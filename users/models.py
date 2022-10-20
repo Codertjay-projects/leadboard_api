@@ -17,8 +17,6 @@ class UserManager(BaseUserManager):
     by creating helper functions
     """
 
-
-
     def create_user(self, email, password, **extra_fields):
         """
         Create and save a User with the given email and password.
@@ -44,7 +42,6 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must have is_superuser=True.'))
         return self.create_user(email, password, **extra_fields)
-
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -123,6 +120,9 @@ class UserProfile(models.Model):
     The user profile is a model that is connected to the user and if the user model is deleted then
     the user profile will also be deleted
     """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="user_profile")
     gender = models.CharField(max_length=50, choices=GENDER_CHOICES, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
