@@ -3,7 +3,18 @@ import uuid
 from django.db import models
 
 # Create your models here.
-from users.models import User
+from users.models import User, Company
+
+
+class LeadGroup(models.Model):
+    Company = models.ForeignKey(Company, related_name="company", on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, null=False, unique=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
 
 LEAD_SOURCE = (
     ("SKILLS_APP", "SKILLS_APP"),
@@ -34,6 +45,8 @@ class LeadContact(models.Model):
     """
     This enables creating leads to enable communication with clients
     """
+    group = models.ManyToManyField(LeadGroup, related_name="groups", blank=True)
+    Company = models.ForeignKey(Company, related_name="company", on_delete=models.CASCADE)
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )

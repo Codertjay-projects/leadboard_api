@@ -157,3 +157,4 @@ def post_save_create_user_profile(sender, instance, *args, **kwargs):
 
 
 post_save.connect(post_save_create_user_profile, sender=User)
+
