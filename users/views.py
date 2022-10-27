@@ -1,5 +1,5 @@
-from rest_auth.registration.views import RegisterView
-from rest_auth.views import LoginView
+from dj_rest_auth.registration.views import RegisterView
+from dj_rest_auth.views import LoginView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView

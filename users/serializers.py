@@ -1,6 +1,6 @@
 from allauth.account.adapter import get_adapter
 from users.models import User, UserProfile
-from rest_auth.registration.serializers import RegisterSerializer
+from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token

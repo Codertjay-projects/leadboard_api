@@ -8,16 +8,16 @@ class NotLoggedInPermission(AllowAny):
 
     def has_permission(self, request, view):
         """By default, headers key are been changed from
-        LEADERBOARD_SK_HEADER to Leaderboard-Sk-Header that's why we change the key """
+        LEADBOARD_SK_HEADER to Leadboard-Sk-Header that's why we change the key """
         for key, value in request.headers.items():
             #  check the host if we are running manage.py test and if it's on test
             #  mode we allow without the headers .
             #  Note if we pass in headers it provides errors with throttle_scope
             if request.get_host() == "testserver":
                 return True
-            if key.lower() == 'leaderboard-sk-header':
-                teems_sk_header = request.headers['Leaderboard-Sk-Header']
-                is_header = teems_sk_header == config('LEADERBOARD_SK_HEADER')
+            if key.lower() == 'leadboard-sk-header':
+                leadboard_sk_header = request.headers['Leadboard-Sk-Header']
+                is_header = leadboard_sk_header == config('LEADBOARD_SK_HEADER')
                 # fixme: throttle provide error when  credentials  is passed on TestCase
                 return is_header
 
@@ -31,7 +31,7 @@ class LoggedInPermission(BasePermission):
 
     def has_permission(self, request, view):
         """By default, headers key are been changed from
-                LEADERBOARD_SK_HEADER to Leaderboard-Sk-Header that's why we change the key """
+                LEADBOARD_SK_HEADER to Leadboard-Sk-Header that's why we change the key """
         # check first  if the user is not authenticated
         if not request.user.is_authenticated:
             return False
@@ -41,9 +41,9 @@ class LoggedInPermission(BasePermission):
             #  Note if we pass in headers it provides errors with throttle_scope
             if request.get_host() == "testserver":
                 return True
-            if key.lower() == 'leaderboard-sk-header':
-                teems_sk_header = request.headers['Leaderboard-Sk-Header']
-                is_header = teems_sk_header == config('LEADERBOARD_SK_HEADER')
+            if key.lower() == 'leadboard-sk-header':
+                leadboard_sk_header = request.headers['Leadboard-Sk-Header']
+                is_header = leadboard_sk_header == config('LEADBOARD_SK_HEADER')
                 return is_header
 
 
@@ -52,7 +52,7 @@ class LoggedInStaffPermission(BasePermission):
 
     def has_permission(self, request, view):
         """By default, headers key are been changed from
-                LEADERBOARD_SK_HEADER to Leaderboard-Sk-Header that's why we change the key """
+                LEADBOARD_SK_HEADER to Leadboard-Sk-Header that's why we change the key """
         #  if the user is not authenticated
         if not request.user.is_authenticated:
             return False

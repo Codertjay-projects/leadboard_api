@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 
 # Create your models here.
+from companies.models import Company, Group
 from leads.models import GENDER
 from users.models import User
 
@@ -23,7 +24,8 @@ class UserScheduleCall(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL)
+    groups = models.ManyToManyField(Group, related_name="user_schedule_groups", blank=True)
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     first_name = models.CharField(max_length=250)
     last_name = models.CharField(max_length=250)
     phone = models.CharField(max_length=50)
@@ -36,8 +38,8 @@ class UserScheduleCall(models.Model):
     good_internet = models.BooleanField(default=False)
     weekly_commitment = models.CharField(max_length=250)
     saturday_check_in = models.CharField(max_length=50)
-    user_type = models.BooleanField(choices=USER_TYPE_CHOICE)
-    schedule_call = models.ForeignKey("ScheduleCall", on_delete=models.SET_NULL)
+    user_type = models.CharField(choices=USER_TYPE_CHOICE, max_length=250)
+    schedule_call = models.ForeignKey("ScheduleCall", on_delete=models.SET_NULL, blank=True, null=True)
     will_subscribe = models.CharField(max_length=50, choices=WILL_SUBSCRIBE_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -49,7 +51,7 @@ class ScheduleCall(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL)
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     title = models.CharField(max_length=250, )
     minutes = models.IntegerField()
     meeting_link = models.URLField()

@@ -12,8 +12,8 @@ EXTERNAL_INSTALLED_APPS = [
     #  for authentications
     'allauth',
     'allauth.account',
-    'rest_auth',
-    'rest_auth.registration',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'rest_framework',
     #  if using token authentication
     'rest_framework.authtoken',
@@ -29,6 +29,12 @@ EXTERNAL_INSTALLED_APPS = [
 
 LOCAL_INSTALLED_APPS = [
     'users',
+    'companies',
+    'feedbacks',
+    'leads',
+    'newsletters',
+    'schedules',
+    'storages',
 ]
 INSTALLED_APPS += EXTERNAL_INSTALLED_APPS
 INSTALLED_APPS += LOCAL_INSTALLED_APPS

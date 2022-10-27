@@ -16,7 +16,7 @@ from pathlib import Path
 from decouple import config
 from .installed import INSTALLED_APPS
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -112,10 +112,8 @@ REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER': 'users.serializers.CustomRegisterSerializer',
 }
 
-"""  
-custom function used to add extra functionality to the signup process
-kind of using it to create a user just let me say the save method function
-"""
+# custom function used to add extra functionality to the signup process
+# kind of using it to create a user just let me say the save method function
 ACCOUNT_ADAPTER = 'users.adapters.UserAdapter'
 
 # setup for django allauth authentications
@@ -130,10 +128,8 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
-"""
-Configuration for email . the email backend is currently set to use post office 
-to log the mail which was sent, failed or still on queue
-"""
+# Configuration for email . the email backend is currently set to use post office
+# to log the mail which was sent, failed or still on queue
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='')
 EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
@@ -142,9 +138,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
-""" The CELERY_ENABLED enables us to perform action with celery task
-     so right now i dont need to add shared_task or delay when sending mail 
-"""
+# The CELERY_ENABLED enables us to perform action with celery task
+# so right now I don't need to add shared_task or delay when sending mail
 POST_OFFICE = {
     'CELERY_ENABLED': True,
     'MESSAGE_ID_ENABLED': True,
@@ -153,12 +148,10 @@ POST_OFFICE = {
     'THREADS_PER_PROCESS': 10,
 }
 
-""" 
-  the default rest framework setting
- anon is for the AnonRateThrottle base on anonymous user
- user is for the UserRateThrottle base on logged in user
- ScopedRateThrottle this is just used to set custom throttle just like the authentication, monitor below
- """
+#  the default rest framework setting
+# anon is for the AnonRateThrottle base on anonymous user
+#  is for the UserRateThrottle base on logged-in user
+# ScopedRateThrottle this is just used to set custom throttle just like the authentication, monitor below
 REST_FRAMEWORK = {
     #  default pagination
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
@@ -177,7 +170,7 @@ REST_FRAMEWORK = {
         # used on route where the user is not logged in like requesting otp
         'monitor': '3/min',
     },
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    # 'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # currently setting the default authentication for django rest framework to jwt
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -187,10 +180,8 @@ REST_FRAMEWORK = {
 # telling rest framework to use jwt
 REST_USE_JWT = True
 
-"""  
-this is used by the package djangorestframework-simplejwt==5.2.0 for providing 
-jwt authentication and also modifying the time which the token expires
-"""
+# this is used by the package djangorestframework-simplejwt==5.2.0 for providing
+# jwt authentication and also modifying the time which the token expires
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=10),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=10),

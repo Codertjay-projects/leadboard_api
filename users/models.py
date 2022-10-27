@@ -150,6 +150,7 @@ class UserProfile(models.Model):
 def post_save_create_user_profile(sender, instance, *args, **kwargs):
     """
     This creates a user profile once a user is being created
+    :param sender:
     :param instance:  the user created or updated
     """
     if instance:

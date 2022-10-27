@@ -2,19 +2,9 @@ import uuid
 
 from django.db import models
 
+from companies.models import Group
 # Create your models here.
-from users.models import User, Company
-
-
-class LeadGroup(models.Model):
-    Company = models.ForeignKey(Company, related_name="company", on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=120, null=False, unique=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
-
+from users.models import User
 
 LEAD_SOURCE = (
     ("SKILLS_APP", "SKILLS_APP"),
@@ -45,18 +35,20 @@ class LeadContact(models.Model):
     """
     This enables creating leads to enable communication with clients
     """
-    group = models.ManyToManyField(LeadGroup, related_name="groups", blank=True)
-    Company = models.ForeignKey(Company, related_name="company", on_delete=models.CASCADE)
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL)
+    prefix = models.CharField(max_length=50, blank=True, null=True, help_text="Mr, Mrs, Dr etc.")
+
+    groups = models.ManyToManyField(Group, related_name="lead_groups", blank=True)
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="staffs")
     last_name = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
     email = models.EmailField()
     mobile = models.CharField(max_length=250)
-    lead_source = models.CharField(choices=LEAD_SOURCE)
-    assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL)
+    lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250)
+    assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
+                                          related_name="assigned_marketers")
     verified = models.BooleanField(default=False)
     gender = models.CharField(choices=GENDER, max_length=50)
     category = models.CharField(max_length=50, choices=CATEGORY)
