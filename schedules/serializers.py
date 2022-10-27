@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from companies.serializers import CompanyGroupSerializer
-from companies.utils import check_marketer_and_admin_access_group
+from companies.utils import check_marketer_and_admin_access_group, check_group_is_under_company
 from schedules.models import UserScheduleCall, ScheduleCall
 
 
@@ -59,11 +59,9 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
         # of a category
         groups = validated_data.pop('groups')
         instance = UserScheduleCall.objects.create(**validated_data)
-        user = self.context['request'].user
-
         for item in groups:
             # check if the user has access
-            if not check_marketer_and_admin_access_group(user, item):
+            if not check_group_is_under_company(instance.company, item):
                 raise ValidationError("You dont have access to the groups provided")
             try:
                 instance.groups.add(item)

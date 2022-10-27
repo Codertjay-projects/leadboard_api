@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
 
 from users.views import LeaderboardRegisterAPIView, LeaderboardLoginAPIView, VerifyEmailOTPAPIView, \
     RequestEmailOTPAPIView
@@ -22,7 +22,9 @@ from users.views import LeaderboardRegisterAPIView, LeaderboardLoginAPIView, Ver
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/users/", include("users.urls")),
-    path("api/v1/companies/", include("companies.urls"))
+    path("api/v1/companies/", include("companies.urls")),
+    path("api/v1/leads/", include("leads.urls")),
+    path("api/v1/feedbacks/", include("feedbacks.urls"))
 ]
 
 # The authentication urls which contains login, register, request otp and verify account

@@ -230,3 +230,5 @@ class IndustryViewSetsAPIView(ModelViewSet):
     serializer_class = IndustrySerializer
     permission_classes = [LoggedInPermission]
     queryset = Industry.objects.all()
+
+

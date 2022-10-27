@@ -25,6 +25,8 @@ class UserScheduleCall(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     groups = models.ManyToManyField(Group, related_name="user_schedule_groups", blank=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     first_name = models.CharField(max_length=250)
     last_name = models.CharField(max_length=250)

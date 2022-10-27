@@ -2,8 +2,9 @@ import uuid
 
 from django.db import models
 
-from companies.models import Group
+from companies.models import Group, Company
 # Create your models here.
+from feedbacks.models import Feedback
 from users.models import User
 
 LEAD_SOURCE = (
@@ -39,7 +40,7 @@ class LeadContact(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     prefix = models.CharField(max_length=50, blank=True, null=True, help_text="Mr, Mrs, Dr etc.")
-
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     groups = models.ManyToManyField(Group, related_name="lead_groups", blank=True)
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="staffs")
     last_name = models.CharField(max_length=250)
@@ -53,3 +54,6 @@ class LeadContact(models.Model):
     gender = models.CharField(choices=GENDER, max_length=50)
     category = models.CharField(max_length=50, choices=CATEGORY)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    def previous_feedback(self):
+        return Feedback.objects.filter(object_id=self.id).first()

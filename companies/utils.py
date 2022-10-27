@@ -1,18 +1,22 @@
 from users.models import User
-from companies.models import Group
+from companies.models import Group, Company
 
 
-def check_marketer_and_admin_access_group(user: User, group :Group):
+def check_group_is_under_company(company: Company, group: Group):
     # check if the user is an admin
-    if user in group.company.admins.all():
+    if company == group.company:
         return True
-    #  if the user is a marketer
-    elif user in group.company.marketers.all():
-        return True
-    # if the user is the owner of the company
-    elif user == group.company.owner():
-        return True
-    # if the user does not have access above
     return False
 
 
+def check_marketer_and_admin_access_company(user: User, company: Company):
+    # check if the user is the owner of the company
+    if user == company.owner:
+        return True
+    # check if the user is one of the admin
+    if user in company.admins.all():
+        return True
+    # check if the user is one of the marketers
+    if user in company.marketers.all():
+        return True
+    return False
