@@ -1,29 +1,36 @@
-from django.shortcuts import render
-
+from django.http import Http404
 # Create your views here.
-from rest_framework.generics import ListCreateAPIView,RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
+from companies.models import Company
 from schedules.serializers import UserScheduleSerializer, UserScheduleCreateUpdateSerializer
-from users.permissions import LoggedInPermission
+from users.permissions import LoggedInPermission, NotLoggedInPermission
 
 
 class UserScheduleCallListCreateAPIView(ListCreateAPIView):
     """
     This is used to list or create a user schedule
     """
-    permission_classes = [LoggedInPermission]
+    permission_classes = [NotLoggedInPermission]
     serializer_class = UserScheduleSerializer
 
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = self.kwargs.get("company_id")
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
     def create(self, request, *args, **kwargs):
-        #  passing context to the serializer to enable us to access the loggedin user
-        # but we use the request to access which user is creating the the user schedule and if he
-        # or she has access
+        company = self.get_company()
         serializer = UserScheduleCreateUpdateSerializer(
             data=request.data,
             context={"request": request})
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        serializer.save(company=company)
         return Response(serializer.data, status=201)
 
 
@@ -36,6 +43,6 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if check_marketer_and_admin_access_group
-        self.perform_destroy(instance)
+        # if check_marketer_and_admin_access_group
+        #     self.perform_destroy(instance)
         return Response(status=204)

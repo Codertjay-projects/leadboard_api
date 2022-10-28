@@ -35,6 +35,7 @@ LOCAL_INSTALLED_APPS = [
     'newsletters',
     'schedules',
     'storages',
+    'events',
 ]
 INSTALLED_APPS += EXTERNAL_INSTALLED_APPS
 INSTALLED_APPS += LOCAL_INSTALLED_APPS

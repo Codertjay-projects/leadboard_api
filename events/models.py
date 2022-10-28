@@ -1,20 +1,22 @@
-from django.db import models
 import uuid
+
+from django.db import models
 
 # Create your models here.
 from companies.models import Company
+from users.models import User
 
 
-class LeadboardStorage(models.Model):
+class Event(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
-    # fixme: add auto delete  when file get deleted
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     title = models.CharField(max_length=250)
     description = models.TextField()
-    file = models.FileField(null=True, blank=True, upload_to="storages")
-    link_1 = models.URLField(null=True, blank=True)
-    link_2 = models.URLField(null=True, blank=True)
-    link_3 = models.URLField(null=True, blank=True)
+    image = models.ImageField(upload_to="events")
+    start_end = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_paid = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)

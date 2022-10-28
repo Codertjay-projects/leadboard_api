@@ -4,6 +4,6 @@ from feedbacks.views import LeadContactFeedbackViewSetsAPIView
 
 router = DefaultRouter()
 #  I am using lead_contact_id to filter the object_id in the feedback
-router.register('leads/<str:lead_contact_id>', LeadContactFeedbackViewSetsAPIView,
+router.register(r'leads', LeadContactFeedbackViewSetsAPIView,
                 basename='lead_contact_feedback')
 urlpatterns = router.urls

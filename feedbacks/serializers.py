@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from users.serializers import UserDetailSerializer
 from .models import Feedback, ACTION_CHOICES
 
 
@@ -7,6 +8,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
     """
     the list feed backs and also get the detail
     """
+    staff = UserDetailSerializer(read_only=True)
 
     class Meta:
         model = Feedback

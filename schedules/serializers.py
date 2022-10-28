@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from companies.serializers import CompanyGroupSerializer
-from companies.utils import check_marketer_and_admin_access_group, check_group_is_under_company
+from companies.utils import check_group_is_under_company
 from schedules.models import UserScheduleCall, ScheduleCall
 
 
@@ -49,6 +49,7 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
             "saturday_check_in",
             "user_type",
             "schedule_call",
+            "communication_medium",
             "will_subscribe",
             "timestamp",
         ]
