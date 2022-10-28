@@ -26,7 +26,8 @@ urlpatterns = [
     path("api/v1/leads/", include("leads.urls")),
     path("api/v1/schedules/", include("schedules.urls")),
     path("api/v1/feedbacks/", include("feedbacks.urls")),
-    path("api/v1/storages/", include("storages.urls"))
+    path("api/v1/storages/", include("storages.urls")),
+    path("api/v1/events/", include("events.urls"))
 ]
 
 # The authentication urls which contains login, register, request otp and verify account

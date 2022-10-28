@@ -62,7 +62,8 @@ class EventCreateAPIView(CreateAPIView):
 
 class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = EventSerializer
-    permission_classes = NotLoggedInPermission
+    permission_classes = [NotLoggedInPermission]
+    lookup_field = "id"
 
     def get_company(self):
         # the company id
@@ -76,7 +77,12 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         return company
 
     def get_queryset(self):
-        event = Event.objects.filter(company=self.get_company())
+        #  if the method is GET . that means the user just want to check not posting or updating the event .
+        #  so this can enable other user to be able to view the event
+        if self.request.method == "GET":
+            event = Event.objects.all()
+        else:
+            event = Event.objects.filter(company=self.get_company())
         return event
 
     def update(self, request, *args, **kwargs):

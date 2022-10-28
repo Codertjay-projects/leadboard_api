@@ -16,7 +16,7 @@ class Event(models.Model):
     title = models.CharField(max_length=250)
     description = models.TextField()
     image = models.ImageField(upload_to="events")
-    start_end = models.DateTimeField()
+    start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     is_paid = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
