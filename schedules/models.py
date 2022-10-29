@@ -80,3 +80,5 @@ class ScheduleCall(models.Model):
     minutes = models.IntegerField()
     meeting_link = models.URLField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+
