@@ -26,9 +26,14 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
         return company
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = CompanySubscriberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        #  using the get company i created to set the company
+        group_id = serializer.validated_data.get("group_id")
+
+        # check if the group_id passed is under that company
+        if not self.get_company().group_set.filter(id=group_id).first():
+            return Response({"error": "You dont have access to to use this group id for this company "})
+        # using the get company i created to set the company
         serializer.save(company=self.get_company())
         return Response(serializer.data, status=201)
 
@@ -40,10 +45,20 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
         company = self.get_company()
         # return subscribed email
         subscribed = self.request.query_params.get("subscribed")
+        group_id = self.request.query_params.get("group_id")
         queryset = CompanySubscriber.objects.filter(company=company)
+        #  if the group id was passed
+        if group_id:
+            queryset = CompanySubscriber.objects.filter(company=company, group_id=group_id)
         if subscribed == "true":
+            #  if the group id was passed
+            if group_id:
+                return CompanySubscriber.objects.filter(company=company, subscribed=True, group_id=group_id)
             return CompanySubscriber.objects.filter(company=company, subscribed=True)
         if subscribed == "false":
+            #  if the group id was passed
+            if group_id:
+                return CompanySubscriber.objects.filter(company=company, subscribed=True, group_id=group_id)
             return CompanySubscriber.objects.filter(company=company, subscribed=True)
         return queryset
 

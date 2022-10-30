@@ -11,7 +11,8 @@ from companies.models import Company, Group
 class CompanySubscriber(models.Model):
     """
     this company subscribers enables users to subscribe to a particular group under a company .
-    so it enables us to manage all users in that are subscribed to the company     : this is used for filtering base on the staff loggedin trying to send an automated message
+    so it enables us to manage all users in that are subscribed to the company
+      : this is used for filtering base on the staff loggedin trying to send an automated message
     that way we would know the user has access sending mail to this users
     """
     id = models.UUIDField(

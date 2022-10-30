@@ -7,6 +7,8 @@ class CompanySubscriberSerializer(serializers.ModelSerializer):
     """
     This enables list all subscribers, updating and retrieving
     """
+    group_id = serializers.UUIDField()
+
     class Meta:
         model = CompanySubscriber
         fields = [
