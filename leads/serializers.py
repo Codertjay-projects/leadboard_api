@@ -67,6 +67,7 @@ class LeadContactSerializer(serializers.ModelSerializer):
             "first_name",
             "email",
             "mobile",
+            "message",
             "lead_source",
             "assigned_marketer",
             "previous_feedback",

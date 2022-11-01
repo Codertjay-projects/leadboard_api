@@ -46,6 +46,7 @@ class LeadContact(models.Model):
     last_name = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
     email = models.EmailField()
+    message = models.TextField()
     mobile = models.CharField(max_length=250)
     lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250)
     assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,

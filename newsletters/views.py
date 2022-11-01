@@ -1,12 +1,14 @@
 from django.http import Http404
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from companies.models import Company
 from companies.utils import check_marketer_and_admin_access_company
-from users.permissions import NotLoggedInPermission
+from users.permissions import NotLoggedInPermission, LoggedInPermission
 from .models import CompanySubscriber
-from .serializers import CompanySubscriberSerializer
+from .serializers import CompanySubscriberSerializer, AddToLeadBoardSerializer
+from leads.models import LeadContact
 
 
 class CompanySubscriberViewSetsAPIView(ModelViewSet):
@@ -40,6 +42,8 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
     def get_queryset(self):
         """
         return all subscribers
+
+        This only shows those subscribers that are not on leadboard.
         :return:wo
         """
         company = self.get_company()
@@ -49,17 +53,21 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
         queryset = CompanySubscriber.objects.filter(company=company)
         #  if the group id was passed
         if group_id:
-            queryset = CompanySubscriber.objects.filter(company=company, group_id=group_id)
+            queryset = CompanySubscriber.objects.filter(
+                company=company, group_id=group_id
+                , on_leadboard=False)
         if subscribed == "true":
             #  if the group id was passed
             if group_id:
-                return CompanySubscriber.objects.filter(company=company, subscribed=True, group_id=group_id)
-            return CompanySubscriber.objects.filter(company=company, subscribed=True)
+                return CompanySubscriber.objects.filter(company=company, subscribed=True,
+                                                        group_id=group_id, on_leadboard=False)
+            return CompanySubscriber.objects.filter(company=company, subscribed=True, on_leadboard=False)
         if subscribed == "false":
             #  if the group id was passed
             if group_id:
-                return CompanySubscriber.objects.filter(company=company, subscribed=True, group_id=group_id)
-            return CompanySubscriber.objects.filter(company=company, subscribed=True)
+                return CompanySubscriber.objects.filter(company=company, subscribed=True, group_id=group_id,
+                                                        on_leadboard=False)
+            return CompanySubscriber.objects.filter(company=company, subscribed=True, on_leadboard=False)
         return queryset
 
     def destroy(self, request, *args, **kwargs):
@@ -79,3 +87,45 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+
+class AddToLeadBoardAPIView(APIView):
+    """
+    This enables adding users email to the lead board
+    """
+    permission_classes = [LoggedInPermission]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddToLeadBoardSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        subscribers = serializer.validated_data.get("subscribers")
+        for item in subscribers:
+            company_subscriber = CompanySubscriber.objects.filter(id=item, on_leadboard=False).first()
+            if not company_subscriber:
+                #  if not the company_subscriber then it re loop
+                continue
+            #  first check for then company owner then the company admins or  the assigned marketer
+            if not check_marketer_and_admin_access_company(self.request.user, company_subscriber.company):
+                return Response({"error": "You dont have permission"}, status=400)
+
+            if not company_subscriber.company.marketers.all().order_by('?').first():
+                return Response({"error": "No marketer currently on company"}, status=400)
+
+            # fixme : fix the way the lead_source or category is used to create the lead contact
+            leadboard = LeadContact.objects.create(
+                prefix="",
+                company=company_subscriber.company,
+                staff=self.request.user,
+                last_name=company_subscriber.last_name,
+                first_name=company_subscriber.first_name,
+                email=company_subscriber.email,
+                message=company_subscriber.message,
+                mobile="",
+                lead_source="",
+                assigned_marketer=company_subscriber.company.marketers.all().order_by('?').first(),
+                gender="",
+                category="INFORMATION",
+            )
+            company_subscriber.on_leadboard = True
+            company_subscriber.save()
+        return Response({"message": "Successfully added to leadboard"}, status=200)

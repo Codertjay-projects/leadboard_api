@@ -24,5 +24,3 @@ ENV/
 test_json.json
 .env-production
 
-*/migrations/*
-/user_profile/
