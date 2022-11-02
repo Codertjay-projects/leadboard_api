@@ -10,7 +10,6 @@ venv
 
 __pycache__
 
-*/migrations/*
 
 # pyflow
 __pypackages__/

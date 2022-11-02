@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class StoragesConfig(AppConfig):
+class HighValueContentsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'storages'
+    name = 'high_value_contents'

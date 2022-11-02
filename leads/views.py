@@ -1,16 +1,13 @@
 from django.http import Http404
-from django.shortcuts import render
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
 
 from companies.models import Company
-from companies.utils import check_marketer_and_admin_access_company
+from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access
 from feedbacks.models import Feedback
-from feedbacks.serializers import FeedbackCreateSerializer, FeedbackSerializer
-from .models import LeadContact
-from users.permissions import LoggedInPermission
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-
+from feedbacks.serializers import FeedbackCreateSerializer
+from high_value_contents.models import HighValueContent
+from users.permissions import LoggedInPermission, NotLoggedInPermission
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactSerializer
 
 
@@ -18,7 +15,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     """
     This class is meant to list all the lead contact and also create a new one
     """
-    permission_classes = [LoggedInPermission]
+    permission_classes = [NotLoggedInPermission]
     serializer_class = LeadContactSerializer
 
     def get_company(self):
@@ -40,14 +37,24 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         #  before creating a lead we have to make sure the user is a member of that company
         company = self.get_company()
-        #  using the company which enables us to verify if the user has access to create the company
-        #  i created this method in the companies/utils.py to enable check if
-        #  the user has access to create the lead using the company
-        if not check_marketer_and_admin_access_company(self.request.user, company):
-            return Response({"error": "You dont have access to create this lead under this company ."}, status=400)
         serializer = LeadContactUpdateCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(staff=self.request.user, company=company)
+        high_value_content = serializer.validated_data.get("high_value_content")
+        #  if the high value content id exists from the validated data that means the user want
+        #  the lead just to download ebook or something else though
+        if high_value_content:
+            #  using the company which enables us to verify the high value content if it exists on the leads
+            #  because some leads are meant just only to download ebooks .
+            if not check_company_high_value_content_access(high_value_content, company):
+                return Response({"error": "You dont have access to create this lead under this company ."}, status=400)
+        if request.user.is_authenticated:
+            #  first check for then company owner then the company admins or  the assigned marketer
+            if not check_marketer_and_admin_access_company(self.request.user, company):
+                return Response({"error": "You dont have permission"}, status=400)
+            # if the user is logged in I save the lead with the user
+            serializer.save(staff=self.request.user, company=company, high_value_content=high_value_content)
+        else:
+            serializer.save(company=company, high_value_content=high_value_content)
         return Response(serializer.data, status=201)
 
 
@@ -90,6 +97,8 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        ################################################################
+        """                 Feedback create                 """
         #  now with the feedback data was
         #  passed also if available when updating the lead we need to create a feedback
         feedback_serializer = FeedbackCreateSerializer(data=request.data)
@@ -107,6 +116,8 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
                 next_schedule=feedback_next_schedule,
                 staff=self.request.user
             )
+        """End Feedback create"""
+        ################################################################
 
         return Response(serializer.data)
 
@@ -117,5 +128,3 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             return Response({"error": "You dont have permission"}, status=400)
         self.perform_destroy(instance)
         return Response(status=204)
-
-

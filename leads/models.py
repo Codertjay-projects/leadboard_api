@@ -5,6 +5,7 @@ from django.db import models
 from companies.models import Group, Company
 # Create your models here.
 from feedbacks.models import Feedback
+from high_value_contents.models import HighValueContent
 from users.models import User
 
 LEAD_SOURCE = (
@@ -30,6 +31,12 @@ CATEGORY = (
     ("INFORMATION", "INFORMATION"),
     ("BUYING_NOW", "BUYING_NOW"),
 )
+WANT = (
+    ("CHILD", "CHILD"),
+    ("SIBLING", "SIBLING"),
+    ("SELF", "SELF"),
+    ("CHILD_AND_SELF", "CHILD_AND_SELF"),
+)
 
 
 class LeadContact(models.Model):
@@ -45,16 +52,27 @@ class LeadContact(models.Model):
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="staffs")
     last_name = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
+
+    middle_name = models.CharField(max_length=250, blank=True, null=True)
+    job_title = models.CharField(max_length=250, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    sector = models.CharField(max_length=100, blank=True, null=True)
+    want = models.CharField(max_length=15, choices=WANT, help_text="Who want to learn", blank=True, null=True)
+    high_value_content = models.ForeignKey(HighValueContent, on_delete=models.CASCADE,
+                                           related_name="lead_contacts",
+                                           blank=True, null=True, )
     email = models.EmailField()
-    message = models.TextField()
     mobile = models.CharField(max_length=250)
-    lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250)
+    lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250, default="OTHERS")
     assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
                                           related_name="assigned_marketers")
     verified = models.BooleanField(default=False)
-    gender = models.CharField(choices=GENDER, max_length=50)
-    category = models.CharField(max_length=50, choices=CATEGORY)
+    gender = models.CharField(choices=GENDER, max_length=50, blank=True, null=True)
+    category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
 
     def previous_feedback(self):
         return Feedback.objects.filter(object_id=self.id).first()

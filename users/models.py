@@ -137,6 +137,9 @@ class UserProfile(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     objects = UserProfileManager()
 
+    class Meta:
+        ordering = ["-timestamp"]
+
     @property
     def profile_image_url(self):
         #  adding this function to prevent issues when accessing the profile image if it doesn't exist
@@ -158,4 +161,3 @@ def post_save_create_user_profile(sender, instance, *args, **kwargs):
 
 
 post_save.connect(post_save_create_user_profile, sender=User)
-

@@ -20,3 +20,6 @@ class Event(models.Model):
     end_date = models.DateTimeField()
     is_paid = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]

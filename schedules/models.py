@@ -56,6 +56,9 @@ class UserScheduleCall(models.Model):
     will_subscribe = models.CharField(max_length=50, choices=WILL_SUBSCRIBE_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-timestamp"]
+
 
 def post_save_create_schedule_call(sender, instance, *args, **kwargs):
     # the schedule call has to be created if
@@ -81,4 +84,5 @@ class ScheduleCall(models.Model):
     meeting_link = models.URLField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
-
+    class Meta:
+        ordering = ["-timestamp"]

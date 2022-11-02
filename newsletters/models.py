@@ -34,3 +34,6 @@ class CompanySubscriber(models.Model):
     subscribed = models.BooleanField(default=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
+
+    class Meta:
+        ordering = ["-timestamp"]

@@ -1,15 +1,15 @@
 from rest_framework import serializers
 
-from storages.models import LeadboardStorage
+from high_value_contents.models import HighValueContent
 
 
-class LeadboardStorageSerializer(serializers.ModelSerializer):
+class HighValueContentSerializer(serializers.ModelSerializer):
     """
     this serializer is meant for the full crud
     """
 
     class Meta:
-        model = LeadboardStorage
+        model = HighValueContent
         fields = [
             "id",
             "company_id",

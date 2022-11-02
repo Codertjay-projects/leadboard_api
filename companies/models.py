@@ -19,6 +19,9 @@ class Industry(models.Model):
     name = models.CharField(max_length=50)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-timestamp"]
+
 
 COMPANY_SIZE_CHOICES = (
     ("2-10", "2-10"),
@@ -43,6 +46,9 @@ class Location(models.Model):
     country = models.CharField(max_length=50)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-timestamp"]
+
 
 class Company(models.Model):
     """
@@ -66,6 +72,9 @@ class Company(models.Model):
     marketers = models.ManyToManyField(User, blank=True, related_name="marketers")
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-timestamp"]
+
 
 class Group(models.Model):
     """
@@ -79,6 +88,9 @@ class Group(models.Model):
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=120, null=False, unique=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
 
     def __str__(self):
         return self.title

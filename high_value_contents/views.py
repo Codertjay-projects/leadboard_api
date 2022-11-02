@@ -2,17 +2,16 @@ from django.http import Http404
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from storages.models import LeadboardStorage
-from storages.serializers import LeadboardStorageSerializer
-from users.permissions import LoggedInPermission
 from companies.models import Company
-
 from companies.utils import check_marketer_and_admin_access_company
+from high_value_contents.models import HighValueContent
+from high_value_contents.serializers import HighValueContentSerializer
+from users.permissions import LoggedInPermission
 
 
-class LeadboardStorageViewSetsAPIView(ModelViewSet):
+class HighValueContentViewSetsAPIView(ModelViewSet):
     """this viewset enables the full crud which are create, retrieve,update and delete  """
-    serializer_class = LeadboardStorageSerializer
+    serializer_class = HighValueContentSerializer
     permission_classes = [LoggedInPermission]
 
     def get_company(self):
@@ -29,7 +28,7 @@ class LeadboardStorageViewSetsAPIView(ModelViewSet):
     def get_queryset(self, *args, **kwargs):
         #  using the company method e created as an helper function
         company = self.get_company()
-        feedback = LeadboardStorage.objects.filter(company=company)
+        feedback = HighValueContent.objects.filter(company=company)
         return feedback
 
     def create(self, request, *args, **kwargs):
