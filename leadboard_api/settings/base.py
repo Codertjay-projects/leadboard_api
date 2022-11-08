@@ -159,7 +159,7 @@ POST_OFFICE = {
 REST_FRAMEWORK = {
     #  default pagination
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 50,
+    'PAGE_SIZE': 20000000,
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
@@ -201,3 +201,7 @@ APPEND_SLASH = True
 CELERY_ENABLED = True
 CELERY_BROKER_URL = config("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = config("CELERY_BROKER_URL")
+
+
+
+#  Email configuration

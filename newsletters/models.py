@@ -33,6 +33,7 @@ class CompanySubscriber(models.Model):
     on_leadboard = models.BooleanField(default=False)
     subscribed = models.BooleanField(default=True)
     timestamp = models.DateTimeField(default=timezone.now)
+    # fixme: when a user unsubscribe and the user is in a lead i remove the group
 
 
     class Meta:

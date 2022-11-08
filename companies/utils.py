@@ -23,6 +23,16 @@ def check_marketer_and_admin_access_company(user: User, company: Company):
     return False
 
 
+def check_admin_access_company(user: User, company: Company):
+    # check if the user is the owner of the company
+    if user == company.owner:
+        return True
+    # check if the user is one of the admin
+    if user in company.admins.all():
+        return True
+    return False
+
+
 def check_company_high_value_content_access(high_value_content: HighValueContent, company: Company):
     """
     this function is used to check the high value content, and it returns a boolean either

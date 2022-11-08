@@ -6,7 +6,6 @@ from companies.models import Company
 from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
-from high_value_contents.models import HighValueContent
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactSerializer
 

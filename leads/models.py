@@ -70,6 +70,7 @@ class LeadContact(models.Model):
     gender = models.CharField(choices=GENDER, max_length=50, blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    # fixme: add subscribed
 
     class Meta:
         ordering = ["-timestamp"]

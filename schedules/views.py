@@ -29,7 +29,6 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
             data=request.data,
             context={"request": request})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
         serializer.save(company=company)
         return Response(serializer.data, status=201)
 

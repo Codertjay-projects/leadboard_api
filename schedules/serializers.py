@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from companies.serializers import CompanyGroupSerializer
+from companies.serializers import CompanyGroupSerializer, CompanySerializer
 from companies.utils import check_group_is_under_company
 from schedules.models import UserScheduleCall, ScheduleCall
 
@@ -34,23 +34,38 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "groups",
-            "staff",
             "first_name",
             "last_name",
-            "phone",
-            "gender",
-            "age",
-            "schedule_date",
-            "schedule_time",
+            "age_range",
+            "email",
             "location",
+            "gender",
+            "phone",
+            "age",
+            "communication_medium",
+            "will_subscribe",
+            "scheduled_date",
+            "scheduled_time",
+            "employed",
+            "other_training",
+            "other_training_lesson",
+            "will_pay",
+            "income_range",
+            "knowledge_scale",
             "have_laptop",
+            "will_get_laptop",
+            "when_get_laptop",
             "good_internet",
             "weekly_commitment",
             "saturday_check_in",
+            "more_details",
+            "kids_count",
+            "kids_years",
+            "time_close_from_school",
             "user_type",
             "schedule_call",
-            "communication_medium",
-            "will_subscribe",
+            "lead_contact",
+            "eligible",
             "timestamp",
         ]
         read_only_fields = ["id", "timestamp", ]
@@ -77,28 +92,47 @@ class UserScheduleSerializer(serializers.ModelSerializer):
     """
     schedule_call = ScheduleCallSerializer(read_only=True)
     groups = CompanyGroupSerializer(many=True)
+    company = CompanySerializer(many=True)
 
     class Meta:
         model = UserScheduleCall
         fields = [
             "id",
+            "company",
             "groups",
             "staff",
             "first_name",
             "last_name",
-            "phone",
-            "gender",
-            "age",
-            "schedule_date",
-            "schedule_time",
+            "age_range",
+            "email",
             "location",
+            "gender",
+            "phone",
+            "age",
+            "communication_medium",
+            "will_subscribe",
+            "scheduled_date",
+            "scheduled_time",
+            "employed",
+            "other_training",
+            "other_training_lesson",
+            "will_pay",
+            "income_range",
+            "knowledge_scale",
             "have_laptop",
+            "will_get_laptop",
+            "when_get_laptop",
             "good_internet",
             "weekly_commitment",
             "saturday_check_in",
+            "more_details",
+            "kids_count",
+            "kids_years",
+            "time_close_from_school",
             "user_type",
             "schedule_call",
-            "will_subscribe",
+            "lead_contact",
+            "eligible",
             "timestamp",
         ]
         read_only_fields = ["id", "timestamp", ]
