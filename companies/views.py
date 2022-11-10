@@ -9,7 +9,9 @@ from users.models import User
 from users.permissions import LoggedInPermission
 from .models import Company, Location, Industry, Group
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyAddUserSerializer, \
-    CompanyGroupSerializer, LocationSerializer, IndustrySerializer
+    CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyRequestSerializer, OwnerAddUserSerializer
+
+from .tasks import send_request_to_user, send_request_to_admin
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -232,3 +234,45 @@ class IndustryViewSetsAPIView(ModelViewSet):
     queryset = Industry.objects.all()
 
 
+class RequestToJoinCompanyAPIView(APIView):
+    """
+    This is meant to send a request to the owner of the company
+    """
+    permission_classes = [LoggedInPermission]
+
+    def post(self, request, *args, **kwargs):
+        # The company id is sent by the user so that way a request model is sent.
+        serializer = CompanyRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        company_id = serializer.data.get("company_id")
+        message = serializer.data.get("message")
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            return Response({"error": "Company with this ID does not exists"}, status=400)
+        # Instead of creating a model thinking of sending both the company owner and the user a message
+        # Send message to both admin and the user sending the request
+        send_request_to_user.delay(self.request.user.email, company.name)
+        send_request_to_admin.delay(company.owner.email, self.request.user.email, message)
+        return Response({"message": "Successfully sent request to Join company"})
+
+
+class OwnerAddUserToCompany(APIView):
+    """
+    The class is meant for the owner tob add a user to the company , remove and also choose what role the user is
+    play either as an admin or a marketer
+    """
+
+    def post(self, request, *args, **kwargs):
+        serializer = OwnerAddUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        company_id = serializer.data.get("company_id")
+        email = serializer.data.get("email")
+        role = serializer.data.get("role")
+        action = serializer.data.get("action")
+        # Check if a company with the ID exists
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            return Response({"error": "Company with this ID does not exists"}, status=400)
+
+
+        return Response()

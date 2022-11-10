@@ -126,3 +126,29 @@ class CompanyGroupSerializer(serializers.ModelSerializer):
             "timestamp",
         ]
         read_only_fields = ["id", "timestamp", "slug"]
+
+
+class CompanyRequestSerializer(serializers.Serializer):
+    """
+    This serializer is meant to send request to the admin about joining the company
+    """
+    company_id = serializers.UUIDField()
+    message = serializers.CharField(max_length=10000)
+
+
+class OwnerAddUserSerializer(serializers.Serializer):
+    """
+    This serializer is meant to be used to add user to an organisation or company
+    """
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(
+        choices=(("MARKETER", "MARKETER"),
+                 ("ADMIN", "ADMIN"),)
+    )
+    action = serializers.ChoiceField(
+        choices=(
+            ("ADD", "ADD"),
+            ("REMOVE", "REMOVE"),
+        )
+    )
+    company_id = serializers.UUIDField()

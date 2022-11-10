@@ -44,5 +44,3 @@ def send_otp_to_email_task(otp, email, first_name, last_name):
         f"contact <a href='mailto:{LEADBOARD_CUSTOMER_SUPPORT_MAIL}'>{LEADBOARD_INFO_MAIL}</a></p>""",
         priority='now'
     )
-
-
