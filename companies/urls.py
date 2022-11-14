@@ -2,7 +2,8 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from .views import CompanyRetrieveUpdateDeleteAPIView, CompanyListCreateAPIView, CompanyAddUserAPIView, \
-    CompanyGroupRetrieveUpdateDestroy, CompanyGroupListCreate, LocationViewSetsAPIView, IndustryViewSetsAPIView
+    CompanyGroupRetrieveUpdateDestroy, CompanyGroupListCreate, LocationViewSetsAPIView, IndustryViewSetsAPIView, \
+    CompanyInviteListCreateAPIView
 
 urlpatterns = [
     path("", CompanyListCreateAPIView.as_view(), name="company_list_create"),
@@ -12,6 +13,7 @@ urlpatterns = [
     path("groups/<str:id>/", CompanyGroupListCreate.as_view(), name="company_group_list_create"),
     path("groups/<str:company_id>/<str:group_id>/", CompanyGroupRetrieveUpdateDestroy.as_view(),
          name="company_group_create_retrieve_destroy"),
+    path("company_invites/", CompanyInviteListCreateAPIView.as_view(), name="company_invites")
 ]
 
 router = DefaultRouter()

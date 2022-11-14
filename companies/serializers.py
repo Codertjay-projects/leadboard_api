@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from users.serializers import UserDetailSerializer
-from .models import Company, Group, Industry, Location
+from .models import Company, Group, Industry, Location, CompanyInvite
 
 
 class IndustrySerializer(serializers.ModelSerializer):
@@ -128,27 +128,23 @@ class CompanyGroupSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "timestamp", "slug"]
 
 
-class CompanyRequestSerializer(serializers.Serializer):
+class CompanyInviteSerializer(serializers.ModelSerializer):
     """
-    This serializer is meant to send request to the admin about joining the company
+    this serializer is meant to create an invitation for a user to JOIN
     """
-    company_id = serializers.UUIDField()
-    message = serializers.CharField(max_length=10000)
+
+    class Meta:
+        model = CompanyInvite
+        fields = [
+            "id",
+            "first_name",
+            "invite_id",
+            "email",
+            "role",
+            "status",
+            "timestamp",
+        ]
+        read_only_fields = ["invite_id","timestamp", "status"]
 
 
-class OwnerAddUserSerializer(serializers.Serializer):
-    """
-    This serializer is meant to be used to add user to an organisation or company
-    """
-    email = serializers.EmailField()
-    role = serializers.ChoiceField(
-        choices=(("MARKETER", "MARKETER"),
-                 ("ADMIN", "ADMIN"),)
-    )
-    action = serializers.ChoiceField(
-        choices=(
-            ("ADD", "ADD"),
-            ("REMOVE", "REMOVE"),
-        )
-    )
-    company_id = serializers.UUIDField()
+

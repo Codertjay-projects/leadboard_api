@@ -7,11 +7,11 @@ from rest_framework.viewsets import ModelViewSet
 
 from users.models import User
 from users.permissions import LoggedInPermission
-from .models import Company, Location, Industry, Group
+from .models import Company, Location, Industry, Group, CompanyInvite
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyAddUserSerializer, \
-    CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyRequestSerializer, OwnerAddUserSerializer
-
-from .tasks import send_request_to_user, send_request_to_admin
+    CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer
+from .tasks import send_request_to_user
+from .utils import check_admin_access_company
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -234,45 +234,64 @@ class IndustryViewSetsAPIView(ModelViewSet):
     queryset = Industry.objects.all()
 
 
-class RequestToJoinCompanyAPIView(APIView):
+class CompanyInviteListCreateAPIView(ListCreateAPIView):
     """
-    This is meant to send a request to the owner of the company
+    This is meant to list, create the CompanyInvite
     """
+    serializer_class = CompanyInviteSerializer
     permission_classes = [LoggedInPermission]
 
-    def post(self, request, *args, **kwargs):
-        # The company id is sent by the user so that way a request model is sent.
-        serializer = CompanyRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        company_id = serializer.data.get("company_id")
-        message = serializer.data.get("message")
+    def get_queryset(self):
+        return CompanyInvite.objects.filter(company=self.get_company())
+
+    def get_company(self):
+        #  get the company id from kwargs and also the group id
+        company_id = self.request.query_params.get("company_id")
         company = Company.objects.filter(id=company_id).first()
         if not company:
-            return Response({"error": "Company with this ID does not exists"}, status=400)
-        # Instead of creating a model thinking of sending both the company owner and the user a message
-        # Send message to both admin and the user sending the request
-        send_request_to_user.delay(self.request.user.email, company.name)
-        send_request_to_admin.delay(company.owner.email, self.request.user.email, message)
-        return Response({"message": "Successfully sent request to Join company"})
+            raise Http404
+        return company
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        company = self.get_company()
+        if not check_admin_access_company(self.request.user, company):
+            return Response({"error": "You dont have permission to view invites"}, status=400)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
-class OwnerAddUserToCompany(APIView):
-    """
-    The class is meant for the owner tob add a user to the company , remove and also choose what role the user is
-    play either as an admin or a marketer
-    """
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
-    def post(self, request, *args, **kwargs):
-        serializer = OwnerAddUserSerializer(data=request.data)
+    def create(self, request, *args, **kwargs):
+        # check the permission
+        company = self.get_company()
+        if not check_admin_access_company(self.request.user, company):
+            return Response({"error": "You dont have permission to view invites"}, status=400)
+        serializer = CompanyInviteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        company_id = serializer.data.get("company_id")
-        email = serializer.data.get("email")
-        role = serializer.data.get("role")
-        action = serializer.data.get("action")
-        # Check if a company with the ID exists
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            return Response({"error": "Company with this ID does not exists"}, status=400)
-
-
-        return Response()
+        # Check if the mail has been used by the company before and also get the info
+        email = serializer.validated_data.get("email")
+        first_name = serializer.validated_data.get("first_name")
+        last_name = serializer.validated_data.get("last_name")
+        if email:
+            if CompanyInvite.objects.filter(email=email, company=self.get_company()).first():
+                return Response({"error": "User has already been sent an invitation"}, status=400)
+        serializer.save(company=self.get_company())
+        # Get the invitation created
+        company_invite = CompanyInvite.objects.filter(company=self.get_company(),
+                                                      email=serializer.validated_data.get("email")).first()
+        if not company_invite:
+            return Response(
+                {"error": "Error creating invite. If the error continues please contact our customer support"},
+                status=500)
+        send_request_to_user.delay(
+            company_name=company.name,
+            invitation_id=company_invite.invite_id,
+            first_name=first_name,
+            last_name=last_name,
+            user_email=email
+        )
+        return Response(serializer.data, status=201)

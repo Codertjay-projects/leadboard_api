@@ -1,10 +1,13 @@
+import random
 import uuid
 
 from django.db import models
 
 # Create your models here.
 from django.db.models.signals import pre_save
+from django.utils import timezone
 from django.utils.text import slugify
+from rest_framework.exceptions import APIException
 
 from users.models import User
 
@@ -62,11 +65,11 @@ class Company(models.Model):
     name = models.CharField(max_length=250)
     website = models.URLField(blank=True, null=True)
     phone = models.CharField(max_length=25)
-    industry = models.ForeignKey(Industry, on_delete=models.CASCADE)
-    overview = models.TextField()
-    company_size = models.CharField(choices=COMPANY_SIZE_CHOICES, max_length=250)
-    headquater = models.CharField(max_length=250)
-    founded = models.DateField()
+    industry = models.ForeignKey(Industry, on_delete=models.CASCADE, blank=True, null=True)
+    overview = models.TextField(blank=True, null=True)
+    company_size = models.CharField(choices=COMPANY_SIZE_CHOICES, max_length=250, blank=True, null=True)
+    headquater = models.CharField(max_length=250, blank=True, null=True)
+    founded = models.DateField(blank=True, null=True)
     locations = models.ManyToManyField(Location, blank=True)
     admins = models.ManyToManyField(User, blank=True, related_name="admins")
     marketers = models.ManyToManyField(User, blank=True, related_name="marketers")
@@ -74,6 +77,40 @@ class Company(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
+
+
+COMPANY_ROLES = (
+    ("ADMIN", "ADMIN"),
+    ("MARKETER", "MARKETER"),
+)
+
+ROLE_CHOICES = (
+    ("ADMIN", "ADMIN"),
+    ("MARKETER", "MARKETER"),
+)
+
+INVITE_STATUS = (
+    ("ACTIVE", "ACTIVE"),
+    ("PENDING", "PENDING"),
+)
+
+
+class CompanyInvite(models.Model):
+    """This is meant to create an invitation which would be sent to the user to join the company """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=250)
+    last_name = models.CharField(max_length=250)
+    # this id is sent to the user upon creating
+    invite_id = models.CharField(max_length=50, blank=True, null=True)
+    email = models.EmailField()
+    role = models.CharField(max_length=250, choices=ROLE_CHOICES)
+    status = models.CharField(max_length=250, choices=INVITE_STATUS, default="PENDING")
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        if not self.invite_id:
+            self.invite_id = random.randint(1000000, 9999999)
+        return super(CompanyInvite, self).save(*args, **kwargs)
 
 
 class Group(models.Model):

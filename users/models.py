@@ -59,6 +59,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     email = models.EmailField(_('email address'), unique=True)
+    mobile = models.IntegerField(blank=True, null=True)
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
@@ -128,7 +130,6 @@ class UserProfile(models.Model):
     date_of_birth = models.DateField(blank=True, null=True)
     profile_image = models.ImageField(blank=True, null=True, upload_to="user_profile")
     address = models.CharField(max_length=250, blank=True, null=True)
-    mobile = models.IntegerField(blank=True, null=True)
     business_name = models.CharField(max_length=250, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     nationality = models.CharField(max_length=250, blank=True, null=True)

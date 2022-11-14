@@ -5,6 +5,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from users.tasks import login_notification_email
+from companies.models import CompanyInvite, Company
+
+ORGANISATION_CHOICES = (
+    ("JOIN", "JOIN"),
+    ("CREATE", "CREATE"),
+)
 
 
 class CustomRegisterSerializer(RegisterSerializer):
@@ -15,6 +21,11 @@ class CustomRegisterSerializer(RegisterSerializer):
 
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
+    mobile = serializers.CharField(max_length=150, required=False)
+    company_name = serializers.CharField(max_length=150, required=False)
+    organisation_choice = serializers.ChoiceField(choices=ORGANISATION_CHOICES)
+
+    invite_id = serializers.CharField(max_length=150, required=False)
     email = serializers.EmailField()
     password1 = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
@@ -25,9 +36,26 @@ class CustomRegisterSerializer(RegisterSerializer):
             'first_name',
             'last_name',
             'email',
+            'mobile',
+            'company_name',
+            'organisation_choice',
+            'invite_id',
             'password1',
             'password2',
         )
+
+    def validate(self, attrs):
+        if attrs.get('organisation_choice') == "JOIN":
+            if not attrs.get('invite_id'):
+                raise serializers.ValidationError("You can't join an Organisation without the invite_id ")
+            if not CompanyInvite.objects.filter(invite_id=attrs.get('invite_id'), email=attrs.get("email")).exists():
+                # Check if the user was sent an Invitation
+                raise serializers.ValidationError(
+                    "You were not sent an invite please request invite from company owner.")
+        if attrs.get('organisation_choice') == "CREATE":
+            if not attrs.get("company_name"):
+                raise serializers.ValidationError("You need the company name if creating a company")
+        return attrs
 
     def get_cleaned_data(self):
         """
@@ -40,6 +68,10 @@ class CustomRegisterSerializer(RegisterSerializer):
             'first_name': self.validated_data.get('first_name', ''),
             'last_name': self.validated_data.get('last_name', ''),
             'email': self.validated_data.get('email', ''),
+            'company_name': self.validated_data.get('company_name', ''),
+            'organisation_choice': self.validated_data.get('organisation_choice', ''),
+            'invite_id': self.validated_data.get('invite_id', ''),
+            'mobile': self.validated_data.get('mobile', ''),
             'password1': self.validated_data.get('password1', ''),
             'password2': self.validated_data.get('password2', ''),
         }
@@ -54,6 +86,33 @@ class CustomRegisterSerializer(RegisterSerializer):
         user = adapter.new_user(request)
         self.cleaned_data = self.get_cleaned_data()
         adapter.save_user(request, user, self)
+        ##############################
+        # Create a company for the user or Join an Organisation base on what the user chose
+        if self.cleaned_data.get("organisation_choice") == "JOIN":
+            # Get the company invite through that we get company
+            company_invite = CompanyInvite.objects.filter(
+                email=self.cleaned_data.get("email"),
+                invite_id=self.cleaned_data.get("invite_id")
+            ).first()
+            if not company_invite:
+                # means an error might have occurred because we checked the above but i just have to delete the user
+                user.delete()
+                raise serializers.ValidationError("An error occurred please try signing in with the right values")
+            company = company_invite.company
+            if company_invite.role == "ADMIN":
+                # Add the user to the admins
+                company.admins.add(user)
+                company_invite.status = "ACTIVE"
+                company_invite.save()
+            elif company_invite.role == "MARKETER":
+                # Add the user to the marketer
+                company.admins.add(user)
+                company_invite.status = "ACTIVE"
+                company_invite.save()
+        if self.cleaned_data.get("organisation_choice") == "CREATE":
+            company = Company.objects.create(
+                owner=user,
+                name=self.cleaned_data.get("company_name"))
         return user
 
 
