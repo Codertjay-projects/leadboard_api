@@ -1,12 +1,13 @@
 import uuid
 
 from django.db import models
-
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save
 
 from companies.models import Company, Group
+from feedbacks.models import Feedback
 from leads.models import GENDER, LeadContact
 from users.models import User
+from users.utils import create_slug
 
 USER_TYPE_CHOICE = (
     ("PARENT", "PARENT"),
@@ -42,18 +43,17 @@ class UserScheduleCall(models.Model):
     )
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     groups = models.ManyToManyField(Group, related_name="user_schedule_groups", blank=True)
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
     first_name = models.CharField(max_length=250)
     last_name = models.CharField(max_length=250)
     age_range = models.CharField(max_length=5, blank=True, null=True, choices=AGE_RANGE)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     location = models.CharField(max_length=250)
     gender = models.CharField(choices=GENDER, max_length=50)
     phone = models.CharField(max_length=50)
     age = models.IntegerField(blank=True, null=True)
     communication_medium = models.CharField(choices=COMMUNICATION_MEDIUM, max_length=250)
-    will_subscribe = models.CharField(max_length=50, choices=WILL_SUBSCRIBE_CHOICES)
     scheduled_date = models.DateField(blank=True, null=True)
     scheduled_time = models.TimeField(blank=True, null=True)
     employed = models.BooleanField(blank=True, null=True)
@@ -66,8 +66,10 @@ class UserScheduleCall(models.Model):
     will_get_laptop = models.BooleanField(blank=True, null=True)
     when_get_laptop = models.CharField(max_length=200, blank=True, null=True)
     good_internet = models.BooleanField(blank=True, null=True)
-    weekly_commitment = models.CharField(max_length=10, blank=True, null=True)
+    weekly_commitment = models.CharField(max_length=50, blank=True, null=True)
     saturday_check_in = models.BooleanField(blank=True, null=True)
+    hours_per_week = models.CharField(max_length=20)
+    catch_up_per_hours_weeks = models.CharField(max_length=20, blank=True, null=True)
     more_details = models.TextField(blank=True, null=True)
     kids_count = models.IntegerField(blank=True, null=True)
     kids_years = models.CharField(max_length=100, blank=True, null=True)
@@ -83,18 +85,8 @@ class UserScheduleCall(models.Model):
     class Meta:
         ordering = ["-timestamp"]
 
-
-def post_save_create_schedule_call(sender, instance: UserScheduleCall, *args, **kwargs):
-    # the schedule call has to be created if
-    if instance.communication_medium == "EMAIL":
-        #  if it was newly created there won't be a staff
-        if not instance.staff:
-            schedule_call = ScheduleCall.objects.create(staff=instance.staff, )
-            instance.schedule_call = schedule_call
-            instance.save()
-
-
-post_save.connect(post_save_create_schedule_call, sender=Group)
+    def previous_feedback(self):
+        return Feedback.objects.filter(object_id=self.id).first()
 
 
 class ScheduleCall(models.Model):
@@ -106,9 +98,19 @@ class ScheduleCall(models.Model):
     )
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     title = models.CharField(max_length=250, )
+    slug = models.SlugField(unique=True)
     minutes = models.IntegerField()
     meeting_link = models.URLField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-timestamp"]
+
+
+def pre_save_schedule_call_receiver(sender, instance, *args, **kwargs):
+    # enable creating slug for a  schedule_call before it is being saved
+    if not instance.slug:
+        instance.slug = create_slug(instance)
+
+
+pre_save.connect(pre_save_schedule_call_receiver, sender=ScheduleCall)

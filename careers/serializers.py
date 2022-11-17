@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from careers.models import Job, Applicant, JobSchedule
+from careers.models import Job, Applicant, JobType, APPLICANT_STATUS_CHOICES
 from django.core.validators import FileExtensionValidator
 
 from users.validators import MaxSizeValidator
@@ -17,31 +17,35 @@ class JobCreateUpdateSerializer(serializers.ModelSerializer):
         model = Job
         fields = [
             "id",
-            "job_schedules",
-            "job_type",
+            "job_category",
+            "job_experience_level",
+            "job_types",
+            "applicants",
             "title",
             "description",
+            "application_deadline",
             "timestamp",
         ]
+        read_only_fields = ["timestamp", "id"]
 
     def create(self, validated_data):
-        # the job_schedules are in this form job_schedules=[<job_schedules instance>, ...] which are the instances
+        # the job_types are in this form job_types=[<job_types instance>, ...] which are the instances
         # of a category
-        job_schedules = validated_data.pop('job_schedules')
+        job_types = validated_data.pop('job_types')
         instance = Job.objects.create(**validated_data)
-        for item in job_schedules:
+        for item in job_types:
             try:
-                instance.job_schedules.add(item)
+                instance.job_types.add(item)
             except Exception as a:
                 print(a)
         return instance
 
 
-class JobScheduleSerializer(serializers.ModelSerializer):
+class JobTypeSerializer(serializers.ModelSerializer):
     """list of job """
 
     class Meta:
-        model = JobSchedule
+        model = JobType
         fields = "__all__"
         read_only_fields = ["id", "timestamp"]
 
@@ -52,19 +56,24 @@ class ApplicantSerializer(serializers.ModelSerializer):
     I actually set the maximum file size for pdf to be 10
     """
     resume = serializers.FileField(validators=[FileExtensionValidator(['pdf'], MaxSizeValidator(10))])
+    position = serializers.SerializerMethodField(read_only=True)
+    job_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Applicant
         fields = [
             "id",
+            "job_id",
             "first_name",
             "last_name",
             "email",
+            "status",
             "image",
             "nationality",
             "country_of_residence",
             "phone_number",
             "home_address",
+            "position",
             "experience",
             "education",
             "linkedin",
@@ -75,25 +84,34 @@ class ApplicantSerializer(serializers.ModelSerializer):
             "message",
             "timestamp",
         ]
+        read_only_fields = ["status", "id", "timestamp", "job_id"]
+
+    def get_position(self, obj):
+        return str(obj.job_position)
+
+    def get_job_id(self, obj):
+        return str(obj.job_id)
 
 
 class JobListDetailSerializer(serializers.ModelSerializer):
     """This contains list of jobs available"""
     applicants = ApplicantSerializer(read_only=True, many=True)
     applicants_counts = serializers.SerializerMethodField(read_only=True)
-    job_schedules = JobScheduleSerializer(read_only=True, many=True)
+    job_types = JobTypeSerializer(read_only=True, many=True)
 
     class Meta:
         model = Job
         fields = [
             "id",
             "company_id",
-            "job_schedules",
-            "job_type",
-            "applicants_counts",
-            "applicants",
             "title",
             "description",
+            "application_deadline",
+            "applicants",
+            "applicants_counts",
+            "job_category",
+            "job_experience_level",
+            "job_types",
             "timestamp",
         ]
 
@@ -102,50 +120,7 @@ class JobListDetailSerializer(serializers.ModelSerializer):
         return obj.applicant_counts
 
 
-{
-    "education": {
-        "1": {
-            "institution": "National open university",
-            "institution_location": "Lagos nigeria",
-            "mayor": "BSC",
-            "degree": "BSC",
-            "description": "the descript bla bla bla",
-            "start_date": "3000-12-2",
-            "end_date": "3000-12-6",
-            "year": "3000-3004",
-            "currently_school_here": "true"
-        },
-        "2": {
-            "institution": "National open university",
-            "institution_location": "Lagos nigeria",
-            "mayor": "BSC",
-            "degree": "BSC",
-            "description": "the descript bla bla bla",
-            "start_date": "3000-12-2",
-            "end_date": "3000-12-6",
-            "year": "3000-3004",
-            "currently_school_here": "true"
-        }
-    },
-    "experience": {
-        "1": {
-            "company_name": "Tech one",
-            "company_location": "Tech one",
-            "job_title": "Tech one",
-            "description": "I implemented this that and those",
-            "start_date": "3000-12-2",
-            "end_date": "3000-12-6",
-            "currently_work_here": "false"
-        },
-        "2": {
-            "company_name": "Tech one",
-            "company_location": "Tech one",
-            "job_title": "Tech one",
-            "description": "I implemented this that and those",
-            "start_date": "3000-12-2",
-            "end_date": "3000-12-6",
-            "currently_work_here": "true"
-        }
-    }
-
-}
+class ApplicantActionSerializer(serializers.Serializer):
+    """This serializer is used to accept a job applications"""
+    application_id = serializers.UUIDField()
+    status = serializers.ChoiceField(choices=APPLICANT_STATUS_CHOICES)

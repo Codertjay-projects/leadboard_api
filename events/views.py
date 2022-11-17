@@ -4,7 +4,7 @@ from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDe
 from rest_framework.response import Response
 
 from companies.models import Company
-from companies.utils import check_marketer_and_admin_access_company
+from companies.utils import check_marketer_and_admin_access_company, check_admin_access_company
 from events.models import Event
 from events.serializers import EventSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
@@ -51,8 +51,8 @@ class EventCreateAPIView(CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         company = self.get_company()
-        #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        #  first check for then company owner then the company admins
+        if not check_admin_access_company(self.request.user, company):
             return Response({"error": "You dont have permission"}, status=400)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=company, staff=self.request.user)
@@ -91,8 +91,8 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             return Response({"error": "You are not authenticated"}, status=400)
         instance = self.get_object()
         company = self.get_company()
-        #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        #  first check for then company owner then the company admins
+        if not check_admin_access_company(self.request.user, company):
             return Response({"error": "You dont have permission"}, status=400)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -105,8 +105,8 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             return Response({"error": "You are not authenticated"}, status=400)
         instance = self.get_object()
         company = self.get_company()
-        #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        #  first check for then company owner then the company admins
+        if not check_admin_access_company(self.request.user, company):
             return Response({"error": "You dont have permission"}, status=400)
         self.perform_destroy(instance)
         return Response(status=204)

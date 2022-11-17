@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from companies.models import Company
-from companies.utils import check_marketer_and_admin_access_company
+from companies.utils import check_marketer_and_admin_access_company, get_assigned_marketer_from_company_lead
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from .models import CompanySubscriber
 from .serializers import CompanySubscriberSerializer, AddToLeadBoardSerializer
@@ -101,16 +101,10 @@ class AddToLeadBoardAPIView(APIView):
         subscribers = serializer.validated_data.get("subscribers")
         for item in subscribers:
             company_subscriber = CompanySubscriber.objects.filter(id=item, on_leadboard=False).first()
+            company = company_subscriber.company
             if not company_subscriber:
                 #  if not the company_subscriber then it re loop
                 continue
-            #  first check for then company owner then the company admins or  the assigned marketer
-            if not check_marketer_and_admin_access_company(self.request.user, company_subscriber.company):
-                return Response({"error": "You dont have permission"}, status=400)
-
-            if not company_subscriber.company.marketers.all().order_by('?').first():
-                return Response({"error": "No marketer currently on company"}, status=400)
-
             # fixme : fix the way the lead_source or category is used to create the lead contact
             leadboard = LeadContact.objects.create(
                 prefix="",
@@ -122,7 +116,7 @@ class AddToLeadBoardAPIView(APIView):
                 message=company_subscriber.message,
                 mobile="",
                 lead_source="",
-                assigned_marketer=company_subscriber.company.marketers.all().order_by('?').first(),
+                assigned_marketer=get_assigned_marketer_from_company_lead(company),
                 gender="",
                 category="INFORMATION",
             )

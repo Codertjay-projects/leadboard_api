@@ -1,5 +1,5 @@
 from django.http import Http404
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.response import Response
 # Create your views here.
 from rest_framework.views import APIView
@@ -7,7 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from users.models import User
 from users.permissions import LoggedInPermission
-from .models import Company, Location, Industry, Group, CompanyInvite
+from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEmployee
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyAddUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer
 from .tasks import send_request_to_user
@@ -57,7 +57,7 @@ class CompanyRetrieveUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         # check the company owner or admins if the user has access
         if request.user != instance.owner:
-            if request.user not in instance.admins.all():
+            if request.user.id not in instance.all_admins_user_ids():
                 return Response(status=400, data={"message": "You are not the owner of the company"})
         self.perform_destroy(instance)
         return Response(status=204, data={"message": "Successfully deleted the company"})
@@ -71,7 +71,7 @@ class CompanyRetrieveUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         # check the company owner or admins if the user has access
         if request.user != instance.owner:
-            if request.user not in instance.admins.all():
+            if request.user.id not in instance.all_admins_user_ids():
                 return Response(status=400, data={"message": "You are not the owner of the company"})
         serializer = CompanyCreateUpdateSerializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -100,7 +100,7 @@ class CompanyAddUserAPIView(APIView):
         # check the company owner or admins if the user has access
         if request.user != company.owner:
             #  check if the user is among the admins in the company
-            if request.user not in company.admins.all():
+            if request.user.id not in company.all_admins_user_ids():
                 return Response(status=400, data={"message": "You are not the owner of the company"})
         # check the email if it is a registered one
         user = User.objects.filter(email=email).first()
@@ -108,27 +108,30 @@ class CompanyAddUserAPIView(APIView):
             return Response(status=400, data={"error": "User does not exist"})
         # check the action
         if action == "ADD" and company_user_type == "ADMIN":
-            if user not in company.admins.all():
-                company.admins.add(user)
-                company.save()
+            if user.id not in company.all_admins_user_ids():
+                # create the admin role
+                CompanyEmployee.objects.create_or_update(
+                    user=user, company=company, role="ADMIN", status="ACTIVE")
                 return Response({"message": "Successfully add user as admin to this company "}, status=200)
             return Response({"error": "User already an admin"}, status=400)
         elif action == "DELETE" and company_user_type == "ADMIN":
-            if user in company.admins.all():
-                company.admins.remove(user)
-                company.save()
+            #  check if the user id's exist in the company employee
+            if user.id in company.all_admins_user_ids():
+                CompanyEmployee.objects.create_or_update(
+                    user=user, company=company, role="ADMIN", status="DEACTIVATE")
                 return Response({"message": "Successfully remove user as admin on this company "}, status=200)
             return Response({"error": "User not  an admin"}, status=400)
         elif action == "ADD" and company_user_type == "MARKETER":
-            if user not in company.marketers.all():
-                company.marketers.add(user)
-                company.save()
+            if user.id not in company.all_marketers_user_ids():
+                CompanyEmployee.objects.create_or_update(
+                    user=user, company=company, role="ADMIN", status="ACTIVE")
                 return Response({"message": "Successfully add user as marketer to this company "}, status=200)
             return Response({"error": "User already a marketer"}, status=400)
         elif action == "DELETE" and company_user_type == "MARKETER":
-            if user in company.marketers.all():
-                company.marketers.remove(user)
-                company.save()
+            if user in company.all_marketers_user_ids():
+                CompanyEmployee.objects.create_or_update(
+                    user=user, company=company, role="MARKETER",
+                    status="DEACTIVATE")
                 return Response({"message": "Successfully remove user as a marketer on this company "}, status=200)
             return Response({"error": "User not a marketer"}, status=400)
         return Response({"error": "Unknown error occurred"}, status=500)
@@ -160,7 +163,7 @@ class CompanyGroupListCreate(ListCreateAPIView):
         company = self.get_company()
         # check the company owner or admins if the user has access
         if request.user != company.owner:
-            if request.user not in company.admins.all():
+            if request.user.id not in company.all_admins_user_ids():
                 return Response(status=400, data={"message": "You are not the owner of the company"})
         # adding the company to the group
         serializer.save(company=company)
@@ -195,7 +198,7 @@ class CompanyGroupRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         # check the company owner or admins if the user has access
         if request.user != instance.company.owner:
-            if request.user not in instance.company.admins.all():
+            if request.user.id not in instance.company.all_admins_user_ids():
                 return Response(status=400, data={"message": "You are not the owner of the company"})
         self.perform_destroy(instance)
         return Response(status=204)
@@ -204,7 +207,7 @@ class CompanyGroupRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         # check the company owner or admins if the user has access
         if request.user != instance.company.owner:
-            if request.user not in instance.company.admins.all():
+            if request.user.id not in instance.company.all_admins_user_ids():
                 return Response(status=400, data={"message": "You are not the owner of the company"})
         serializer = CompanyGroupSerializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -295,3 +298,11 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             user_email=email
         )
         return Response(serializer.data, status=201)
+
+
+class CompanyEmployeesListAPIView(ListAPIView):
+    """
+    This returns all the marketers available in the company providing the company id
+    """
+    permission_classes = [LoggedInPermission]
+    serializer_class = CompanyEmployee

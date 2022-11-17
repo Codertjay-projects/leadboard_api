@@ -66,10 +66,12 @@ class LeadContact(models.Model):
     lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250, default="OTHERS")
     assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
                                           related_name="assigned_marketers")
+    is_safe = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
     gender = models.CharField(choices=GENDER, max_length=50, blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
     # fixme: add subscribed
 
     class Meta:

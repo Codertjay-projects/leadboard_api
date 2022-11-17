@@ -1,7 +1,23 @@
 from rest_framework import serializers
 
 from users.serializers import UserDetailSerializer
-from .models import Company, Group, Industry, Location, CompanyInvite
+from .models import Company, Group, Industry, Location, CompanyInvite, CompanyMarketer, CompanyEmployee
+
+
+class CompanyEmployeeSerializer(serializers.ModelSerializer):
+    """this is used to serialize all the marketers"""
+    user = UserDetailSerializer(read_only=True)
+
+    class Meta:
+        model = CompanyEmployee
+        fields = [
+            "id",
+            "user",
+            "company",
+            "role",
+            "status",
+            "timestamp",
+        ]
 
 
 class IndustrySerializer(serializers.ModelSerializer):
@@ -40,7 +56,6 @@ class CompanyCreateUpdateSerializer(serializers.ModelSerializer):
     """
     This is used to create a company  .
     """
-    industry = IndustrySerializer()
 
     class Meta:
         model = Company
@@ -49,6 +64,8 @@ class CompanyCreateUpdateSerializer(serializers.ModelSerializer):
             "name",
             "website",
             "phone",
+            "info_email",
+            "customer_support_email",
             "industry",
             "overview",
             "company_size",
@@ -77,10 +94,9 @@ class CompanySerializer(serializers.ModelSerializer):
     This is used to list all  company's or get the detail .
     """
     owner = UserDetailSerializer(read_only=True)
-    admins = UserDetailSerializer(many=True)
-    marketers = UserDetailSerializer(many=True)
     locations = LocationSerializer(many=True)
     industry = IndustrySerializer()
+    company_employees = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Company
@@ -90,17 +106,23 @@ class CompanySerializer(serializers.ModelSerializer):
             "name",
             "website",
             "phone",
+            "info_email",
+            "customer_support_email",
             "industry",
             "overview",
             "company_size",
             "headquater",
             "founded",
             "locations",
-            "admins",
-            "marketers",
             "timestamp",
+            "company_employees",
         ]
-        read_only_fields = ["id", "timestamp", ]
+        read_only_fields = ["id", "timestamp", "company_employees"]
+
+    def get_company_employees(self, obj):
+        """"This is used to list all company employees """
+        serializer = CompanyEmployeeSerializer(obj.company_employees(), many=True)
+        return serializer.data
 
 
 class CompanyAddUserSerializer(serializers.Serializer):
@@ -144,7 +166,4 @@ class CompanyInviteSerializer(serializers.ModelSerializer):
             "status",
             "timestamp",
         ]
-        read_only_fields = ["invite_id","timestamp", "status"]
-
-
-
+        read_only_fields = ["invite_id", "timestamp", "status"]

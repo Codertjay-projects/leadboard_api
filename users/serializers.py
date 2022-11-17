@@ -5,7 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from users.tasks import login_notification_email
-from companies.models import CompanyInvite, Company
+from companies.models import CompanyInvite, Company, CompanyAdmin, CompanyMarketer, CompanyEmployee
 
 ORGANISATION_CHOICES = (
     ("JOIN", "JOIN"),
@@ -101,12 +101,12 @@ class CustomRegisterSerializer(RegisterSerializer):
             company = company_invite.company
             if company_invite.role == "ADMIN":
                 # Add the user to the admins
-                company.admins.add(user)
+                CompanyEmployee.objects.create(user=user, company=company, status="ACTIVE", role="ADMIN")
                 company_invite.status = "ACTIVE"
                 company_invite.save()
             elif company_invite.role == "MARKETER":
                 # Add the user to the marketer
-                company.admins.add(user)
+                CompanyEmployee.objects.create(user=user, company=company, status="ACTIVE", role="MARKETER")
                 company_invite.status = "ACTIVE"
                 company_invite.save()
         if self.cleaned_data.get("organisation_choice") == "CREATE":
@@ -179,6 +179,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'email',
             'verified',
             'is_staff',
+            'last_login',
         ]
         extra_kwargs = {'password': {'write_only': True,
                                      'min_length': 4}}

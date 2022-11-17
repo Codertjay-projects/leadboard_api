@@ -3,7 +3,9 @@ from rest_framework.exceptions import ValidationError
 
 from companies.serializers import CompanyGroupSerializer, CompanySerializer
 from companies.utils import check_group_is_under_company
+from feedbacks.serializers import FeedbackSerializer
 from schedules.models import UserScheduleCall, ScheduleCall
+from users.serializers import UserDetailSerializer
 
 
 class ScheduleCallSerializer(serializers.ModelSerializer):
@@ -27,7 +29,6 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
     """
     This is used to create or update a schedule
     """
-    groups = CompanyGroupSerializer(many=True)
 
     class Meta:
         model = UserScheduleCall
@@ -43,7 +44,6 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
             "phone",
             "age",
             "communication_medium",
-            "will_subscribe",
             "scheduled_date",
             "scheduled_time",
             "employed",
@@ -92,7 +92,9 @@ class UserScheduleSerializer(serializers.ModelSerializer):
     """
     schedule_call = ScheduleCallSerializer(read_only=True)
     groups = CompanyGroupSerializer(many=True)
-    company = CompanySerializer(many=True)
+    company = CompanySerializer(read_only=True)
+    assigned_marketer = UserDetailSerializer(read_only=True)
+    previous_feedback = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserScheduleCall
@@ -100,7 +102,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "id",
             "company",
             "groups",
-            "staff",
+            "assigned_marketer",
             "first_name",
             "last_name",
             "age_range",
@@ -110,7 +112,6 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "phone",
             "age",
             "communication_medium",
-            "will_subscribe",
             "scheduled_date",
             "scheduled_time",
             "employed",
@@ -130,9 +131,19 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "kids_years",
             "time_close_from_school",
             "user_type",
+
             "schedule_call",
             "lead_contact",
             "eligible",
             "timestamp",
+            "previous_feedback",
         ]
         read_only_fields = ["id", "timestamp", ]
+
+    def get_previous_feedback(self, instance):
+        #  get the previous feedback
+        feedback = instance.previous_feedback()
+        if feedback:
+            serializer = FeedbackSerializer(feedback)
+            return serializer.data
+        return None

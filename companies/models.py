@@ -2,12 +2,10 @@ import random
 import uuid
 
 from django.db import models
-
 # Create your models here.
 from django.db.models.signals import pre_save
 from django.utils import timezone
 from django.utils.text import slugify
-from rest_framework.exceptions import APIException
 
 from users.models import User
 
@@ -53,6 +51,45 @@ class Location(models.Model):
         ordering = ["-timestamp"]
 
 
+COMPANY_EMPLOYEE_STATUS = (
+    ("ACTIVE", "ACTIVE"),
+    ("DEACTIVATE", "DEACTIVATE"),
+    ("PENDING", "PENDING"),
+)
+
+
+class CompanyAdmin(models.Model):
+    """
+    THIS company admin is meant for us to track the admin which was added to the company
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+
+class CompanyMarketer(models.Model):
+    """
+    THIS company marketer is meant for us to track the marketer which was added to the company
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+
 class Company(models.Model):
     """
     This enables identifying what company a user exists in when assigning marketer to a lead
@@ -65,29 +102,123 @@ class Company(models.Model):
     name = models.CharField(max_length=250)
     website = models.URLField(blank=True, null=True)
     phone = models.CharField(max_length=25)
+    info_email = models.EmailField(blank=True, null=True)
+    customer_support_email = models.EmailField(blank=True, null=True)
     industry = models.ForeignKey(Industry, on_delete=models.CASCADE, blank=True, null=True)
     overview = models.TextField(blank=True, null=True)
     company_size = models.CharField(choices=COMPANY_SIZE_CHOICES, max_length=250, blank=True, null=True)
     headquater = models.CharField(max_length=250, blank=True, null=True)
     founded = models.DateField(blank=True, null=True)
     locations = models.ManyToManyField(Location, blank=True)
-    admins = models.ManyToManyField(User, blank=True, related_name="admins")
-    marketers = models.ManyToManyField(User, blank=True, related_name="marketers")
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    def admins_count(self):
+        """
+        this returns the total number of admin in a company
+        """
+        return self.companyemployee_set.filter(role="ADMIN").count()
+
+    def marketers_count(self):
+        """
+        this returns the total number of marketers in a company
+        """
+        return self.companyemployee_set.filter(role="MARKETER").count()
+
+    def company_marketers_active(self):
+        """
+        this returns list of users that are active marketer in a company
+        :return:
+        """
+        marketers = self.companyemployee_set.filter(role="MARKETER", status="ACTIVE").values_list("user")
+        return marketers
+
+    def company_employees(self):
+        return self.companyemployee_set.all()
+
+    def first_marketer_user(self):
+        """
+        this returns first employee in a company but shows only the user on it.
+        It is only called when the company have more than zero marketer
+        """
+        return self.companyemployee_set.filter(role="MARKETER", status="ACTIVE").first().user
+
+    def first_admin_user(self):
+        """
+        this returns first employee in a company but shows only the user on it.
+        It is only called when the company have more than zero admin
+        """
+        return self.companyemployee_set.filter(role="ADMIN", status="ACTIVE").first().user
+
+    def all_marketers_user_ids(self):
+        """
+        This returns list of IDS in the of the marketers but the user id that was used to create it
+        :return:
+        """
+        user_id = self.companyemployee_set.filter(role="MARKETER", status="ACTIVE").values_list("user_id")
+        user_id_list = []
+        for item in user_id:
+            user_id_list.append(item[0])
+        return user_id_list
+
+    def all_admins_user_ids(self):
+        """
+        This returns list of IDS in the of the admins but the user id that was used to create it
+        :return:
+        """
+        user_id = self.companyemployee_set.filter(role="ADMIN", status="ACTIVE").values_list("user_id")
+        user_id_list = []
+        for item in user_id:
+            user_id_list.append(item[0])
+        return user_id_list
 
     class Meta:
         ordering = ["-timestamp"]
 
 
-COMPANY_ROLES = (
-    ("ADMIN", "ADMIN"),
-    ("MARKETER", "MARKETER"),
-)
-
 ROLE_CHOICES = (
     ("ADMIN", "ADMIN"),
     ("MARKETER", "MARKETER"),
 )
+
+
+class CompanyEmployeeManager(models.Manager):
+    """
+    This enables create optional function
+    """
+
+    def create_or_update(self, user, company, role, status):
+        """
+        this enables getting or creating a company employee if he or she exists we just update
+        """
+        company_employee = self.filter(user=user, company=company).first()
+        if company_employee:
+            """if the employees exist we just make an update"""
+            company_employee.role = role
+            company_employee.status = status
+            company_employee.save()
+        else:
+            # We just create a new employee
+            company_employee = CompanyEmployee.objects.create(user=user, company=company, role=role, status=status)
+        return company_employee
+
+
+class CompanyEmployee(models.Model):
+    """
+    THIS company marketer is meant for us to track the marketer which was added to the company
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    role = models.CharField(choices=ROLE_CHOICES, max_length=250)
+    status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
+    timestamp = models.DateTimeField(default=timezone.now)
+    objects = CompanyEmployeeManager()
+
+    class Meta:
+        ordering = ["-timestamp"]
+
 
 INVITE_STATUS = (
     ("ACTIVE", "ACTIVE"),
@@ -106,6 +237,9 @@ class CompanyInvite(models.Model):
     role = models.CharField(max_length=250, choices=ROLE_CHOICES)
     status = models.CharField(max_length=250, choices=INVITE_STATUS, default="PENDING")
     timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-timestamp"]
 
     def save(self, *args, **kwargs):
         if not self.invite_id:
@@ -135,7 +269,6 @@ class Group(models.Model):
 
 def pre_save_group_receiver(sender, instance, *args, **kwargs):
     # enable creating slug for a  group before it is being saved
-    # todo: calculate blog read time
     if not instance.slug:
         instance.slug = create_slug(instance)
 

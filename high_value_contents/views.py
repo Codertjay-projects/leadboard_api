@@ -1,12 +1,13 @@
 from django.http import Http404
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from companies.models import Company
 from companies.utils import check_marketer_and_admin_access_company
 from high_value_contents.models import HighValueContent
-from high_value_contents.serializers import HighValueContentSerializer
-from users.permissions import LoggedInPermission
+from high_value_contents.serializers import HighValueContentSerializer, DownloadHighValueContentSerializer
+from users.permissions import LoggedInPermission, NotLoggedInPermission
 
 
 class HighValueContentViewSetsAPIView(ModelViewSet):
@@ -61,3 +62,35 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
             return Response({"error": "You dont have permission"}, status=400)
         self.perform_destroy(instance)
         return Response(status=204)
+
+
+class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
+    """
+    This is used to download the high value content where the user fills out information which is being sent to the lead
+    but before that we verify the email first
+    """
+    serializer_class = DownloadHighValueContentSerializer
+    permission_classes = [NotLoggedInPermission]
+
+    def get_high_value_content(self):
+        # the high_value_content_id
+        high_value_content_id = self.request.query_params.get("high_value_content_id")
+        #  this filter base on the high_value_content_id  provided
+        if not high_value_content_id:
+            raise Http404
+        high_value_content = HighValueContent.objects.filter(id=high_value_content_id).first()
+        if not high_value_content:
+            raise Http404
+        return high_value_content
+
+    def create(self, request, *args, **kwargs):
+        """
+        This first save the info in the DownloadHighValueContent first but after that once we verify the
+        user email we save the user info on the lead
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(high_value_content=self.get_high_value_content())
+        # fixme: send an email to the user and verify the email
+
+        return Response(serializer.data, status=201)
