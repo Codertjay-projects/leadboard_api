@@ -106,8 +106,6 @@ class CompanySerializer(serializers.ModelSerializer):
             "name",
             "website",
             "phone",
-            "info_email",
-            "customer_support_email",
             "industry",
             "overview",
             "company_size",
@@ -123,6 +121,32 @@ class CompanySerializer(serializers.ModelSerializer):
         """"This is used to list all company employees """
         serializer = CompanyEmployeeSerializer(obj.company_employees(), many=True)
         return serializer.data
+
+
+class CompanyInfoSerializer(serializers.ModelSerializer):
+    """
+    This is  contains little info about a company
+    """
+    owner = UserDetailSerializer(read_only=True)
+    locations = LocationSerializer(many=True)
+    industry = IndustrySerializer()
+
+    class Meta:
+        model = Company
+        fields = [
+            "id",
+            "owner",
+            "name",
+            "website",
+            "phone",
+            "industry",
+            "overview",
+            "headquater",
+            "founded",
+            "locations",
+            "timestamp",
+        ]
+        read_only_fields = ["id", "timestamp", ]
 
 
 class CompanyAddUserSerializer(serializers.Serializer):

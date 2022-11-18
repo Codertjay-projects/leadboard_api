@@ -30,7 +30,7 @@ class LeadContactFeedbackViewSetsAPIView(ModelViewSet):
         lead_contact = LeadContact.objects.get(id=instance.object_id)
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, lead_contact.company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)
 
@@ -40,7 +40,7 @@ class LeadContactFeedbackViewSetsAPIView(ModelViewSet):
         lead_contact = LeadContact.objects.get(id=instance.object_id)
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, lead_contact.company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)

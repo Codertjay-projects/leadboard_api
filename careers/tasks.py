@@ -7,28 +7,28 @@ LEADBOARD_CUSTOMER_SUPPORT_MAIL = config("LEADBOARD_CUSTOMER_SUPPORT_MAIL")
 
 
 @shared_task
-def send_accepted_mail(email, first_name, last_name, company_info_email):
+def send_accepted_mail(email, first_name, last_name, company_email):
     mail.send(
         email,
-        LEADBOARD_INFO_MAIL,
+        company_email,
         subject='Login Notification',
         html_message=f"<h2>Hi {first_name} - {last_name},</h2>"
                      f"<p> You have been accepted come for interview."
-                     f"<a href='mailto:{company_info_email}'>{company_info_email}</a></p>",
+                     f"<a href='mailto:{company_email}'>{company_email}</a></p>",
         priority='now',
     )
     return True
 
 
 @shared_task
-def send_rejection_mail(email, first_name, last_name, company_info_email):
+def send_rejection_mail(email, first_name, last_name, company_email):
     mail.send(
         email,
-        LEADBOARD_INFO_MAIL,
+        company_email,
         subject='Login Notification',
         html_message=f"<h2>Hi {first_name} - {last_name},</h2>"
                      f"<p> You have been rejected dont come for interview."
-                     f"<a href='mailto:{company_info_email}'>{company_info_email}</a></p>",
+                     f"<a href='mailto:{company_email}'>{company_email}</a></p>",
         priority='now',
     )
     return True

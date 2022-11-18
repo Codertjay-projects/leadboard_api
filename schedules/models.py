@@ -110,7 +110,7 @@ class ScheduleCall(models.Model):
 def pre_save_schedule_call_receiver(sender, instance, *args, **kwargs):
     # enable creating slug for a  schedule_call before it is being saved
     if not instance.slug:
-        instance.slug = create_slug(instance)
+        instance.slug = create_slug(instance, ScheduleCall)
 
 
 pre_save.connect(pre_save_schedule_call_receiver, sender=ScheduleCall)

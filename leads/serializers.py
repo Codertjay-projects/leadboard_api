@@ -105,7 +105,6 @@ class LeadContactSerializer(serializers.ModelSerializer):
             "id",
             "prefix",
             "groups",
-            "staff",
             "last_name",
             "first_name",
             "middle_name",
@@ -130,5 +129,48 @@ class LeadContactSerializer(serializers.ModelSerializer):
         feedback = instance.previous_feedback()
         if feedback:
             serializer = FeedbackSerializer(feedback)
+            return serializer.data
+        return None
+
+
+class LeadContactDetailSerializer(serializers.ModelSerializer):
+    """
+    This is meant to list all serializer for lead contact
+    """
+    groups = CompanyGroupSerializer(many=True)
+    assigned_marketer = UserDetailSerializer(read_only=True)
+    all_previous_feedbacks = serializers.SerializerMethodField(read_only=True)
+    high_value_content = HighValueContentSerializer(read_only=True)
+
+    class Meta:
+        model = LeadContact
+        fields = [
+            "id",
+            "prefix",
+            "groups",
+            "last_name",
+            "first_name",
+            "middle_name",
+            "job_title",
+            "department",
+            "sector",
+            "want",
+            "high_value_content",
+            "email",
+            "mobile",
+            "lead_source",
+            "assigned_marketer",
+            "all_previous_feedbacks",
+            "verified",
+            "gender",
+            "category",
+            "timestamp",
+        ]
+
+    def get_all_previous_feedbacks(self, instance):
+        #  get the previous feedback
+        feedback = instance.all_previous_feedbacks()
+        if feedback:
+            serializer = FeedbackSerializer(feedback, many=True)
             return serializer.data
         return None

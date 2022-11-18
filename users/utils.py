@@ -13,7 +13,5 @@ def create_slug(instance, instances, new_slug=None):
     qs = instances.objects.filter(slug=slug).order_by('-id')
     if qs.exists():
         new_slug = f'{slug}-{qs.first().id}'
-        return create_slug(instance, new_slug=new_slug)
+        return create_slug(instance, instances, new_slug=new_slug)
     return slug
-
-

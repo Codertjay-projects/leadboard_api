@@ -34,7 +34,7 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
 
         # check if the group_id passed is under that company
         if not self.get_company().group_set.filter(id=group_id).first():
-            return Response({"error": "You dont have access to to use this group id for this company "})
+            return Response({"error": "You dont have access to to use this group id for this company "},status=401)
         # using the get company i created to set the company
         serializer.save(company=self.get_company())
         return Response(serializer.data, status=201)
@@ -74,7 +74,7 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, instance.company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)
 
@@ -82,7 +82,7 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, instance.company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)

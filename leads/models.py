@@ -49,7 +49,6 @@ class LeadContact(models.Model):
     prefix = models.CharField(max_length=50, blank=True, null=True, help_text="Mr, Mrs, Dr etc.")
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     groups = models.ManyToManyField(Group, related_name="lead_groups", blank=True)
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="staffs")
     last_name = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
 
@@ -72,10 +71,11 @@ class LeadContact(models.Model):
     category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    # fixme: add subscribed
-
     class Meta:
         ordering = ["-timestamp"]
 
     def previous_feedback(self):
         return Feedback.objects.filter(object_id=self.id).first()
+
+    def all_previous_feedbacks(self):
+        return Feedback.objects.filter(object_id=self.id)

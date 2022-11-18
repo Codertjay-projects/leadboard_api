@@ -210,13 +210,13 @@ class JobAcceptAPIView(APIView):
             applicant.save()
             send_accepted_mail.delay(
                 email=applicant.email, first_name=applicant.first_name, last_name=applicant.last_name,
-                company_info_email=applicant.company.info_email)
+                company_email=applicant.company.owner.email)
             return Response({"message": "Successfully sent invite to the applicant"}, status=200)
         elif serializer.validated_data.get("status") == "REJECTED":
             applicant.status = "REJECTED"
             applicant.save()
             send_rejection_mail.delay(
                 email=applicant.email, first_name=applicant.first_name, last_name=applicant.last_name,
-                company_info_email=applicant.company.info_email)
+                company_email=applicant.company.owner.email)
             return Response({"message": "Successfully sent rejection mail to the applicant"}, status=200)
         return Response({"error": "An unknown error occurred"}, status=400)

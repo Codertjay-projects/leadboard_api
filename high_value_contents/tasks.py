@@ -17,8 +17,8 @@ def send_high_value_content_verify(company_email, first_name, last_name, email, 
         company_email,
         subject=f'{high_value_content.title}',
         html_message=f"<h2>Hi {first_name} - {last_name},</h2>"
-                     f"<p> You have been accepted come for interview."
-                     f"<a href='mailto:{company_info_email}'>{company_info_email}</a></p>",
+                     f"<p> This is the ebook or file link ."
+                     f"<a href='mailto:{company_email}'>{company_email}</a></p>",
         priority='now',
     )
     return True

@@ -1,13 +1,15 @@
 from django.http import Http404
+from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
 from companies.models import Company
-from companies.utils import check_marketer_and_admin_access_company, check_admin_access_company
+from companies.utils import check_admin_access_company
 from events.models import Event
-from events.serializers import EventSerializer
+from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
+from .tasks import send_user_register_event
 
 
 class EvenListAPIView(ListAPIView):
@@ -53,17 +55,16 @@ class EventCreateAPIView(CreateAPIView):
         company = self.get_company()
         #  first check for then company owner then the company admins
         if not check_admin_access_company(self.request.user, company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=company, staff=self.request.user)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=201, headers=headers)
+        return Response(serializer.data, status=201)
 
 
 class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = EventSerializer
     permission_classes = [NotLoggedInPermission]
-    lookup_field = "id"
+    lookup_field = "slug"
 
     def get_company(self):
         # the company id
@@ -85,15 +86,20 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             event = Event.objects.filter(company=self.get_company())
         return event
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = EventDetailSerializer(instance)
+        return Response(serializer.data)
+
     def update(self, request, *args, **kwargs):
         # check if the user is authenticated
         if not self.request.user.is_authenticated:
-            return Response({"error": "You are not authenticated"}, status=400)
+            return Response({"error": "You are not authenticated"}, status=401)
         instance = self.get_object()
         company = self.get_company()
         #  first check for then company owner then the company admins
         if not check_admin_access_company(self.request.user, company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(staff=self.request.user)
@@ -102,11 +108,52 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         # check if the user is authenticated
         if not self.request.user.is_authenticated:
-            return Response({"error": "You are not authenticated"}, status=400)
+            return Response({"error": "You are not authenticated"}, status=401)
         instance = self.get_object()
         company = self.get_company()
         #  first check for then company owner then the company admins
         if not check_admin_access_company(self.request.user, company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)
+
+
+class EventRegisterAPIView(CreateAPIView):
+    """
+    This is used to register for an event for a normal not logged-in user
+    """
+    permission_classes = [NotLoggedInPermission]
+    serializer_class = EventRegisterSerializer
+
+    def get_event(self):
+        """
+        this is used to get the event with the event id passed on the params
+        """
+        event_id = self.request.query_params.get("event_id")
+        #  this filter base on the event id  provided
+        if not event_id:
+            raise Http404
+        event = Event.objects.filter(id=event_id).first()
+        if not event:
+            raise Http404
+        return event
+
+    def create(self, request, *args, **kwargs):
+        # Get the event
+        event = self.get_event()
+        if event.start_date == timezone.now():
+            return Response({"error": "Event registration closed "}, status=400)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(event=event)
+        # Send in the email to the user registering for the event
+        # we cant pass in the event instance that's why I pass the id instead
+        send_user_register_event.delay(
+            first_name=serializer.validated_data.get("first_name"),
+            last_name=serializer.validated_data.get("last_name"),
+            email=serializer.validated_data.get("email"),
+            event_id=event.id,
+        )
+        return Response(
+            {"message": "Successfully registered for an event and email has been sent about the event",
+             "data": serializer.data}, status=201)

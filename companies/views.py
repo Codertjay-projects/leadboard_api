@@ -259,7 +259,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         company = self.get_company()
         if not check_admin_access_company(self.request.user, company):
-            return Response({"error": "You dont have permission to view invites"}, status=400)
+            return Response({"error": "You dont have permission to view invites"}, status=401)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -272,7 +272,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         # check the permission
         company = self.get_company()
         if not check_admin_access_company(self.request.user, company):
-            return Response({"error": "You dont have permission to view invites"}, status=400)
+            return Response({"error": "You dont have permission to view invites"}, status=401)
         serializer = CompanyInviteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # Check if the mail has been used by the company before and also get the info

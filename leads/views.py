@@ -7,7 +7,7 @@ from companies.utils import check_marketer_and_admin_access_company, check_compa
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
-from .serializers import LeadContactUpdateCreateSerializer, LeadContactSerializer
+from .serializers import LeadContactUpdateCreateSerializer, LeadContactSerializer, LeadContactDetailSerializer
 
 
 class LeadContactCreateListAPIView(ListCreateAPIView):
@@ -19,7 +19,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
 
     def get_company(self):
         #  filter the company base on the id provided
-        company_id = self.kwargs.get("company_id")
+        company_id = self.request.query_params.get("company_id")
         company = Company.objects.filter(id=company_id).first()
         if not company:
             raise Http404
@@ -45,11 +45,11 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             #  using the company which enables us to verify the high value content if it exists on the leads
             #  because some leads are meant just only to download ebooks .
             if not check_company_high_value_content_access(high_value_content, company):
-                return Response({"error": "You dont have access to create this lead under this company ."}, status=400)
+                return Response({"error": "You dont have access to create this lead under this company ."}, status=401)
         if request.user.is_authenticated:
             #  first check for then company owner then the company admins or  the assigned marketer
             if not check_marketer_and_admin_access_company(self.request.user, company):
-                return Response({"error": "You dont have permission"}, status=400)
+                return Response({"error": "You dont have permission"}, status=401)
             # if the user is logged in I save the lead with the user
             serializer.save(staff=self.request.user, company=company, high_value_content=high_value_content)
         else:
@@ -68,7 +68,7 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         # using the id of the company to filter through the leads
-        company_id = self.kwargs.get("company_id")
+        company_id = self.request.query_params.get("company_id")
         # the lead id on the url
         id = self.kwargs.get("id")
         company = Company.objects.filter(id=company_id).first()
@@ -84,15 +84,15 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, instance.company):
-            return Response({"error": "You dont have permission"}, status=400)
-        serializer = LeadContactSerializer(instance)
+            return Response({"error": "You dont have permission"}, status=401)
+        serializer = LeadContactDetailSerializer(instance)
         return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, instance.company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -124,6 +124,6 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, instance.company):
-            return Response({"error": "You dont have permission"}, status=400)
+            return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)

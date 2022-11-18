@@ -2,22 +2,47 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from companies.serializers import CompanyInfoSerializer
 from users.serializers import UserDetailSerializer
-from .models import Event
+from .models import Event, EventRegister
+
+
+class EventRegisterSerializer(serializers.ModelSerializer):
+    """
+    this serializer is used to register for an event
+    """
+
+    class Meta:
+        model = EventRegister
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email",
+            "mobile",
+            "gender",
+            "age_range",
+            "will_receive_email",
+            "accept_terms_and_conditions",
+            "timestamp",
+        ]
 
 
 class EventSerializer(serializers.ModelSerializer):
     staff = UserDetailSerializer(read_only=True)
     price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    company = CompanyInfoSerializer(read_only=True)
+    event_register_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Event
         fields = [
             "id",
             "staff",
-            "company_id",
+            "company",
             "title",
             "email",
+            "slug",
             "description",
             "image",
             "start_date",
@@ -29,11 +54,12 @@ class EventSerializer(serializers.ModelSerializer):
             "price",
             "tags",
             "is_paid",
+            "event_register_count",
             "timestamp",
         ]
         read_only_fields = [
             "id",
-            "company_id",
+            "company",
             "timestamp"
         ]
 
@@ -55,3 +81,56 @@ class EventSerializer(serializers.ModelSerializer):
             if not attrs.get("price"):
                 raise serializers.ValidationError("Price is required for event.")
         return attrs
+
+    def get_event_register_count(self, obj: Event):
+        return obj.event_registers().count()
+
+
+class EventDetailSerializer(serializers.ModelSerializer):
+    staff = UserDetailSerializer(read_only=True)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    event_registers = serializers.SerializerMethodField(read_only=True)
+    company = CompanyInfoSerializer(read_only=True)
+    event_register_count = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Event
+        fields = [
+            "id",
+            "staff",
+            "company",
+            "title",
+            "email",
+            "slug",
+            "description",
+            "image",
+            "start_date",
+            "end_date",
+            "price",
+            "link_1",
+            "link_2",
+            "location",
+            "price",
+            "tags",
+            "is_paid",
+            "timestamp",
+            "event_register_count",
+            "event_registers",
+
+        ]
+        read_only_fields = [
+            "id",
+            "company_id",
+            "timestamp"
+        ]
+
+    def get_event_registers(self, obj: Event):
+        """
+        This returns list of the individuals registered for the event
+        """
+        serializer = EventRegisterSerializer(obj.event_registers(), many=True)
+        return serializer.data
+
+    def get_event_register_count(self, obj: Event):
+        """returns the number of people registered for the event"""
+        return obj.event_registers().count()
