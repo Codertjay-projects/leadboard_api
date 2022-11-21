@@ -25,6 +25,8 @@ EXTERNAL_INSTALLED_APPS = [
     #  for logging and sending mail
     #  it enable us to view failed and sent mails
     'post_office',
+
+
 ]
 
 LOCAL_INSTALLED_APPS = [

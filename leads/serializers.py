@@ -25,6 +25,7 @@ class LeadContactUpdateCreateSerializer(serializers.ModelSerializer):
             "first_name",
             "email",
             "middle_name",
+            "thumbnail",
             "job_title",
             "department",
             "sector",
@@ -90,49 +91,6 @@ class LeadContactUpdateCreateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class LeadContactSerializer(serializers.ModelSerializer):
-    """
-    This is meant to list all serializer for lead contact
-    """
-    groups = CompanyGroupSerializer(many=True)
-    assigned_marketer = UserDetailSerializer(read_only=True)
-    previous_feedback = serializers.SerializerMethodField(read_only=True)
-    high_value_content = HighValueContentSerializer(read_only=True)
-
-    class Meta:
-        model = LeadContact
-        fields = [
-            "id",
-            "prefix",
-            "groups",
-            "last_name",
-            "first_name",
-            "middle_name",
-            "job_title",
-            "department",
-            "sector",
-            "want",
-            "high_value_content",
-            "email",
-            "mobile",
-            "lead_source",
-            "assigned_marketer",
-            "previous_feedback",
-            "verified",
-            "gender",
-            "category",
-            "timestamp",
-        ]
-
-    def get_previous_feedback(self, instance):
-        #  get the previous feedback
-        feedback = instance.previous_feedback()
-        if feedback:
-            serializer = FeedbackSerializer(feedback)
-            return serializer.data
-        return None
-
-
 class LeadContactDetailSerializer(serializers.ModelSerializer):
     """
     This is meant to list all serializer for lead contact
@@ -151,6 +109,7 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
             "last_name",
             "first_name",
             "middle_name",
+            "thumbnail",
             "job_title",
             "department",
             "sector",

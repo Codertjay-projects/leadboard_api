@@ -7,9 +7,12 @@ from rest_framework.viewsets import ModelViewSet
 
 from users.models import User
 from users.permissions import LoggedInPermission
-from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEmployee
+from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEmployee, SendGroupsEmailScheduler, \
+    SendCustomEmailScheduler
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyAddUserSerializer, \
-    CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer
+    CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
+    SendGroupsEmailSchedulerSerializer, SendCustomEmailSchedulerSerializer, SendGroupsEmailSchedulerListSerializer, \
+    SendCustomEmailListSchedulerSerializer
 from .tasks import send_request_to_user
 from .utils import check_admin_access_company
 
@@ -147,7 +150,7 @@ class CompanyGroupListCreate(ListCreateAPIView):
 
     def get_company(self):
         #  the company id passed in the params
-        id = self.kwargs.get("id")
+        id = self.request.query_params.get("company_id")
         company = Company.objects.filter(id=id).first()
         if not company:
             raise Http404
@@ -180,7 +183,7 @@ class CompanyGroupRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         #  get the company id from kwargs and also the group id
-        company_id = self.kwargs.get("company_id")
+        company_id = self.request.query_params.get("company_id")
         group_id = self.kwargs.get("group_id")
         #  filter the company and get the groups under that company
         company = Company.objects.filter(id=company_id).first()
@@ -258,6 +261,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         company = self.get_company()
+        # Check if the user have permission as an admin or owner
         if not check_admin_access_company(self.request.user, company):
             return Response({"error": "You dont have permission to view invites"}, status=401)
         page = self.paginate_queryset(queryset)
@@ -306,3 +310,87 @@ class CompanyEmployeesListAPIView(ListAPIView):
     """
     permission_classes = [LoggedInPermission]
     serializer_class = CompanyEmployee
+
+
+class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
+    """
+    this list all mails sent or fail which are sent to groups of users on leads
+    """
+    permission_classes = [LoggedInPermission]
+    serializer_class = SendGroupsEmailSchedulerSerializer
+    queryset = SendGroupsEmailScheduler.objects.all()
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = self.request.query_params.get("company_id")
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def list(self, request, *args, **kwargs):
+        """Overriding the list method to list all the mails .
+         I only did this just to change the email I am currently sending """
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SendGroupsEmailSchedulerListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        """Filter the query set base on the company provided"""
+        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not check_admin_access_company(user=self.request.user, company=self.get_company()):
+            return Response({"error": "You do not have access to this Company"}, status=401)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(company=self.get_company())
+        return Response(serializer.data, status=201)
+
+
+class SendCustomEmailSchedulerListCreateAPIView(ListCreateAPIView):
+    """
+    this list all mails sent or fail which are sent to groups of users on leads
+    """
+    permission_classes = [LoggedInPermission]
+    serializer_class = SendCustomEmailSchedulerSerializer
+    queryset = SendCustomEmailScheduler.objects.all()
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = self.request.query_params.get("company_id")
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SendCustomEmailListSchedulerSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        """Filter the query set base on the company provided"""
+        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not check_admin_access_company(user=self.request.user, company=self.get_company()):
+            return Response({"error": "You do not have access to this Company"}, status=401)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(company=self.get_company())
+        return Response(serializer.data, status=201)

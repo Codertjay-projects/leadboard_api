@@ -1,7 +1,10 @@
+from django.utils import timezone
+from django.utils.datetime_safe import datetime
 from rest_framework import serializers
 
 from users.serializers import UserDetailSerializer
-from .models import Company, Group, Industry, Location, CompanyInvite, CompanyMarketer, CompanyEmployee
+from .models import Company, Group, Industry, Location, CompanyInvite, CompanyEmployee, SendGroupsEmailScheduler, \
+    SendCustomEmailScheduler
 
 
 class CompanyEmployeeSerializer(serializers.ModelSerializer):
@@ -128,7 +131,6 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
     This is  contains little info about a company
     """
     owner = UserDetailSerializer(read_only=True)
-    locations = LocationSerializer(many=True)
     industry = IndustrySerializer()
 
     class Meta:
@@ -140,10 +142,6 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
             "website",
             "phone",
             "industry",
-            "overview",
-            "headquater",
-            "founded",
-            "locations",
             "timestamp",
         ]
         read_only_fields = ["id", "timestamp", ]
@@ -191,3 +189,97 @@ class CompanyInviteSerializer(serializers.ModelSerializer):
             "timestamp",
         ]
         read_only_fields = ["invite_id", "timestamp", "status"]
+
+
+class SendGroupsEmailSchedulerListSerializer(serializers.ModelSerializer):
+    """
+    This is used when list the the mail sent and retrieving
+    """
+    email_to = CompanyGroupSerializer(many=True, read_only=True)
+    company = CompanyInfoSerializer(read_only=True)
+
+    class Meta:
+        model = SendGroupsEmailScheduler
+        fields = [
+            "id",
+            "company",
+            "email_to",
+            "email_from",
+            "email_subject",
+            "scheduled_date",
+            "description",
+            "status",
+            "timestamp",
+        ]
+        read_only_fields = ["id", "status", "timestamp"]
+
+
+class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SendGroupsEmailScheduler
+        fields = [
+            "id",
+            "email_to",
+            "email_from",
+            "email_subject",
+            "scheduled_date",
+            "description",
+            "status",
+            "timestamp",
+        ]
+        read_only_fields = ["id", "status", "timestamp"]
+
+    def validate_scheduled_date(self, attrs):
+        scheduled_date = attrs
+        if scheduled_date < timezone.now():
+            raise serializers.ValidationError("The schedule date must be lest than the current date")
+        return scheduled_date
+
+    def create(self, validated_data):
+        # the email_to are in this form email_to=[<email_to instance>, ...] which are the instances
+        # of a category
+        email_to = validated_data.pop('email_to')
+        instance = SendGroupsEmailScheduler.objects.create(**validated_data)
+        for item in email_to:
+            try:
+                instance.email_to.add(item)
+            except Exception as a:
+                print(a)
+        return instance
+
+
+class SendCustomEmailListSchedulerSerializer(serializers.ModelSerializer):
+    """
+    This is used to send emails to custom individual
+    """
+    company = CompanyInfoSerializer(read_only=True)
+
+    class Meta:
+        model = SendCustomEmailScheduler
+        fields = ["id",
+                  "company",
+                  "email_subject",
+                  "email_list",
+                  "description",
+                  "scheduled_date",
+                  "status",
+                  "timestamp",
+                  ]
+        read_only_fields = ["id", "timestamp", "company"]
+
+
+class SendCustomEmailSchedulerSerializer(serializers.ModelSerializer):
+    """
+    This is used to send emails to custom individual
+    """
+
+    class Meta:
+        model = SendCustomEmailScheduler
+        fields = "__all__"
+        read_only_fields = ["id", "timestamp", "company"]
+
+    def validate_scheduled_date(self, attrs):
+        scheduled_date = attrs
+        if scheduled_date < timezone.now():
+            raise serializers.ValidationError("The schedule date must be lest than the current date")
+        return scheduled_date

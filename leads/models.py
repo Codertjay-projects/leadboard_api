@@ -51,6 +51,7 @@ class LeadContact(models.Model):
     groups = models.ManyToManyField(Group, related_name="lead_groups", blank=True)
     last_name = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
+    thumbnail = models.ImageField(upload_to="lead_thumbnail",blank=True, null=True)
 
     middle_name = models.CharField(max_length=250, blank=True, null=True)
     job_title = models.CharField(max_length=250, blank=True, null=True)
@@ -70,6 +71,8 @@ class LeadContact(models.Model):
     gender = models.CharField(choices=GENDER, max_length=50, blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    # fixme : custom fields
+
 
     class Meta:
         ordering = ["-timestamp"]

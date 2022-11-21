@@ -7,7 +7,7 @@ from companies.utils import check_marketer_and_admin_access_company, check_compa
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
-from .serializers import LeadContactUpdateCreateSerializer, LeadContactSerializer, LeadContactDetailSerializer
+from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
 
 
 class LeadContactCreateListAPIView(ListCreateAPIView):
@@ -15,7 +15,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     This class is meant to list all the lead contact and also create a new one
     """
     permission_classes = [NotLoggedInPermission]
-    serializer_class = LeadContactSerializer
+    serializer_class = LeadContactDetailSerializer
 
     def get_company(self):
         #  filter the company base on the id provided

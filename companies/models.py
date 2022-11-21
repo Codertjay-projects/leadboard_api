@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from users.models import User
+from users.utils import create_slug
 
 
 class Industry(models.Model):
@@ -56,38 +57,6 @@ COMPANY_EMPLOYEE_STATUS = (
     ("DEACTIVATE", "DEACTIVATE"),
     ("PENDING", "PENDING"),
 )
-
-
-class CompanyAdmin(models.Model):
-    """
-    THIS company admin is meant for us to track the admin which was added to the company
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    company = models.ForeignKey("Company", on_delete=models.CASCADE)
-    status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250)
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ["-timestamp"]
-
-
-class CompanyMarketer(models.Model):
-    """
-    THIS company marketer is meant for us to track the marketer which was added to the company
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    company = models.ForeignKey("Company", on_delete=models.CASCADE)
-    status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ["-timestamp"]
 
 
 class Company(models.Model):
@@ -270,25 +239,55 @@ class Group(models.Model):
 def pre_save_group_receiver(sender, instance, *args, **kwargs):
     # enable creating slug for a  group before it is being saved
     if not instance.slug:
-        instance.slug = create_slug(instance)
+        instance.slug = create_slug(instance, Group)
 
 
 pre_save.connect(pre_save_group_receiver, sender=Group)
 
+EMAIL_STATUS = (
+    ("PENDING", "PENDING"),
+    ("SENT", "SENT"),
+    ("FAILED", "FAILED"),
+)
 
-def create_slug(instance, new_slug=None):
+
+class SendCustomEmailScheduler(models.Model):
     """
-    This creates a slug for a group   before it is being
-     saved and if the slug exist it add the id the old group  to the slug
-    :param instance: group
-    :param new_slug: slug passed if existed
-    :return: slug
+    This is used to send custom mail email message to users passed in text comma seperated
     """
-    slug = slugify(instance.title)
-    if new_slug is not None:
-        slug = new_slug
-    qs = Group.objects.filter(slug=slug).order_by('-id')
-    if qs.exists():
-        new_slug = f'{slug}-{qs.first().id}'
-        return create_slug(instance, new_slug=new_slug)
-    return slug
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    email_subject = models.CharField(max_length=250)
+    #  list of email comma seperated
+    email_list = models.TextField()
+    description = models.TextField()
+    scheduled_date = models.DateTimeField()
+    status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
+    timestamp = models.DateTimeField(default=timezone.now)
+
+
+class SendGroupsEmailScheduler(models.Model):
+    """
+    This is used to send am email to list of groups users on the lead.
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    # the set of groups the email is sent to it could be from  newsletters, contacts,downloads and schedule
+    email_to = models.ManyToManyField(Group, blank=True)
+    email_from = models.CharField(max_length=250)
+    email_subject = models.CharField(max_length=250)
+    scheduled_date = models.DateTimeField()
+    description = models.TextField()
+    status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
+    timestamp = models.DateTimeField(default=timezone.now)
+
+"""
+def v():
+    lead_list_uiids = SendGroupsEmailScheduler.objects.all().values_list("email_to__lead_groups")
+    list_ids = []
+    for item in lead_list_uiids:
+        list_ids.append(item[0])"""
