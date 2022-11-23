@@ -150,6 +150,8 @@ POST_OFFICE = {
     'MAX_RETRIES': 5,
     'RETRY_INTERVAL': datetime.timedelta(minutes=15),  # Schedule to be retried 15 minutes later
     'THREADS_PER_PROCESS': 10,
+    'LOG_LEVEL': 0,  # Log nothin ( to log failed is 1 and log all both succwessfull is 2 )
+
 }
 
 #  the default rest framework setting
@@ -159,7 +161,7 @@ POST_OFFICE = {
 REST_FRAMEWORK = {
     #  default pagination
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 20000000,
+    'PAGE_SIZE': 20,
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',

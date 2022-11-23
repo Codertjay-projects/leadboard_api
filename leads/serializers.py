@@ -6,7 +6,6 @@ from companies.utils import check_group_is_under_company, get_assigned_marketer_
 from feedbacks.serializers import FeedbackSerializer
 from high_value_contents.serializers import HighValueContentSerializer
 from leads.models import LeadContact
-from newsletters.models import CompanySubscriber
 from users.serializers import UserDetailSerializer
 
 
@@ -41,6 +40,7 @@ class LeadContactUpdateCreateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "timestamp", ]
 
+
     def create(self, validated_data):
         # the groups are in this form groups=[<group instance>, ...] which are the instances
         # of a category
@@ -66,28 +66,7 @@ class LeadContactUpdateCreateSerializer(serializers.ModelSerializer):
         """ Assigned a marketer to the lead"""
         instance.assigned_marketer = get_assigned_marketer_from_company_lead(instance.company)
         instance.save()
-        ##################################################################
-        """Add Email to  Newsletter"""
-        # if the high value content has no group then
-        # I get a random group from the company
-        if instance.high_value_content:
-            #  if the high value content was passed then i have to add the email to the subscriber
-            # but will set on_leadboard to true so that way we don't need to
-            # transfer info to lead from subscriber again
-            group = instance.high_value_content.group
-            if not group:
-                group = instance.company.group_set.order_by("?").first()
-            newsletter = CompanySubscriber.objects.create(
-                company=instance.company,
-                group=group,
-                email=instance.email,
-                first_name=instance.first_name,
-                last_name=instance.last_name,
-                message="Download high value content",
-                on_leadboard=True,
-                subscribed=True,
-            )
-        ##################################################################
+
         return instance
 
 

@@ -7,6 +7,7 @@ from companies.utils import check_marketer_and_admin_access_company, check_compa
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
+from .models import LeadContact
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
 
 
@@ -38,6 +39,13 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         company = self.get_company()
         serializer = LeadContactUpdateCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # Getting the email and checking if an email exists on this leads under the company
+        email = serializer.validated_data.get("email")
+        lead_contact_email_exists = LeadContact.objects.filter(email=email, company=company).first()
+        if lead_contact_email_exists:
+            # The lead email must be unique under an organisation
+            return Response({"error": "Lead with that email already exists under this organisation"}, status=400)
+
         high_value_content = serializer.validated_data.get("high_value_content")
         #  if the high value content id exists from the validated data that means the user want
         #  the lead just to download ebook or something else though

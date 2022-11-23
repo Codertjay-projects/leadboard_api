@@ -25,7 +25,7 @@ class CustomRegisterSerializer(RegisterSerializer):
     company_name = serializers.CharField(max_length=150, required=False)
     organisation_choice = serializers.ChoiceField(choices=ORGANISATION_CHOICES)
 
-    invite_id = serializers.CharField(max_length=150, required=False)
+    company_id = serializers.UUIDField(required=False)
     email = serializers.EmailField()
     password1 = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
@@ -39,16 +39,16 @@ class CustomRegisterSerializer(RegisterSerializer):
             'mobile',
             'company_name',
             'organisation_choice',
-            'invite_id',
+            'company_id',
             'password1',
             'password2',
         )
 
     def validate(self, attrs):
         if attrs.get('organisation_choice') == "JOIN":
-            if not attrs.get('invite_id'):
-                raise serializers.ValidationError("You can't join an Organisation without the invite_id ")
-            if not CompanyInvite.objects.filter(invite_id=attrs.get('invite_id'), email=attrs.get("email")).exists():
+            if not attrs.get('company_id'):
+                raise serializers.ValidationError("You can't join an Organisation without the company_id ")
+            if not CompanyInvite.objects.filter(company__id=attrs.get('company_id'), email=attrs.get("email")).exists():
                 # Check if the user was sent an Invitation
                 raise serializers.ValidationError(
                     "You were not sent an invite please request invite from company owner.")
@@ -70,7 +70,7 @@ class CustomRegisterSerializer(RegisterSerializer):
             'email': self.validated_data.get('email', ''),
             'company_name': self.validated_data.get('company_name', ''),
             'organisation_choice': self.validated_data.get('organisation_choice', ''),
-            'invite_id': self.validated_data.get('invite_id', ''),
+            'company_id': self.validated_data.get('company_id', ''),
             'mobile': self.validated_data.get('mobile', ''),
             'password1': self.validated_data.get('password1', ''),
             'password2': self.validated_data.get('password2', ''),
@@ -92,7 +92,7 @@ class CustomRegisterSerializer(RegisterSerializer):
             # Get the company invite through that we get company
             company_invite = CompanyInvite.objects.filter(
                 email=self.cleaned_data.get("email"),
-                invite_id=self.cleaned_data.get("invite_id")
+                company__id=self.cleaned_data.get("company_id")
             ).first()
             if not company_invite:
                 # means an error might have occurred because we checked the above but i just have to delete the user

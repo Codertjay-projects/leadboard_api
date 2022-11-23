@@ -130,14 +130,12 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
     """
     This is  contains little info about a company
     """
-    owner = UserDetailSerializer(read_only=True)
     industry = IndustrySerializer()
 
     class Meta:
         model = Company
         fields = [
             "id",
-            "owner",
             "name",
             "website",
             "phone",

@@ -6,14 +6,15 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from users.models import User
-from users.permissions import LoggedInPermission
+from users.permissions import LoggedInPermission, NotLoggedInPermission
 from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEmployee, SendGroupsEmailScheduler, \
     SendCustomEmailScheduler
-from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyAddUserSerializer, \
+from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyInfoSerializer, \
+    CompanyAddUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     SendGroupsEmailSchedulerSerializer, SendCustomEmailSchedulerSerializer, SendGroupsEmailSchedulerListSerializer, \
     SendCustomEmailListSchedulerSerializer
-from .tasks import send_request_to_user
+from .tasks import send_request_to_user, send_schedule_group_email, send_schedule_custom_email
 from .utils import check_admin_access_company
 
 
@@ -82,7 +83,7 @@ class CompanyRetrieveUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
         return Response(serializer.data)
 
 
-class CompanyAddUserAPIView(APIView):
+class CompanyModifyEmployeeAPIView(APIView):
     """
     This class is meant to create marketer in a company or remove from the existing once base on
     """
@@ -311,6 +312,20 @@ class CompanyEmployeesListAPIView(ListAPIView):
     permission_classes = [LoggedInPermission]
     serializer_class = CompanyEmployee
 
+    def get_company(self):
+        #  get the company id from kwargs and also the group id
+        company_id = self.request.query_params.get("company_id")
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def get_queryset(self):
+        company = self.get_company()
+        company_employees = company.company_employees()
+        queryset = self.filter_queryset(company_employees)
+        return queryset
+
 
 class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
     """
@@ -352,6 +367,9 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())
+        # Calling the task to schedule the mail we need to send
+        send_schedule_group_email.delay()
+
         return Response(serializer.data, status=201)
 
 
@@ -393,4 +411,29 @@ class SendCustomEmailSchedulerListCreateAPIView(ListCreateAPIView):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())
+        # Calling the task to schedule the mail we need to send
+        send_schedule_custom_email.delay()
         return Response(serializer.data, status=201)
+
+
+class InvitedEmployeeSearchCompanyAPIView(ListAPIView):
+    permission_classes = [NotLoggedInPermission]
+    serializer_class = CompanyInfoSerializer
+
+    def get_queryset(self):
+        # Get the email that was sent an invitation
+        email = self.request.query_params.get("email")
+        if not email:
+            raise Http404
+        # It could be more than one organisation that sends an invitation to I just need to add the value list
+        company_ids_info = CompanyInvite.objects.filter(email=email).values_list("company__id")
+        company_list = []
+        for item in company_ids_info:
+            # Check if the id is not none
+            if not item[0]:
+                continue
+            # Get the company with the ID provided
+            company = Company.objects.filter(id=item[0]).first()
+            if company:
+                company_list.append(company)
+        return company_list

@@ -16,10 +16,19 @@ app.conf.broker_url = config("CELERY_BROKER_URL")
 #  this is used to make an automation either send mail during a specific time
 #  or delete some stuff or more
 app.conf.beat_schedule = {
+    # Resend failed mails in 10 minutes
+    'send-queued-mail': {
+        'task': 'post_office.tasks.send_queued_mail',
+        'schedule': 600.0,
+    },
     #  This schedule and sends an email to the leads connected to the email_to in the model
+    "send_schedule_group_email": {
+        "task": 'companies.tasks.send_schedule_group_email',
+        "schedule": crontab(hour=1),
+    },
     "send_schedule_custom_email": {
         "task": 'companies.tasks.send_schedule_custom_email',
-        "schedule": crontab(hour=2),
+        "schedule": crontab(hour=1),
     },
 
 }

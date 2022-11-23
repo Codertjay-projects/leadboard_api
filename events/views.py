@@ -141,7 +141,7 @@ class EventRegisterAPIView(CreateAPIView):
     def create(self, request, *args, **kwargs):
         # Get the event
         event = self.get_event()
-        if event.start_date == timezone.now():
+        if event.start_date <= timezone.now():
             return Response({"error": "Event registration closed "}, status=400)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -5,7 +5,6 @@ from django.db import models
 # Create your models here.
 from django.db.models.signals import pre_save
 from django.utils import timezone
-from django.utils.text import slugify
 
 from users.models import User
 from users.utils import create_slug
@@ -80,6 +79,8 @@ class Company(models.Model):
     founded = models.DateField(blank=True, null=True)
     locations = models.ManyToManyField(Location, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    # fixme: for now this is a number i used to track the number of mails the company owner has sent
+    sent_mail_count = models.IntegerField(default=0)
 
     def admins_count(self):
         """
@@ -251,6 +252,49 @@ EMAIL_STATUS = (
 )
 
 
+class SendCustomEmailSchedulerManager(models.Manager):
+    """
+    this is used to create custom method
+    """
+
+    def get_custom_emails(self, status):
+        # Get the list of all we need to send
+        value_list_info = self.filter(status=status).values_list(
+            'id',
+            "email_subject",
+            "description",
+            "email_list",
+            "company__info_email",
+            "company__customer_support_email",
+            "company__name",
+            "company__id",
+            "scheduled_date",
+        )
+        custom_email_list_info = []
+        for item in value_list_info:
+            info = {
+                "custom_id": item[0],
+                "email_subject": item[1],
+                "description": item[2],
+                "email_list": item[3].split(","),
+                "company__info_email": item[4],
+                "company__customer_support_email": item[5],
+                "company__name": item[6],
+                "company__id": item[7],
+                "scheduled_date": item[8],
+            }
+            custom_email_list_info.append(info)
+        return custom_email_list_info
+
+    def update_all_schedule_status_to_sent(self):
+        """
+        this update all schedule status to send.
+        After the email was sent we update all schedule to sent
+        """
+        self.filter(status="PENDING", scheduled_date__lte=timezone.now()).update(status="SENT")
+        return True
+
+
 class SendCustomEmailScheduler(models.Model):
     """
     This is used to send custom mail email message to users passed in text comma seperated
@@ -266,6 +310,62 @@ class SendCustomEmailScheduler(models.Model):
     scheduled_date = models.DateTimeField()
     status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
     timestamp = models.DateTimeField(default=timezone.now)
+    objects = SendCustomEmailSchedulerManager()
+
+
+class SendGroupsEmailSchedulerManager(models.Manager):
+    """
+    this manager enables creating custom function
+    """
+
+    def get_lead_emails(self, status) -> list:
+        """
+        this return list of emails from the lead connected to this mail
+        status: this could either be PENDING SENT FAILED
+        :return:
+        """
+        #  Get the leads email  that are connected to the SendGroupsEmailScheduler
+        #  and also the id of the SendGroupsEmailScheduler
+        value_list_info = self.filter(status=status).values_list(
+            "id",
+            "email_subject",
+            "description",
+            "email_to__lead_groups__email",
+            "company__info_email",
+            "company__customer_support_email",
+            "company__name",
+            "email_to__lead_groups__first_name",
+            "email_to__lead_groups__last_name",
+            "company_id",
+            "scheduled_date",
+        )
+        schedule_email_list_info = []
+        for item in value_list_info:
+            # Create a dictionary which enables easy access
+            info = {
+                "schedule_id": item[0],
+                "email_subject": item[1],
+                "description": item[2],
+                "lead_email": item[3],
+                "company__info_email": item[4],
+                "company__customer_support_email": item[5],
+                "company__name": item[6],
+                "first_name": item[7],
+                "last_name": item[8],
+                "company_id": item[9],
+                "scheduled_date": item[10],
+            }
+            schedule_email_list_info.append(info)
+        #  Remove all duplicate emails to avoid sending email twice to a single mail
+        return schedule_email_list_info
+
+    def update_all_schedule_status_to_sent(self):
+        """
+        this update all schedule status to send.
+        After the email was sent we update all schedule to sent
+        """
+        self.filter(status="PENDING", scheduled_date__lte=timezone.now()).update(status="SENT")
+        return True
 
 
 class SendGroupsEmailScheduler(models.Model):
@@ -284,10 +384,4 @@ class SendGroupsEmailScheduler(models.Model):
     description = models.TextField()
     status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
     timestamp = models.DateTimeField(default=timezone.now)
-
-"""
-def v():
-    lead_list_uiids = SendGroupsEmailScheduler.objects.all().values_list("email_to__lead_groups")
-    list_ids = []
-    for item in lead_list_uiids:
-        list_ids.append(item[0])"""
+    objects = SendGroupsEmailSchedulerManager()
