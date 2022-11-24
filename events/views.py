@@ -9,6 +9,7 @@ from companies.utils import check_admin_access_company
 from events.models import Event
 from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
+from users.utils import date_filter_queryset
 from .tasks import send_user_register_event
 
 
@@ -16,7 +17,10 @@ class EvenListAPIView(ListAPIView):
     serializer_class = EventSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = [
-        "title"
+        "title",
+        "slug",
+        "description",
+        "tags",
     ]
     permission_classes = [NotLoggedInPermission]
     queryset = Event.objects.all()
@@ -25,8 +29,11 @@ class EvenListAPIView(ListAPIView):
         """this is getting the filtered queryset from search filter
                  then adding more filtering   """
         queryset = self.filter_queryset(self.queryset.all())
-        # FIXME: ASK QUESTION ON HOW THE QUERY WILL LOOK LIKE
-
+        if queryset:
+            # Filter the date if it is passed in the params like
+            # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+            # You will get more from the documentation
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
         return queryset
 
 

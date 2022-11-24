@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
@@ -7,6 +8,7 @@ from companies.utils import check_marketer_and_admin_access_company, check_compa
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
+from users.utils import date_filter_queryset
 from .models import LeadContact
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
 
@@ -17,6 +19,16 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     """
     permission_classes = [NotLoggedInPermission]
     serializer_class = LeadContactDetailSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "last_name",
+        "first_name",
+        "middle_name",
+        "job_title",
+        "sector",
+        "lead_source",
+        "want",
+    ]
 
     def get_company(self):
         #  filter the company base on the id provided
@@ -31,8 +43,13 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         this filter using the company id passed on the urls to get the leads associated with it
         :return:
         """
-        lead = self.get_company().leadcontact_set.all()
-        return lead
+        queryset = self.filter_queryset(self.get_company().leadcontact_set.all())
+        if queryset:
+            # Filter the date if it is passed in the params like
+            # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+            # You will get more from the documentation
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
+        return queryset
 
     def create(self, request, *args, **kwargs):
         #  before creating a lead we have to make sure the user is a member of that company

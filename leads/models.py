@@ -51,16 +51,13 @@ class LeadContact(models.Model):
     groups = models.ManyToManyField(Group, related_name="lead_groups", blank=True)
     last_name = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
-    thumbnail = models.ImageField(upload_to="lead_thumbnail",blank=True, null=True)
+    thumbnail = models.ImageField(upload_to="lead_thumbnail", blank=True, null=True)
 
     middle_name = models.CharField(max_length=250, blank=True, null=True)
     job_title = models.CharField(max_length=250, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
     sector = models.CharField(max_length=100, blank=True, null=True)
     want = models.CharField(max_length=15, choices=WANT, help_text="Who want to learn", blank=True, null=True)
-    high_value_content = models.ForeignKey(HighValueContent, on_delete=models.CASCADE,
-                                           related_name="lead_contacts",
-                                           blank=True, null=True, )
     email = models.EmailField()
     mobile = models.CharField(max_length=250)
     lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250, default="OTHERS")
@@ -71,14 +68,16 @@ class LeadContact(models.Model):
     gender = models.CharField(choices=GENDER, max_length=50, blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-    # fixme : custom fields
 
+    # fixme : custom fields
 
     class Meta:
         ordering = ["-timestamp"]
 
     def previous_feedback(self):
+        # Get the last feedback
         return Feedback.objects.filter(object_id=self.id).first()
 
     def all_previous_feedbacks(self):
+        # Get all feedbacks made by this user
         return Feedback.objects.filter(object_id=self.id)

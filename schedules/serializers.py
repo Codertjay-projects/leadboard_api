@@ -95,6 +95,8 @@ class UserScheduleSerializer(serializers.ModelSerializer):
     company = CompanySerializer(read_only=True)
     assigned_marketer = UserDetailSerializer(read_only=True)
     previous_feedback = serializers.SerializerMethodField(read_only=True)
+    group_list = serializers.SerializerMethodField(read_only=True)
+    assigned_marketer_list = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserScheduleCall
@@ -131,7 +133,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "kids_years",
             "time_close_from_school",
             "user_type",
-
+            "group_list",
             "schedule_call",
             "lead_contact",
             "eligible",
@@ -139,6 +141,60 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "previous_feedback",
         ]
         read_only_fields = ["id", "timestamp", ]
+
+    def get_assigned_marketer_list(self, obj: UserScheduleCall):
+        """
+        List of marketers currently on company .
+        It won't show the admin or owner with in the list
+        :param obj: LeadContact
+        :return: marketer_list dictionary
+        """
+        try:
+            marketer_info_list = obj.company.companyemployee_set.filter(
+                role="MARKETER", status="ACTIVE").values_list(
+                "user__id",
+                "user__first_name",
+                "user__last_name", )
+            # Initialize a list for the user ids
+            datasets = {}
+            for item in marketer_info_list:
+                checked = False
+                if not item[0]:
+                    # sometimes it can be none
+                    continue
+                if item[0] == obj.assigned_marketer.id:
+                    # If the marketer id is within then we know he is the current one
+                    checked = True
+                datasets[item[0]] = {
+                    'id': item[0],
+                    'first_name': item[1],
+                    'last_name': item[2],
+                    'status': checked
+                }
+            return datasets
+        except Exception as a:
+            print(a)
+            return {}
+
+    def get_group_list(self, obj: UserScheduleCall):
+        """
+        List of groups in the db
+        Return status if category selected in UserScheduleCall
+        """
+        datasets = {}
+        for c in obj.company.group_set.all():
+            # Get all groups currently on this company
+            # ( Reason why I use the company is to make it little more fast)
+            if c in obj.groups.all():
+                checked = True  # Checked categories
+            else:
+                checked = False
+            datasets[c.id] = {
+                'id': c.id,
+                'title': c.title,
+                'status': checked
+            }
+        return datasets
 
     def get_previous_feedback(self, instance):
         #  get the previous feedback

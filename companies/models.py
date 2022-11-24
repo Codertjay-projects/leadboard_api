@@ -184,6 +184,8 @@ class CompanyEmployee(models.Model):
     role = models.CharField(choices=ROLE_CHOICES, max_length=250)
     status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
     timestamp = models.DateTimeField(default=timezone.now)
+    lead_actions_count = models.IntegerField(default=0)
+    schedule_actions_count = models.IntegerField(default=0)
     objects = CompanyEmployeeManager()
 
     class Meta:

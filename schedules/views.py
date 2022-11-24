@@ -1,5 +1,6 @@
 from django.http import Http404
 # Create your views here.
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
@@ -12,6 +13,7 @@ from leads.models import LeadContact
 from schedules.models import ScheduleCall, UserScheduleCall
 from schedules.serializers import UserScheduleSerializer, UserScheduleCreateUpdateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
+from users.utils import date_filter_queryset
 
 
 class UserScheduleCallListCreateAPIView(ListCreateAPIView):
@@ -21,6 +23,17 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
     permission_classes = [NotLoggedInPermission]
     serializer_class = UserScheduleSerializer
     queryset = UserScheduleCall.objects.all()
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "first_name",
+        "last_name",
+        "age_range",
+        "location",
+        "gender",
+        "communication_medium",
+        "catch_up_per_hours_weeks",
+        "time_close_from_school",
+    ]
 
     def get_company(self):
         #  filter the company base on the id provided
@@ -31,10 +44,14 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         return company
 
     def get_queryset(self):
-        queryset = self.filter_queryset(self.queryset)
-        schedules = queryset.filter(company=self.get_company())
-        # Fixme: Fix the search
-        return schedules
+        # Filter the queryset and the backend filter also
+        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        if queryset:
+            # Filter the date if it is passed in the params like
+            # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+            # You will get more from the documentation
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
+        return queryset
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -112,7 +129,7 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
         # Get the company
         company = self.get_company()
         # Check if the user is the assigned marker
-        if not self.request.user == instance.assigned_marketer:
+        if self.request.user != instance.assigned_marketer:
             if not check_admin_access_company(company=company,
                                               user=self.request.user):
                 return Response({"error": "You don not have access to update the schedule ."
@@ -150,7 +167,7 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
         # Get the company
         company = self.get_company()
         # Check if the user is the assigned marker
-        if not self.request.user == instance.assigned_marketer:
+        if self.request.user != instance.assigned_marketer:
             if not check_admin_access_company(company=company,
                                               user=self.request.user):
                 return Response({"error": "You don not have access to update the schedule ."
@@ -161,6 +178,9 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        # if check_marketer_and_admin_access_group
-        #     self.perform_destroy(instance)
+        if instance.assigned_marketer != self.request.user:
+            # if the user is not the assigned marketer
+            if not check_admin_access_company(user=self.request.user, company=self.get_company()):
+                return Response({"error": "You dont have permission to perform this action"}, status=401)
+        self.perform_destroy(instance)
         return Response(status=204)

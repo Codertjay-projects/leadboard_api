@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -10,12 +11,19 @@ from high_value_contents.serializers import HighValueContentSerializer, Download
     DownloadHighValueContentDetailSerializer
 from high_value_contents.tasks import send_high_value_content_verify
 from users.permissions import LoggedInPermission, NotLoggedInPermission
+from users.utils import date_filter_queryset
 
 
 class HighValueContentViewSetsAPIView(ModelViewSet):
     """this viewset enables the full crud which are create, retrieve,update and delete  """
     serializer_class = HighValueContentSerializer
     permission_classes = [LoggedInPermission]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "title",
+        "slug",
+        "description",
+    ]
 
     def get_company(self):
         # the company id
@@ -31,8 +39,14 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
     def get_queryset(self, *args, **kwargs):
         #  using the company method e created as an helper function
         company = self.get_company()
-        feedback = HighValueContent.objects.filter(company=company)
-        return feedback
+        # Filter through the query set
+        queryset = self.filter_queryset(queryset=HighValueContent.objects.filter(company=company))
+        if queryset:
+            # Filter the date if it is passed in the params like
+            # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+            # You will get more from the documentation
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
+        return queryset
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

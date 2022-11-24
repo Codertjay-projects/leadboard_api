@@ -1,5 +1,4 @@
 from celery import shared_task
-from django.utils import timezone
 from post_office import mail
 
 from companies.models import SendGroupsEmailScheduler, SendCustomEmailScheduler
@@ -34,12 +33,12 @@ def send_schedule_group_email():
     This is used to send email using this SendGroupsEmailScheduler model
     where we get the leads to send follow-ups
     This  pending_mail_info is in this format
-    info = {
-                "schedule_id": item[0],
-                "email_subject": item[1],
-                "description": item[2],
-                "lead_email": item[3],
-                "company__info_email": item[4],
+    info = [{
+                "schedule_id": uuid4,
+                "email_subject": "To te top ;..",
+                "description": "the description ..",
+                "lead_email": "email@gmail.com",
+                "company__info_email": "company__info_email",
                 "company__customer_support_email": item[5],
                 "company__name": item[6],
                 "first_name": item[7],
@@ -47,7 +46,7 @@ def send_schedule_group_email():
                 "company_id": item[9],
                "scheduled_date": datetime,
 
-            }
+            },....]
 
     """
     # Get the scheduled mail which are  currently pending which is a list of dictionaries
@@ -75,7 +74,7 @@ def send_schedule_custom_email():
     """
     This is used to send email using this SendCustomEmailScheduler model
     the pending_mail_info is in this format :
-    info = {
+    info = [{
                 "custom_id": item[0],
                 "email_subject": item[1],
                 "description": item[2],
@@ -86,7 +85,7 @@ def send_schedule_custom_email():
                 "company__id": item[7],
                 "scheduled_date": datetime,
 
-            }
+            },....]
     """
     # Get the scheduled mail which are  currently pending which is a list of dictionaries
     pending_mail_info = SendCustomEmailScheduler.objects.get_lead_emails(status="PENDING")

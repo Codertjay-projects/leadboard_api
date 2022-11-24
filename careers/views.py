@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
@@ -8,6 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from companies.models import Company
 from companies.utils import check_admin_access_company
 from users.permissions import NotLoggedInPermission, IsAuthenticatedOrReadOnly, LoggedInPermission
+from users.utils import date_filter_queryset
 from .models import Job, JobType, Applicant
 from .serializers import JobCreateUpdateSerializer, JobListDetailSerializer, JobTypeSerializer, ApplicantSerializer, \
     ApplicantActionSerializer
@@ -19,6 +21,30 @@ class JobListCreateAPIView(ListCreateAPIView):
     permission_classes = [NotLoggedInPermission]
     serializer_class = JobListDetailSerializer
     queryset = Job.objects.all()
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "job_types",
+        "title",
+        "description",
+    ]
+    def get_queryset(self):
+        # get the company we need
+        company = self.get_company()
+        job_category = self.request.query_params.get("job_category")
+        if company and job_category:
+            # if the company exists and also the job_category was passed
+            queryset = self.filter_queryset(self.queryset.filter(company=company, job_category__icontains=job_category))
+        elif company:
+            # if only the company was passed
+            queryset = self.filter_queryset(self.queryset.filter(company=company))
+        else:
+            queryset = self.filter_queryset(self.queryset)
+        # Filter the date if it is passed in the params like
+        # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+        # You will get more from the documentation
+        if queryset:
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
+        return queryset
 
     def get_company(self, *args, **kwargs):
         # the company id
@@ -40,16 +66,6 @@ class JobListCreateAPIView(ListCreateAPIView):
         serializer = JobListDetailSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def get_queryset(self):
-        # get the company we need
-        company = self.get_company()
-        job_category = self.request.query_params.get("job_category")
-        if company and job_category:
-            # if the company exists and also the job_category was passed
-            return self.filter_queryset(self.queryset.filter(company=company, job_category__icontains=job_category))
-        if company:
-            return self.filter_queryset(self.queryset.filter(company=company))
-        return self.filter_queryset(self.queryset)
 
     def create(self, request, *args, **kwargs):
         if not self.get_company():
@@ -88,8 +104,6 @@ class JobRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             return Response({"error": "You are currently not authenticated"}, status=401)
         if not check_admin_access_company(self.request.user, instance.company):
             return Response({"error": "You dont have permission to delete a job under the company "}, status=401)
-        # Fixme: right now i am deleting all the applicants
-        #  and also look for a way to delete the resume to release the server
         instance.applicants.all().delete()
         instance.delete()
         return Response(status=204)
@@ -153,6 +167,17 @@ class JobApplicantListAPIView(ListAPIView):
     """
     serializer_class = ApplicantSerializer
     permission_classes = [LoggedInPermission]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "first_name",
+        "last_name",
+        "status",
+        "nationality",
+        "home_address",
+        "experience",
+        "education",
+        "message",
+    ]
 
     def get_job(self):
         """
@@ -173,13 +198,16 @@ class JobApplicantListAPIView(ListAPIView):
         if not check_admin_access_company(self.request.user, self.get_job().company):
             return Response({"error": "You dont have permission to delete a job under the company "}, status=401)
         queryset = self.filter_queryset(self.get_job().applicants.all())
-        # Fixme: fix the filtering
+        # Filter the date if it is passed in the params like
+        # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+        # You will get more from the documentation
+        queryset = date_filter_queryset(request=self.request, queryset=queryset)
         return queryset
 
 
 class JobAcceptAPIView(APIView):
     """
-    the is use to accept job applications or ignore decline job applications which was created by the organisation
+    the is used to accept job applications or ignore decline job applications which was created by the organisation
     """
     permission_classes = [LoggedInPermission]
 

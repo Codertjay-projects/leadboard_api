@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.response import Response
 # Create your views here.
@@ -7,13 +8,14 @@ from rest_framework.viewsets import ModelViewSet
 
 from users.models import User
 from users.permissions import LoggedInPermission, NotLoggedInPermission
+from users.utils import date_filter_queryset
 from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEmployee, SendGroupsEmailScheduler, \
     SendCustomEmailScheduler
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyInfoSerializer, \
-    CompanyAddUserSerializer, \
+    CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     SendGroupsEmailSchedulerSerializer, SendCustomEmailSchedulerSerializer, SendGroupsEmailSchedulerListSerializer, \
-    SendCustomEmailListSchedulerSerializer
+    SendCustomEmailListSchedulerSerializer, CompanyEmployeeSerializer
 from .tasks import send_request_to_user, send_schedule_group_email, send_schedule_custom_email
 from .utils import check_admin_access_company
 
@@ -90,7 +92,7 @@ class CompanyModifyEmployeeAPIView(APIView):
     permission_classes = [LoggedInPermission]
 
     def post(self, request, *args, **kwargs):
-        serializer = CompanyAddUserSerializer(data=request.data)
+        serializer = CompanyModifyUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         company_user_type = serializer.validated_data.get("company_user_type")
@@ -111,27 +113,29 @@ class CompanyModifyEmployeeAPIView(APIView):
         if not user:
             return Response(status=400, data={"error": "User does not exist"})
         # check the action
-        if action == "ADD" and company_user_type == "ADMIN":
+        if action == "ACTIVATE" and company_user_type == "ADMIN":
             if user.id not in company.all_admins_user_ids():
                 # create the admin role
                 CompanyEmployee.objects.create_or_update(
                     user=user, company=company, role="ADMIN", status="ACTIVE")
                 return Response({"message": "Successfully add user as admin to this company "}, status=200)
             return Response({"error": "User already an admin"}, status=400)
-        elif action == "DELETE" and company_user_type == "ADMIN":
+        elif action == "DEACTIVATE" and company_user_type == "ADMIN":
             #  check if the user id's exist in the company employee
             if user.id in company.all_admins_user_ids():
                 CompanyEmployee.objects.create_or_update(
                     user=user, company=company, role="ADMIN", status="DEACTIVATE")
                 return Response({"message": "Successfully remove user as admin on this company "}, status=200)
             return Response({"error": "User not  an admin"}, status=400)
-        elif action == "ADD" and company_user_type == "MARKETER":
+        elif action == "ACTIVATE" and company_user_type == "MARKETER":
+            # activate the user if he or she is an inactive marketer
             if user.id not in company.all_marketers_user_ids():
                 CompanyEmployee.objects.create_or_update(
                     user=user, company=company, role="ADMIN", status="ACTIVE")
                 return Response({"message": "Successfully add user as marketer to this company "}, status=200)
             return Response({"error": "User already a marketer"}, status=400)
-        elif action == "DELETE" and company_user_type == "MARKETER":
+        elif action == "DEACTIVATE" and company_user_type == "MARKETER":
+            # deactivate the user if he or she is an active marketer
             if user in company.all_marketers_user_ids():
                 CompanyEmployee.objects.create_or_update(
                     user=user, company=company, role="MARKETER",
@@ -310,7 +314,13 @@ class CompanyEmployeesListAPIView(ListAPIView):
     This returns all the marketers available in the company providing the company id
     """
     permission_classes = [LoggedInPermission]
-    serializer_class = CompanyEmployee
+    serializer_class = CompanyEmployeeSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "user__first_name",
+        "user__last_name",
+        "status",
+    ]
 
     def get_company(self):
         #  get the company id from kwargs and also the group id
@@ -324,6 +334,10 @@ class CompanyEmployeesListAPIView(ListAPIView):
         company = self.get_company()
         company_employees = company.company_employees()
         queryset = self.filter_queryset(company_employees)
+        # Filter the date if it is passed in the params like
+        # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+        # You will get more from the documentation
+        queryset = date_filter_queryset(request=self.request, queryset=queryset)
         return queryset
 
 
@@ -343,11 +357,15 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
             raise Http404
         return company
 
+    def get_queryset(self):
+        """Filter the query set base on the company provided"""
+        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        return queryset
+
     def list(self, request, *args, **kwargs):
         """Overriding the list method to list all the mails .
          I only did this just to change the email I am currently sending """
-        queryset = self.filter_queryset(self.get_queryset())
-
+        queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = SendGroupsEmailSchedulerListSerializer(page, many=True)
@@ -355,11 +373,6 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-    def get_queryset(self):
-        """Filter the query set base on the company provided"""
-        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
-        return queryset
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

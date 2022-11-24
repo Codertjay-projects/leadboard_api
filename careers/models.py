@@ -14,7 +14,7 @@ JOB_TYPE_CHOICES = (
 
 class JobType(models.Model):
     """
-    this contains the categories of jobs which is either contract,fulltime or remote
+    this contains the categories of jobs which is either contract,full-time or remote
     """
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
@@ -56,6 +56,7 @@ class Applicant(models.Model):
     resume = models.FileField(upload_to="resumes")
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    # fixme: create a pre_delete to delete the resume if the applicant was deleted
 
     @property
     def job_position(self):

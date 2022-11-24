@@ -150,7 +150,7 @@ POST_OFFICE = {
     'MAX_RETRIES': 5,
     'RETRY_INTERVAL': datetime.timedelta(minutes=15),  # Schedule to be retried 15 minutes later
     'THREADS_PER_PROCESS': 10,
-    'LOG_LEVEL': 0,  # Log nothin ( to log failed is 1 and log all both succwessfull is 2 )
+    'LOG_LEVEL': 1,  # Log nothin ( to log failed is 1 and log all both succwessfull is 2 )
 
 }
 

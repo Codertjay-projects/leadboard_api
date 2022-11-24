@@ -1,5 +1,4 @@
 from django.utils import timezone
-from django.utils.datetime_safe import datetime
 from rest_framework import serializers
 
 from users.serializers import UserDetailSerializer
@@ -10,6 +9,8 @@ from .models import Company, Group, Industry, Location, CompanyInvite, CompanyEm
 class CompanyEmployeeSerializer(serializers.ModelSerializer):
     """this is used to serialize all the marketers"""
     user = UserDetailSerializer(read_only=True)
+    lead_feedbacks = serializers.SerializerMethodField(read_only=True)
+    schedule_feedbacks = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CompanyEmployee
@@ -18,9 +19,31 @@ class CompanyEmployeeSerializer(serializers.ModelSerializer):
             "user",
             "company",
             "role",
+            "lead_actions_count",
+            "schedule_actions_count",
             "status",
             "timestamp",
+            "lead_feedbacks",
+            "schedule_feedbacks",
         ]
+
+    def get_lead_feedbacks(self, obj: CompanyEmployee):
+        """" This returns the lead feedbacks made by the user"""
+        from feedbacks.serializers import FeedbackSerializer
+        user = obj.user
+        feedbacks = user.feedback_set.filter(content_type__model="leadcontact")
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return serializer.data
+
+    def get_schedule_feedbacks(self, obj: CompanyEmployee):
+        """" This returns the lead feedbacks made by the user"""
+        from feedbacks.serializers import FeedbackSerializer
+        user = obj.user
+        # Return all feedbacks made by the user . the content_type__model enables me to get the
+        #  particular model because the feedback is used for schedule and lead
+        feedbacks = user.feedback_set.filter(content_type__model="userschedulecall")
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return serializer.data
 
 
 class IndustrySerializer(serializers.ModelSerializer):
@@ -145,12 +168,12 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "timestamp", ]
 
 
-class CompanyAddUserSerializer(serializers.Serializer):
+class CompanyModifyUserSerializer(serializers.Serializer):
     """
     This is meant to add user to the company
     """
     company_user_type = serializers.ChoiceField(choices=[("ADMIN", "ADMIN"), ("MARKETER", "MARKETER")])
-    action = serializers.ChoiceField(choices=[("ADD", "ADD"), ("DELETE", "DELETE"), ])
+    action = serializers.ChoiceField(choices=[("ACTIVATE", "ACTIVATE"), ("DEACTIVATE", "DEACTIVATE"), ])
     email = serializers.EmailField()
 
 
