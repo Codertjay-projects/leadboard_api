@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from users.models import User
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from users.serializers import VerifyEmailSerializer, UserProfileUpdateSerializer, UserProfileDetailSerializer, \
-    UserDetailSerializer, UserUpdateSerializer
+    UserDetailSerializer, UserUpdateSerializer,ForgotPasswordOTPSerializer,ChangePasswordSerializer
 
 
 class LeaderboardLoginAPIView(LoginView):
@@ -94,6 +94,32 @@ class RequestEmailOTPAPIView(APIView):
         return Response({'message': 'There was an error performing your request please try again later '}, status=400)
 
 
+class ForgotPasswordWithOTPAPIView(APIView):
+    """
+    Used when the kid forgot password
+    """
+    permission_classes = [NotLoggedInPermission]
+    throttle_scope = 'monitor'
+
+    def post(self, request):
+        serializer = ForgotPasswordOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.data.get('email')
+        password = serializer.data.get('password')
+        otp = serializer.data.get('otp')
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({'message': 'User Does Not Exist. Please Pass in the correct data.'},
+                            status=404)
+        if user.validate_email_otp(otp):
+            if user.check_password(password):
+                return Response({'message': 'New password cannot be same as current password'},
+                                status=400)
+            user.set_password(password)
+            return Response({'message': ' You have successfully changed your password'}, status=200)
+        return Response({'message': 'There was an error performing your request '}, status=400)
+
+
 class VerifyEmailOTPAPIView(APIView):
     """
     This is used to verify an email using the otp passed and also it uses cache which was set to expire after 10 min
@@ -159,3 +185,28 @@ class UserProfileUpdateAPIView(APIView):
             data={"message": "successfully updated user profile",
                   "data": UserProfileDetailSerializer(request.user.user_profile).data
                   })
+
+class ChangePasswordAPIView(APIView):
+    """
+    This is used only when user is authenticated
+    """
+    permission_classes = [IsAuthenticated]
+    throttle_scope = 'monitor'
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        old_password = serializer.data.get('old_password')
+        new_password = serializer.data.get('new_password')
+        user = request.user
+        if user:
+            if old_password == new_password:
+                return Response({'message': 'Your new password cannot be the same as the old password'}, status=400)
+            if user.check_password(old_password):
+                user.set_password(new_password)
+                user.save()
+                return Response({'message': ' You have successfully changed your password'}, status=200)
+            elif not user.check_password(old_password):
+                return Response({'message': 'Your old password is incorrect'},
+                                status=400)
+        return Response({'message': 'There was an error performing your request '}, status=400)

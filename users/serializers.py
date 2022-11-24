@@ -296,3 +296,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "gender",
             "profile_image",
         ]
+
+class ForgotPasswordOTPSerializer(serializers.Serializer):
+    """
+    Changing user password with otp only when user is not logged in  this means the user has forgotten his/her password
+    so he would have request otp to his mail before sending the otp his new password and hs email
+    used when user forgot password
+    """
+    otp = serializers.CharField(max_length=4)
+    email = serializers.EmailField()
+    password = serializers.CharField(max_length=100)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    changing user password when user is logged
+    """
+    old_password = serializers.CharField(max_length=100)
+    new_password = serializers.CharField(max_length=100)

@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from users.views import LeaderboardRegisterAPIView, LeaderboardLoginAPIView, VerifyEmailOTPAPIView, \
-    RequestEmailOTPAPIView
+    RequestEmailOTPAPIView, ForgotPasswordWithOTPAPIView, ChangePasswordAPIView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -42,6 +42,8 @@ auth_urlpatterns = [
     path("api/v1/auth/request_email_otp/", RequestEmailOTPAPIView.as_view(), name="Leaderboard_request_otp"),
     #  verify account with the otp passed on posted data
     path("api/v1/auth/verify_account/", VerifyEmailOTPAPIView.as_view(), name="Leaderboard_verify_account"),
+    path('api/v1/auth/forgot_password/', ForgotPasswordWithOTPAPIView.as_view(), name='forgot_password'),
+    path('api/v1/auth/change_password/', ChangePasswordAPIView.as_view(), name='change_password'),
 ]
 
 urlpatterns += auth_urlpatterns
