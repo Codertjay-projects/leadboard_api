@@ -83,9 +83,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = 'Africa/Lagos'
 
 USE_I18N = True
+
+USE_L10N = True
 
 USE_TZ = True
 
@@ -136,7 +138,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 # to log the mail which was sent, failed or still on queue
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='')
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
-EMAIL_HOST = config('EMAIL_HOST',default="smtp.sendgrid.net")
+EMAIL_HOST = config('EMAIL_HOST', default="smtp.sendgrid.net")
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
