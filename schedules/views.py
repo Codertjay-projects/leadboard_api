@@ -1,5 +1,4 @@
 from django.http import Http404
-# Create your views here.
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
@@ -12,7 +11,7 @@ from feedbacks.serializers import FeedbackCreateSerializer
 from leads.models import LeadContact
 from schedules.models import ScheduleCall, UserScheduleCall
 from schedules.serializers import UserScheduleSerializer, UserScheduleCreateUpdateSerializer
-from users.permissions import LoggedInPermission, NotLoggedInPermission
+from users.permissions import LoggedInPermission
 from users.utils import date_filter_queryset
 
 
@@ -20,13 +19,15 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
     """
     This is used to list or create a user schedule
     """
-    permission_classes = [NotLoggedInPermission]
+    permission_classes = [LoggedInPermission]
     serializer_class = UserScheduleSerializer
     queryset = UserScheduleCall.objects.all()
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = [
         "first_name",
         "last_name",
+        "assigned_marketer__first_name",
+        "assigned_marketer__last_name",
         "age_range",
         "location",
         "gender",
@@ -56,8 +57,14 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         # Check if the user is logged in
-        if not self.request.user.is_authenticated:
-            return Response({"error": "Not logged in"}, status=401)
+        # Check if the user have permission to view the list
+        if not check_marketer_and_admin_access_company(self.request.user, self.get_company()):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        # Check if the user is among marketers in the company
+        if self.request.user.id in self.get_company().all_marketers_user_ids():
+            # Filter to get the leads where the user is the assigned marketer
+            queryset = queryset.filter(assigned_marketer=self.request.user)
         # Check if the user has permission to view this schedule call
         if not check_marketer_and_admin_access_company(
                 company=self.get_company(),

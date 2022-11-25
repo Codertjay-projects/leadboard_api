@@ -48,7 +48,7 @@ class UserScheduleCall(models.Model):
     first_name = models.CharField(max_length=250)
     last_name = models.CharField(max_length=250)
     age_range = models.CharField(max_length=5, blank=True, null=True, choices=AGE_RANGE)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     location = models.CharField(max_length=250)
     gender = models.CharField(choices=GENDER, max_length=50)
     phone = models.CharField(max_length=50)

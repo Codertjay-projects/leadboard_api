@@ -46,6 +46,22 @@ def convert_words_to_date_format(date_text):
             # check if the text is seven_days we then convert it to date format of seven days ago
             value = timezone.datetime.now() - timezone.timedelta(days=7)
             return value
+        elif date_text == "fourteen_days":
+            # check fourteen_days we then convert it to date format
+            value = timezone.datetime.now() - timezone.timedelta(days=14)
+            return value
+        elif date_text == "twenty_eight_days":
+            # check twenty_eight_days we then convert it to date format
+            value = timezone.datetime.now() - timezone.timedelta(days=28)
+            return value
+        elif date_text == "month":
+            # check month we then convert it to date format
+            value = timezone.datetime.now() - timezone.timedelta(days=30)
+            return value
+        elif date_text == "year":
+            # check year we then convert it to date format
+            value = timezone.datetime.now() - timezone.timedelta(days=366)
+            return value
         elif date_text == "one_month":
             value = timezone.datetime.now() - timezone.timedelta(days=30)
             return value
@@ -64,7 +80,7 @@ def date_filter_queryset(request, queryset):
     """
     from_date = request.query_params.get("from_date")
     to_date = request.query_params.get("to_date")
-    #  The date_text value could be seven_days,one_month, one_year or more but it must be
+    #  The date_text value could be seven_days,one_month, one_year or more, but it must be
     # a value the function convert_words_to_date_format(date_text) above^  can convert to date format
     date_text = request.query_params.get("date_text")
     try:

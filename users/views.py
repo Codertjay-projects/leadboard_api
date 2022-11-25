@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from users.models import User
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from users.serializers import VerifyEmailSerializer, UserProfileUpdateSerializer, UserProfileDetailSerializer, \
-    UserDetailSerializer, UserUpdateSerializer,ForgotPasswordOTPSerializer,ChangePasswordSerializer
+    UserDetailSerializer, UserUpdateSerializer, ForgotPasswordOTPSerializer, ChangePasswordSerializer
 
 
 class LeaderboardLoginAPIView(LoginView):
@@ -33,7 +33,7 @@ class LeaderboardLoginAPIView(LoginView):
         # login the user to access him/ her on the request
         #  overriding the login of allauth to add this if user is not verified
         if not request.user.verified:
-            # fixme :add verify mail send otp
+            # fixme :add verify mail send otp or a link
             return Response({"message": "Please verify your email address."},
                             status=400)
         return self.get_response()
@@ -186,12 +186,13 @@ class UserProfileUpdateAPIView(APIView):
                   "data": UserProfileDetailSerializer(request.user.user_profile).data
                   })
 
+
 class ChangePasswordAPIView(APIView):
     """
     This is used only when user is authenticated
     """
-    permission_classes = [IsAuthenticated]
-    throttle_scope = 'monitor'
+    permission_classes = [LoggedInPermission]
+    throttle_scope = 'authentication'
 
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data)

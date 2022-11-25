@@ -135,7 +135,8 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 # Configuration for email . the email backend is currently set to use post office
 # to log the mail which was sent, failed or still on queue
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='')
-EMAIL_HOST = config('EMAIL_HOST')
+SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
+EMAIL_HOST = config('EMAIL_HOST',default="smtp.sendgrid.net")
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
@@ -150,8 +151,7 @@ POST_OFFICE = {
     'MAX_RETRIES': 5,
     'RETRY_INTERVAL': datetime.timedelta(minutes=15),  # Schedule to be retried 15 minutes later
     'THREADS_PER_PROCESS': 10,
-    'LOG_LEVEL': 1,  # Log nothin ( to log failed is 1 and log all both succwessfull is 2 )
-
+    'LOG_LEVEL': 2,  # Log nothing ( to log failed is 1 and log all both successful is 2 ),
 }
 
 #  the default rest framework setting
@@ -201,5 +201,7 @@ APPEND_SLASH = True
 
 #  configuration for celery
 CELERY_ENABLED = True
-CELERY_BROKER_URL = config("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = config("CELERY_BROKER_URL")
+CELERY_BROKER_URL = "redis://127.0.0.1:6379"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379"
+# Send test mail and other bugs info
+ADMINS = [("Afenikhena Favour", ("dev.codertjay@gmail.com"))]

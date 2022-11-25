@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -118,7 +120,7 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
                 "user__first_name",
                 "user__last_name", )
             # Initialize a list for the user ids
-            datasets = {}
+            datasets = []
             for item in marketer_info_list:
                 checked = False
                 if not item[0]:
@@ -127,12 +129,13 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
                 if item[0] == obj.assigned_marketer.id:
                     # If the marketer id is within then we know he is the current one
                     checked = True
-                datasets[item[0]] = {
-                    'id': item[0],
+                json_item = {
+                    'id': str(item[0]),
                     'first_name': item[1],
                     'last_name': item[2],
                     'status': checked
                 }
+                datasets.append(json_item)
             return datasets
         except Exception as a:
             print(a)
@@ -143,19 +146,25 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
         List of groups in the db
         Return status if category selected in lead contact
         """
-        datasets = {}
-        for c in obj.company.group_set.all():
-            # Get all groups currently on this company
-            if c in obj.groups.all():
-                checked = True  # Checked categories
-            else:
-                checked = False
-            datasets[c.id] = {
-                'id': c.id,
-                'title': c.title,
-                'status': checked
-            }
-        return datasets
+        try:
+            datasets = []
+            for c in obj.company.group_set.all():
+                # Get all groups currently on this company
+                if c in obj.groups.all():
+                    checked = True  # Checked categories
+                else:
+                    checked = False
+                json_item = {
+                    'id': str(c.id),
+                    'title': c.title,
+                    'status': checked
+                }
+                # append the item to the list
+                datasets.append(json_item)
+            return datasets
+        except Exception as a:
+            print(a)
+            return None
 
     def get_all_previous_feedbacks(self, instance):
         #  get the previous feedback

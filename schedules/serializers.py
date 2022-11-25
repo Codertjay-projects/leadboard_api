@@ -1,7 +1,9 @@
+import json
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from companies.serializers import CompanyGroupSerializer, CompanySerializer
+from companies.serializers import CompanyGroupSerializer, CompanySerializer, CompanyInfoSerializer
 from companies.utils import check_group_is_under_company
 from feedbacks.serializers import FeedbackSerializer
 from schedules.models import UserScheduleCall, ScheduleCall
@@ -34,6 +36,7 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
         model = UserScheduleCall
         fields = [
             "id",
+            "assigned_marketer",
             "groups",
             "first_name",
             "last_name",
@@ -92,7 +95,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
     """
     schedule_call = ScheduleCallSerializer(read_only=True)
     groups = CompanyGroupSerializer(many=True)
-    company = CompanySerializer(read_only=True)
+    company = CompanyInfoSerializer(read_only=True)
     assigned_marketer = UserDetailSerializer(read_only=True)
     previous_feedback = serializers.SerializerMethodField(read_only=True)
     group_list = serializers.SerializerMethodField(read_only=True)
@@ -134,6 +137,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "time_close_from_school",
             "user_type",
             "group_list",
+            "assigned_marketer_list",
             "schedule_call",
             "lead_contact",
             "eligible",
@@ -156,7 +160,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
                 "user__first_name",
                 "user__last_name", )
             # Initialize a list for the user ids
-            datasets = {}
+            datasets = []
             for item in marketer_info_list:
                 checked = False
                 if not item[0]:
@@ -165,23 +169,25 @@ class UserScheduleSerializer(serializers.ModelSerializer):
                 if item[0] == obj.assigned_marketer.id:
                     # If the marketer id is within then we know he is the current one
                     checked = True
-                datasets[item[0]] = {
-                    'id': item[0],
+                json_item = {
+                    'id': str(item[0]),
                     'first_name': item[1],
                     'last_name': item[2],
                     'status': checked
                 }
+                # append the item to the list
+                datasets.append(json_item)
             return datasets
         except Exception as a:
             print(a)
-            return {}
+            return None
 
     def get_group_list(self, obj: UserScheduleCall):
         """
         List of groups in the db
         Return status if category selected in UserScheduleCall
         """
-        datasets = {}
+        datasets = []
         for c in obj.company.group_set.all():
             # Get all groups currently on this company
             # ( Reason why I use the company is to make it little more fast)
@@ -189,11 +195,13 @@ class UserScheduleSerializer(serializers.ModelSerializer):
                 checked = True  # Checked categories
             else:
                 checked = False
-            datasets[c.id] = {
-                'id': c.id,
+            json_item = {
+                'id': str(c.id),
                 'title': c.title,
                 'status': checked
             }
+            # append the item to the list
+            datasets.append(json_item)
         return datasets
 
     def get_previous_feedback(self, instance):

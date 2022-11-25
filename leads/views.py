@@ -4,7 +4,8 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.response import Response
 
 from companies.models import Company
-from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access
+from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access, \
+    get_assigned_marketer_from_company_user_schedule_call, get_assigned_marketer_from_company_lead
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
@@ -17,7 +18,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     """
     This class is meant to list all the lead contact and also create a new one
     """
-    permission_classes = [NotLoggedInPermission]
+    permission_classes = [LoggedInPermission]
     serializer_class = LeadContactDetailSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = [
@@ -43,6 +44,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         this filter using the company id passed on the urls to get the leads associated with it
         :return:
         """
+        # fixme: marker can see only leads assigned to him
         queryset = self.filter_queryset(self.get_company().leadcontact_set.all())
         if queryset:
             # Filter the date if it is passed in the params like
@@ -50,6 +52,25 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             # You will get more from the documentation
             queryset = date_filter_queryset(request=self.request, queryset=queryset)
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        # Check if the user have permission to view the list
+        if not check_marketer_and_admin_access_company(self.request.user, self.get_company()):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        # Check if the user is among marketers in the company
+        if self.request.user.id in self.get_company().all_marketers_user_ids():
+            # Filter to get the leads where the user is the assigned marketer
+            queryset = queryset.filter(assigned_marketer=self.request.user)
+        # paginate the response
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            # return a paginated response
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         #  before creating a lead we have to make sure the user is a member of that company
@@ -63,22 +84,12 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             # The lead email must be unique under an organisation
             return Response({"error": "Lead with that email already exists under this organisation"}, status=400)
 
-        high_value_content = serializer.validated_data.get("high_value_content")
-        #  if the high value content id exists from the validated data that means the user want
-        #  the lead just to download ebook or something else though
-        if high_value_content:
-            #  using the company which enables us to verify the high value content if it exists on the leads
-            #  because some leads are meant just only to download ebooks .
-            if not check_company_high_value_content_access(high_value_content, company):
-                return Response({"error": "You dont have access to create this lead under this company ."}, status=401)
-        if request.user.is_authenticated:
-            #  first check for then company owner then the company admins or  the assigned marketer
-            if not check_marketer_and_admin_access_company(self.request.user, company):
-                return Response({"error": "You dont have permission"}, status=401)
-            # if the user is logged in I save the lead with the user
-            serializer.save(staff=self.request.user, company=company, high_value_content=high_value_content)
-        else:
-            serializer.save(company=company, high_value_content=high_value_content)
+        #  first check for then company owner then the company admins or  the assigned marketer
+        if not check_marketer_and_admin_access_company(self.request.user, company):
+            return Response({"error": "You dont have permission"}, status=401)
+        # Get an assigned marketer for the schedule call
+        assigned_marketer = get_assigned_marketer_from_company_lead(company)
+        serializer.save(company=company, assigned_marketer=assigned_marketer)
         return Response(serializer.data, status=201)
 
 
