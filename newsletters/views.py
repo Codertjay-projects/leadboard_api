@@ -34,7 +34,7 @@ class CompanySubscriberViewSetsAPIView(ModelViewSet):
 
         # check if the group_id passed is under that company
         if not self.get_company().group_set.filter(id=group_id).first():
-            return Response({"error": "You dont have access to to use this group id for this company "},status=401)
+            return Response({"error": "You dont have access to to use this group id for this company "}, status=401)
         # using the get company i created to set the company
         serializer.save(company=self.get_company())
         return Response(serializer.data, status=201)
@@ -108,6 +108,7 @@ class AddToLeadBoardAPIView(APIView):
             # fixme : fix the way the lead_source or category is used to create the lead contact
             leadboard = LeadContact.objects.create(
                 prefix="",
+                lead_type="NEWSLETTER",
                 company=company_subscriber.company,
                 staff=self.request.user,
                 last_name=company_subscriber.last_name,

@@ -3,7 +3,7 @@ import uuid
 
 from django.db import models
 # Create your models here.
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.utils import timezone
 
 from users.models import User
@@ -79,8 +79,9 @@ class Company(models.Model):
     founded = models.DateField(blank=True, null=True)
     locations = models.ManyToManyField(Location, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-    # fixme: for now this is a number i used to track the number of mails the company owner has sent
-    sent_mail_count = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["-timestamp"]
 
     def admins_count(self):
         """
@@ -93,14 +94,6 @@ class Company(models.Model):
         this returns the total number of marketers in a company
         """
         return self.companyemployee_set.filter(role="MARKETER").count()
-
-    def company_marketers_active(self):
-        """
-        this returns list of users that are active marketer in a company
-        :return:
-        """
-        marketers = self.companyemployee_set.filter(role="MARKETER", status="ACTIVE").values_list("user")
-        return marketers
 
     def company_employees(self):
         return self.companyemployee_set.all()
@@ -140,9 +133,6 @@ class Company(models.Model):
         for item in user_id:
             user_id_list.append(item[0])
         return user_id_list
-
-    class Meta:
-        ordering = ["-timestamp"]
 
 
 ROLE_CHOICES = (
@@ -315,59 +305,47 @@ class SendCustomEmailScheduler(models.Model):
     objects = SendCustomEmailSchedulerManager()
 
 
-class SendGroupsEmailSchedulerManager(models.Manager):
+class SendGroupsEmailSchedulerLog(models.Model):
     """
-    this manager enables creating custom function
+    This is used to log the emails sent by the SendGroupsEmailScheduler
     """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
 
-    def get_lead_emails(self, status) -> list:
-        """
-        this return list of emails from the lead connected to this mail
-        status: this could either be PENDING SENT FAILED
-        :return:
-        """
-        #  Get the leads email  that are connected to the SendGroupsEmailScheduler
-        #  and also the id of the SendGroupsEmailScheduler
-        value_list_info = self.filter(status=status).values_list(
-            "id",
-            "email_subject",
-            "description",
-            "email_to__lead_groups__email",
-            "company__info_email",
-            "company__customer_support_email",
-            "company__name",
-            "email_to__lead_groups__first_name",
-            "email_to__lead_groups__last_name",
-            "company_id",
-            "scheduled_date",
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    send_groups_email_scheduler = models.ForeignKey("SendGroupsEmailScheduler", on_delete=models.CASCADE)
+    # the emails would be unique with this SendGroupsEmailScheduler so on create I send the email with post_office
+    email = models.EmailField()
+    first_name = models.CharField(max_length=250, blank=True, null=True)
+    last_name = models.CharField(max_length=250, blank=True, null=True)
+    links_clicked = models.TextField(blank=True, null=True)
+    status = models.CharField(choices=EMAIL_STATUS, max_length=50, default="PENDING", blank=True, null=True)
+    emails_view_count = models.IntegerField(default=0)
+    sent_mail_count = models.IntegerField(default=0)
+    read_mail_count = models.IntegerField(default=0)
+
+
+def post_save_send_group_email_log(sender, instance, *args, **kwargs):
+    # This creates a task on celery and sends an email on the scheduled time
+    from .tasks import send_email_schedule_task
+    if instance.status == "PENDING" or instance.status == "FAILED":
+        send_email_schedule_task.delay(
+            to_email=instance.email,
+            subject=instance.send_groups_email_scheduler.email_subject,
+            reply_to=instance.company.customer_support_email,
+            first_name=instance.first_name,
+            last_name=instance.last_name,
+            description=instance.send_groups_email_scheduler.description,
+            scheduled_date=instance.send_groups_email_scheduler.scheduled_date,
+            company_info_email=instance.company.info_email,
+            company_name=instance.company.name,
         )
-        schedule_email_list_info = []
-        for item in value_list_info:
-            # Create a dictionary which enables easy access
-            info = {
-                "schedule_id": item[0],
-                "email_subject": item[1],
-                "description": item[2],
-                "lead_email": item[3],
-                "company__info_email": item[4],
-                "company__customer_support_email": item[5],
-                "company__name": item[6],
-                "first_name": item[7],
-                "last_name": item[8],
-                "company_id": item[9],
-                "scheduled_date": item[10],
-            }
-            schedule_email_list_info.append(info)
-        #  Remove all duplicate emails to avoid sending email twice to a single mail
-        return schedule_email_list_info
+        # Set the status to sent
+        instance.status = "SENT"
 
-    def update_all_schedule_status_to_sent(self):
-        """
-        this update all schedule status to send.
-        After the email was sent we update all schedule to sent
-        """
-        self.filter(status="PENDING", scheduled_date__lte=timezone.now()).update(status="SENT")
-        return True
+
+post_save.connect(post_save_send_group_email_log, sender=SendGroupsEmailSchedulerLog)
 
 
 class SendGroupsEmailScheduler(models.Model):
@@ -384,6 +362,48 @@ class SendGroupsEmailScheduler(models.Model):
     email_subject = models.CharField(max_length=250)
     scheduled_date = models.DateTimeField()
     description = models.TextField()
-    status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
     timestamp = models.DateTimeField(default=timezone.now)
-    objects = SendGroupsEmailSchedulerManager()
+
+    def get_lead_emails(self) -> list:
+        #  Get the leads email  that are connected to the SendGroupsEmailScheduler
+        #  and also the id of the SendGroupsEmailScheduler
+        from leads.models import LeadContact
+        value_list_info = LeadContact.objects.filter(company=self.company, groups__in=self.email_to.all()).values_list(
+            "email",
+            "first_name",
+            "last_name",
+        )
+        schedule_email_list_info = []
+        for item in value_list_info:
+            # Create a dictionary which enables easy access
+            info = {
+                "email": item[0],
+                "first_name": item[1],
+                "last_name": item[2],
+            }
+            schedule_email_list_info.append(info)
+        return schedule_email_list_info
+
+
+def post_save_create_send_group_email_log(sender, instance, *args, **kwargs):
+    # This creates a log on the SendGroupsEmailSchedulerLog which enables us to get more information about
+    # the email
+    if instance.email_to.count() > 0:
+        # The email to must be added before sending the email
+        pending_mail_info = instance.get_lead_emails()
+        for item in pending_mail_info:
+            # Try getting to send group email log if it exists before and if it doesn't
+            # exist I just add extra fields
+            send_group_email_log, created = SendGroupsEmailSchedulerLog.objects.get_or_create(
+                email=item.get("email"),
+                send_groups_email_scheduler=instance,
+                company=instance.company
+            )
+            if created:
+                # Get the first name and last name from the dictionary on the list
+                send_group_email_log.first_name = item.get("first_name")
+                send_group_email_log.last_name = item.get("last_name")
+                send_group_email_log.save()
+
+
+post_save.connect(post_save_create_send_group_email_log, sender=SendGroupsEmailScheduler)

@@ -37,6 +37,10 @@ WANT = (
     ("SELF", "SELF"),
     ("CHILD_AND_SELF", "CHILD_AND_SELF"),
 )
+LEAD_TYPE_CHOICES = (
+    ("NEWSLETTER", "NEWSLETTER"),
+    ("HIGHVALUECONTENT", "HIGHVALUECONTENT"),
+)
 
 
 class LeadContact(models.Model):
@@ -47,6 +51,7 @@ class LeadContact(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     prefix = models.CharField(max_length=50, blank=True, null=True, help_text="Mr, Mrs, Dr etc.")
+    lead_type = models.CharField(max_length=250, blank=True, null=True, choices=LEAD_TYPE_CHOICES)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     groups = models.ManyToManyField(Group, related_name="lead_groups", blank=True)
     last_name = models.CharField(max_length=250)

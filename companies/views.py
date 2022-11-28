@@ -16,8 +16,9 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     SendGroupsEmailSchedulerSerializer, SendCustomEmailSchedulerSerializer, SendGroupsEmailSchedulerListSerializer, \
     SendCustomEmailListSchedulerSerializer, CompanyEmployeeSerializer
-from .tasks import send_request_to_user, send_schedule_group_email, send_schedule_custom_email
+from .tasks import send_request_to_user, send_schedule_custom_email
 from .utils import check_admin_access_company
+from post_office.models import Log,Email
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -381,7 +382,6 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())
         # Calling the task to schedule the mail we need to send
-        send_schedule_group_email.delay()
 
         return Response(serializer.data, status=201)
 
@@ -450,3 +450,24 @@ class InvitedEmployeeSearchCompanyAPIView(ListAPIView):
             if company:
                 company_list.append(company)
         return company_list
+
+
+class EmailReadAPIView(APIView):
+    """
+    This view is used to increase the number of read email by the users on the organisation
+    using the organisations ID
+
+    This would be set on the mail as an image
+    """
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = self.request.query_params.get("company_id")
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def get(self, request, *args, **kwargs):
+        company = self.get_company()
+        return Response({"message": "Successfully open mail"}, status=200)

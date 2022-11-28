@@ -229,10 +229,9 @@ class SendGroupsEmailSchedulerListSerializer(serializers.ModelSerializer):
             "email_subject",
             "scheduled_date",
             "description",
-            "status",
             "timestamp",
         ]
-        read_only_fields = ["id", "status", "timestamp"]
+        read_only_fields = ["id", "timestamp"]
 
 
 class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
@@ -245,7 +244,6 @@ class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
             "email_subject",
             "scheduled_date",
             "description",
-            "status",
             "timestamp",
         ]
         read_only_fields = ["id", "status", "timestamp"]
@@ -266,6 +264,9 @@ class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
                 instance.email_to.add(item)
             except Exception as a:
                 print(a)
+        # Note this .save below is used by the logger once we have
+        # successfully created this then the logger logs and sends it mail
+        instance.save()
         return instance
 
 

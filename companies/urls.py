@@ -4,7 +4,8 @@ from rest_framework.routers import DefaultRouter
 from .views import CompanyRetrieveUpdateDeleteAPIView, CompanyListCreateAPIView, CompanyModifyEmployeeAPIView, \
     CompanyGroupRetrieveUpdateDestroy, CompanyGroupListCreate, LocationViewSetsAPIView, IndustryViewSetsAPIView, \
     CompanyInviteListCreateAPIView, SendGroupsEmailSchedulerListCreateAPIView, \
-    SendCustomEmailSchedulerListCreateAPIView, InvitedEmployeeSearchCompanyAPIView, CompanyEmployeesListAPIView
+    SendCustomEmailSchedulerListCreateAPIView, InvitedEmployeeSearchCompanyAPIView, CompanyEmployeesListAPIView, \
+    EmailReadAPIView
 
 urlpatterns = [
     path("", CompanyListCreateAPIView.as_view(), name="company_list_create"),
@@ -18,7 +19,8 @@ urlpatterns = [
     path("send_groups_email/", SendGroupsEmailSchedulerListCreateAPIView.as_view(), name="send_groups_email"),
     path("send_custom_email/", SendCustomEmailSchedulerListCreateAPIView.as_view(), name="send_custom_email"),
     path("company_employees/", CompanyEmployeesListAPIView.as_view(), name="company_employees"),
-    path("company_id_from_invite/", InvitedEmployeeSearchCompanyAPIView.as_view(), name="company_id_from_invite")
+    path("company_id_from_invite/", InvitedEmployeeSearchCompanyAPIView.as_view(), name="company_id_from_invite"),
+    path("email_read/", EmailReadAPIView.as_view(), name="email_read")
 ]
 
 router = DefaultRouter()

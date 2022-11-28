@@ -42,10 +42,12 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     def get_queryset(self):
         """
         this filter using the company id passed on the urls to get the leads associated with it
-        :return:
         """
-        # fixme: marker can see only leads assigned to him
         queryset = self.filter_queryset(self.get_company().leadcontact_set.all())
+        lead_type = self.request.query_params.get("company_id")
+        # if the lead_type is passed on the params then we set it on the request
+        if lead_type:
+            queryset = queryset.filter(lead_type=lead_type)
         if queryset:
             # Filter the date if it is passed in the params like
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...

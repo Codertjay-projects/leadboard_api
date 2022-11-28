@@ -26,15 +26,6 @@ app.conf.beat_schedule = {
         'task': 'post_office.tasks.send_queued_mail',
         'schedule': 600.0,
     },
-    #  This schedule and sends an email to the leads connected to the email_to in the model
-    "send_schedule_group_email": {
-        "task": 'companies.tasks.send_schedule_group_email',
-        "schedule": crontab(hour=1),
-    },
-    "send_schedule_custom_email": {
-        "task": 'companies.tasks.send_schedule_custom_email',
-        "schedule": crontab(hour=1),
-    },
 
 }
 
