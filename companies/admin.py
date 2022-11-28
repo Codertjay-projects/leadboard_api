@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import Group, Company, CompanyEmployee, SendGroupsEmailScheduler, SendGroupsEmailSchedulerLog, \
-    CompanyInvite, Industry
+from .models import Group, Company, CompanyEmployee, CompanyInvite, Industry
+from communications.models import SendGroupsEmailSchedulerLog, SendGroupsEmailScheduler
 
 admin.site.register(Group)
 admin.site.register(Company)

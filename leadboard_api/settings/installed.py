@@ -39,6 +39,7 @@ LOCAL_INSTALLED_APPS = [
     'high_value_contents',
     'events',
     'careers',
+    'communications',
 ]
 INSTALLED_APPS += EXTERNAL_INSTALLED_APPS
 INSTALLED_APPS += LOCAL_INSTALLED_APPS

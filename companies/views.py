@@ -9,16 +9,13 @@ from rest_framework.viewsets import ModelViewSet
 from users.models import User
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset
-from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEmployee, SendGroupsEmailScheduler, \
-    SendCustomEmailScheduler
+from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEmployee
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyInfoSerializer, \
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
-    SendGroupsEmailSchedulerSerializer, SendCustomEmailSchedulerSerializer, SendGroupsEmailSchedulerListSerializer, \
-    SendCustomEmailListSchedulerSerializer, CompanyEmployeeSerializer
-from .tasks import send_request_to_user, send_schedule_custom_email
+    CompanyEmployeeSerializer
+from .tasks import send_request_to_user
 from .utils import check_admin_access_company
-from post_office.models import Log,Email
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -342,93 +339,6 @@ class CompanyEmployeesListAPIView(ListAPIView):
         return queryset
 
 
-class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
-    """
-    this list all mails sent or fail which are sent to groups of users on leads
-    """
-    permission_classes = [LoggedInPermission]
-    serializer_class = SendGroupsEmailSchedulerSerializer
-    queryset = SendGroupsEmailScheduler.objects.all()
-
-    def get_company(self):
-        #  filter the company base on the id provided
-        company_id = self.request.query_params.get("company_id")
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            raise Http404
-        return company
-
-    def get_queryset(self):
-        """Filter the query set base on the company provided"""
-        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
-        return queryset
-
-    def list(self, request, *args, **kwargs):
-        """Overriding the list method to list all the mails .
-         I only did this just to change the email I am currently sending """
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = SendGroupsEmailSchedulerListSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if not check_admin_access_company(user=self.request.user, company=self.get_company()):
-            return Response({"error": "You do not have access to this Company"}, status=401)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(company=self.get_company())
-        # Calling the task to schedule the mail we need to send
-
-        return Response(serializer.data, status=201)
-
-
-class SendCustomEmailSchedulerListCreateAPIView(ListCreateAPIView):
-    """
-    this list all mails sent or fail which are sent to groups of users on leads
-    """
-    permission_classes = [LoggedInPermission]
-    serializer_class = SendCustomEmailSchedulerSerializer
-    queryset = SendCustomEmailScheduler.objects.all()
-
-    def get_company(self):
-        #  filter the company base on the id provided
-        company_id = self.request.query_params.get("company_id")
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            raise Http404
-        return company
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = SendCustomEmailListSchedulerSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def get_queryset(self):
-        """Filter the query set base on the company provided"""
-        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
-        return queryset
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if not check_admin_access_company(user=self.request.user, company=self.get_company()):
-            return Response({"error": "You do not have access to this Company"}, status=401)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(company=self.get_company())
-        # Calling the task to schedule the mail we need to send
-        send_schedule_custom_email.delay()
-        return Response(serializer.data, status=201)
-
-
 class InvitedEmployeeSearchCompanyAPIView(ListAPIView):
     permission_classes = [NotLoggedInPermission]
     serializer_class = CompanyInfoSerializer
@@ -450,24 +360,3 @@ class InvitedEmployeeSearchCompanyAPIView(ListAPIView):
             if company:
                 company_list.append(company)
         return company_list
-
-
-class EmailReadAPIView(APIView):
-    """
-    This view is used to increase the number of read email by the users on the organisation
-    using the organisations ID
-
-    This would be set on the mail as an image
-    """
-
-    def get_company(self):
-        #  filter the company base on the id provided
-        company_id = self.request.query_params.get("company_id")
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            raise Http404
-        return company
-
-    def get(self, request, *args, **kwargs):
-        company = self.get_company()
-        return Response({"message": "Successfully open mail"}, status=200)
