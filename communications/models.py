@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from companies.models import Group, Company
 from .tasks import send_email_group_schedule_task, send_email_custom_schedule_task
-from .utils import check_email
+from .utils import check_email, append_links_and_id_to_description
 
 EMAIL_STATUS = (
     ("PENDING", "PENDING"),
@@ -40,16 +40,26 @@ def post_save_send_custom_email_from_log(sender, instance, *args, **kwargs):
     if instance.status == "PENDING" or instance.status == "FAILED":
         # if the instance is pending or failed we re-schedule the email
         email_scheduler = instance.send_custom_email_scheduler
+        # Update the description and append redirect url to all links which enables us to know links clicked
+        description = append_links_and_id_to_description(
+            description=email_scheduler.description,
+            email_id=instance.id,
+            email_type="custom"
+        )
         send_email_custom_schedule_task.delay(
             to_email=instance.email,
             subject=email_scheduler.email_subject,
             reply_to=instance.company.customer_support_email,
-            description=email_scheduler.description,
+            description=description,
             scheduled_date=email_scheduler.scheduled_date,
             company_info_email=instance.company.info_email,
             company_name=instance.company.name,
+            email_id=instance.id,
         )
         instance.status = "SENT"
+
+
+post_save.connect(post_save_send_custom_email_from_log, sender=SendCustomEmailSchedulerLog)
 
 
 class SendCustomEmailScheduler(models.Model):
@@ -128,16 +138,23 @@ def post_save_send_group_email_from_log(sender, instance, *args, **kwargs):
     # This creates a task on celery and sends an email on the scheduled time
     if instance.status == "PENDING" or instance.status == "FAILED":
         # The task to send the mail
+        # Update the description and append redirect url to all links which enables us to know links clicked
+        description = append_links_and_id_to_description(
+            description=instance.send_groups_email_scheduler.description,
+            email_id=instance.id,
+            email_type="custom"
+        )
         send_email_group_schedule_task.delay(
             to_email=instance.email,
             subject=instance.send_groups_email_scheduler.email_subject,
             reply_to=instance.company.customer_support_email,
             first_name=instance.first_name,
             last_name=instance.last_name,
-            description=instance.send_groups_email_scheduler.description,
+            description=description,
             scheduled_date=instance.send_groups_email_scheduler.scheduled_date,
             company_info_email=instance.company.info_email,
             company_name=instance.company.name,
+            email_id=instance.id,
         )
         # Set the status to sent
         instance.status = "SENT"

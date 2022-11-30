@@ -1,4 +1,5 @@
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
+from django.views import View
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,27 +10,7 @@ from communications.serializers import SendGroupsEmailSchedulerSerializer, SendG
 from companies.models import Company
 from companies.utils import check_admin_access_company
 from users.permissions import LoggedInPermission
-
-
-class EmailReadAPIView(APIView):
-    """
-    This view is used to increase the number of read email by the users on the organisation
-    using the organisations ID
-
-    This would be set on the mail as an image
-    """
-
-    def get_company(self):
-        #  filter the company base on the id provided
-        company_id = self.request.query_params.get("company_id")
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            raise Http404
-        return company
-
-    def get(self, request, *args, **kwargs):
-        company = self.get_company()
-        return Response({"message": "Successfully open mail"}, status=200)
+from .models import SendCustomEmailSchedulerLog, SendGroupsEmailSchedulerLog
 
 
 class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
@@ -115,3 +96,52 @@ class SendCustomEmailSchedulerListCreateAPIView(ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())
         return Response(serializer.data, status=201)
+
+
+class EmailUpdateLinkClickedView(View):
+    """
+    This update the view counts of email logs  for custom and group emails
+    """
+
+    def get(self, request, *args, **kwargs):
+        email_type = request.GET.get('email_type')
+        redirect_url = request.GET.get('redirect_url')
+        email_id = request.GET.get('email_id')
+        if email_type == "custom":
+            log = SendCustomEmailSchedulerLog.objects.filter(id=email_id).first()
+            if log:
+                log.links_clicked = f"{log.links_clicked},{redirect_url}"
+                log.save()
+        if email_type == "group":
+            # if the email type is group then we add the links to the group
+            log = SendGroupsEmailSchedulerLog.objects.filter(id=email_id).first()
+            if log:
+                log.links_clicked = f"{log.links_clicked},{redirect_url}"
+                log.save()
+        return HttpResponseRedirect(redirect_url)
+
+
+class EmailUpdateViewCountAPIView(APIView):
+    """
+    This view is used to increase the number of read email by the users on the organisation
+    using the organisations ID
+
+    This would be set on the mail as an image
+    """
+
+    def get(self, request, *args, **kwargs):
+        email_type = self.request.GET.get("email_type")
+        email_id = self.request.GET.get("email_id")
+        if email_type == "group":
+            # Update the SendGroupsEmailSchedulerLog  view count if the email type is custom
+            log = SendGroupsEmailSchedulerLog.objects.filter(id=email_id).first()
+            if log:
+                log.emails_view_count += 1
+                log.save()
+        if email_type == "custom":
+            # Update the SendCustomEmailSchedulerLog  view count if the email type is custom
+            log = SendCustomEmailSchedulerLog.objects.filter(id=email_id).first()
+            if log:
+                log.emails_view_count += 1
+                log.save()
+        return Response({"message": "Successfully open mail"}, status=200)

@@ -9,6 +9,17 @@
 </head>
 <body>
 <h1>Hello mail</h1>
-<img src="https://production.codertjay.com:8001/api/v1/companies/email_read/?company_id=280fb0d16f5446829aea1948d75bd612" alt="">
+<img src="https://production.codertjay.com:8001/api/v1/companies/update_view_count/?company_id=280fb0d16f5446829aea1948d75bd612"
+     alt="">
+<a href=""></a>
+
+<script>
+    const add_view_count = fetch(
+        "http://production.codertjay.com:8001/api/v1/communications/update_view_count/?email_id=53bfab1fcd0a4cdb8223aa16f3cfb41a&email_type=custom"
+    );
+    window.onload = async () => {
+        await add_view_count;
+    };
+</script>
 </body>
 </html>

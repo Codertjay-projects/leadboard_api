@@ -5,7 +5,7 @@ from post_office import mail
 @shared_task
 def send_email_custom_schedule_task(
         to_email,
-        subject, reply_to, description, scheduled_date, company_info_email, company_name):
+        subject, reply_to, description, scheduled_date, company_info_email, company_name, email_id):
     mail.send(
         to_email,
         headers={
@@ -14,8 +14,8 @@ def send_email_custom_schedule_task(
         subject=subject,
         html_message=f""
                      f"{description}"
-                     f"Message from {company_name} "
-                     f"<a href='mailto:{company_info_email}'>{company_info_email}</a></p>",
+                     f"<img src='http://production.codertjay.com:8001/api/v1/communications/update_view_count/"
+                     f"?email_id={email_id}&email_type=custom'/>",
         scheduled_time=scheduled_date
     )
 
@@ -28,7 +28,10 @@ def send_email_group_schedule_task(to_email,
                                    last_name, description,
                                    scheduled_date,
                                    company_info_email,
-                                   company_name):
+                                   company_name,
+                                   email_id
+                                   ):
+    # The reason why I create this is just because the group have a name so maybe the message might be different
     """
 
     This is used by the SendGroupsEmailSchedulerLog on post_save so once the log is created
@@ -42,11 +45,8 @@ def send_email_group_schedule_task(to_email,
             "Reply-to": reply_to,
         },
         html_message=f"<h1> Hello {first_name} - {last_name}. </h1>"
-                     f"<p>{description}</p> "
-                     f"<div>Yor are getting this message from {company_name}"
-                     f"<img "
-                     f"src='http://production.codertjay.com:8001/api/v1/companies/email_read/?company_id=280fb0d16f5446829aea1948d75bd612' "
-                     f"alt='Image'> "
-                     f"<a href='mailto:{company_info_email}'>{company_info_email}</a></p>",
+                     f"<p>{description}</p>"
+                     f"<img src='http://production.codertjay.com:8001/api/v1/communications/update_view_count/"
+                     f"?email_id={email_id}&email_type=group'/>",
         scheduled_time=scheduled_date
     )

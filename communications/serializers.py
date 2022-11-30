@@ -44,7 +44,7 @@ class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
     def validate_scheduled_date(self, attrs):
         scheduled_date = attrs
         if scheduled_date < timezone.now():
-            raise serializers.ValidationError("The schedule date must be lest than the current date")
+            raise serializers.ValidationError("The schedule date must be greater than the current date")
         return scheduled_date
 
     def create(self, validated_data):
@@ -95,5 +95,5 @@ class SendCustomEmailSchedulerSerializer(serializers.ModelSerializer):
     def validate_scheduled_date(self, attrs):
         scheduled_date = attrs
         if scheduled_date < timezone.now():
-            raise serializers.ValidationError("The schedule date must be lest than the current date")
+            raise serializers.ValidationError("The schedule date must be greater than the current date")
         return scheduled_date
