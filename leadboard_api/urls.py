@@ -30,7 +30,7 @@ urlpatterns = [
     path("api/v1/feedbacks/", include("feedbacks.urls")),
     path("api/v1/high_value_contents/", include("high_value_contents.urls")),
     path("api/v1/events/", include("events.urls")),
-    path("api/v1/newsletters/", include("newsletters.urls")),
+    path("api/v1/contacts/", include("contacts.urls")),
     path("api/v1/careers/", include("careers.urls")),
     path("api/v1/communications/", include("communications.urls"))
 ]

@@ -29,3 +29,41 @@ def append_links_and_id_to_description(description, email_type, email_id):
         f"&email_id={email_id}&redirect_url=https"
     )
     return description
+
+
+def modify_names_on_description(description, first_name, last_name):
+    """
+    this is used to modify the first name and last name if passed as first_name and last_name
+    on the description
+    :return: description
+    """
+    # replace first_name
+    if last_name:
+        description = description.replace(
+            "first_name", first_name)
+    #  replace last_name
+    if last_name:
+        description = description.replace(
+            "last_name", last_name)
+    return description
+
+
+def update_custom_schedule_log_status(id, status):
+    # Used local import
+
+    from communications.models import SendCustomEmailSchedulerLog
+    # filter the schedule
+    custom_schedule = SendCustomEmailSchedulerLog.objects.filter(id=id).first()
+    if custom_schedule:
+        custom_schedule.status = status
+        custom_schedule.save()
+
+
+def update_group_schedule_log_status(id, status):
+    # Used local import
+    from communications.models import SendGroupsEmailSchedulerLog
+    # filter the schedule
+    custom_schedule = SendGroupsEmailSchedulerLog.objects.filter(id=id).first()
+    if custom_schedule:
+        custom_schedule.status = status
+        custom_schedule.save()

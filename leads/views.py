@@ -44,7 +44,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         this filter using the company id passed on the urls to get the leads associated with it
         """
         queryset = self.filter_queryset(self.get_company().leadcontact_set.all())
-        lead_type = self.request.query_params.get("company_id")
+        lead_type = self.request.query_params.get("lead_type")
         # if the lead_type is passed on the params then we set it on the request
         if lead_type:
             queryset = queryset.filter(lead_type=lead_type)

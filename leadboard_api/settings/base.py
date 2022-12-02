@@ -134,9 +134,7 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
-# Configuration for email . the email backend is currently set to use post office
-# to log the mail which was sent, failed or still on queue
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='')
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
 EMAIL_HOST = config('EMAIL_HOST', default="smtp.sendgrid.net")
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
@@ -145,16 +143,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
-# The CELERY_ENABLED enables us to perform action with celery task
-# so right now I don't need to add shared_task or delay when sending mail
-POST_OFFICE = {
-    'CELERY_ENABLED': True,
-    'MESSAGE_ID_ENABLED': True,
-    'MAX_RETRIES': 5,
-    'RETRY_INTERVAL': datetime.timedelta(minutes=15),  # Schedule to be retried 15 minutes later
-    'THREADS_PER_PROCESS': 10,
-    'LOG_LEVEL': 2,  # Log nothing ( to log failed is 1 and log all both successful is 2 ),
-}
 
 #  the default rest framework setting
 # anon is for the AnonRateThrottle base on anonymous user

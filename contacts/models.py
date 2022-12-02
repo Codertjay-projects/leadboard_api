@@ -8,7 +8,7 @@ from django.utils import timezone
 from companies.models import Company, Group
 
 
-class CompanySubscriber(models.Model):
+class ContactUs(models.Model):
     """
     The reason why this was created was to manage email under your company .I know we are supposed
     to use the leadboard to save the user email directly and attend to the user but sometimes the
@@ -28,11 +28,22 @@ class CompanySubscriber(models.Model):
     last_name = models.CharField(max_length=250)
     message = models.TextField()
     on_leadboard = models.BooleanField(default=False)
-    subscribed = models.BooleanField(default=True)
-
     timestamp = models.DateTimeField(default=timezone.now)
 
     # fixme: when a user unsubscribe and the user is in a lead i remove the group
 
     class Meta:
         ordering = ["-timestamp"]
+
+
+class Newsletter(models.Model):
+    """
+    this is used for users trying to only update from blogs and other information
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    email = models.EmailField()
+    on_blog = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(default=timezone.now)

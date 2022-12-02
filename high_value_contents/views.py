@@ -1,15 +1,19 @@
+import uuid
+
+from decouple import config
 from django.http import Http404
+from django.utils import timezone
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from companies.models import Company
+from companies.models import Company, Group
 from companies.utils import check_marketer_and_admin_access_company, get_assigned_marketer_from_company_lead
+from email_logs.models import EmailLog
 from high_value_contents.models import HighValueContent, DownloadHighValueContent
 from high_value_contents.serializers import HighValueContentSerializer, DownloadHighValueContentSerializer, \
     DownloadHighValueContentDetailSerializer
-from high_value_contents.tasks import send_high_value_content_verify
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset
 
@@ -54,8 +58,13 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, company):
             return Response({"error": "You dont have permission"}, status=401)
+        # Get or create the group if it doesn't exist
+        group, created = Group.objects.get_or_create(
+            title="HIGHVALUECONTENT",
+            company=self.get_company()
+        )
         serializer.is_valid(raise_exception=True)
-        serializer.save(company=company)
+        serializer.save(company=company, group=group)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=201, headers=headers)
 
@@ -109,14 +118,22 @@ class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(high_value_content=self.get_high_value_content())
-        # fixme: send an email to the user containing the detail url once the user view the link we verify the email
-        # and also send the info to the lead
-        send_high_value_content_verify.delay(
-            company_email=company.owner.email,
-            first_name=serializer.validated_data.get("first_name"),
-            last_name=serializer.validated_data.get("last_name"),
-            email=serializer.validated_data.get("email"),
-            high_value_content_id=high_value_content.id,
+        # This save the email and also through this we know if the mail fail or was su
+        email_Log = EmailLog.objects.create(
+            company=company,
+            message_id=uuid.uuid4(),
+            message_type="HIGHVALUECONTENT",
+            email_from=high_value_content.company.name,
+            email_to=serializer.validated_data.get("email"),
+            reply_to=high_value_content.company.customer_support_email,
+            email_subject=f"Download {high_value_content.title}",
+            description=f"""
+            You made a request request to download {high_value_content.title} Click the link to download <a 
+            href="{config("DOMAIN_NAME")}/api/v1/communications/update_links_clicked/?email_id=
+            {serializer.data.get("id")}&email_type=high_value_content&redirect_url={high_value_content.link}"> 
+            {high_value_content.title}</a>
+            """,
+            scheduled_date=timezone.now()
         )
         return Response({"message": "An link of the file has been sent to your email", "data": serializer.data},
                         status=201)

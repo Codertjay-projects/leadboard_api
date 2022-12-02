@@ -31,7 +31,7 @@ class HighValueContentSerializer(serializers.ModelSerializer):
             "publish",
             "timestamp",
         ]
-        read_only_fields = ["timestamp", "id", "company_id", "last_edit", "upload_date", ]
+        read_only_fields = ["timestamp", "id", "company_id", "last_edit", "upload_date","group" ]
 
 
 class DownloadHighValueContentSerializer(serializers.ModelSerializer):

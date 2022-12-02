@@ -156,6 +156,7 @@ class TokenSerializer(serializers.ModelSerializer):
                 #  using celery task to make it faster
                 login_notification_email.delay(
                     obj.user.first_name, obj.user.email)
+
             return UserDetailSerializer(obj.user, read_only=True).data
         except Exception as a:
             # just for debugging purposes

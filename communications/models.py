@@ -5,8 +5,8 @@ from django.db.models.signals import post_save
 from django.utils import timezone
 
 from companies.models import Group, Company
-from .tasks import send_email_group_schedule_task, send_email_custom_schedule_task
-from .utils import check_email, append_links_and_id_to_description
+from email_logs.models import EmailLog
+from .utils import check_email, append_links_and_id_to_description, modify_names_on_description
 
 EMAIL_STATUS = (
     ("PENDING", "PENDING"),
@@ -26,9 +26,7 @@ class SendCustomEmailSchedulerLog(models.Model):
     send_custom_email_scheduler = models.ForeignKey("SendCustomEmailScheduler", on_delete=models.CASCADE)
     email = models.EmailField()
     status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
-    emails_view_count = models.IntegerField(default=0)
-    sent_mail_count = models.IntegerField(default=0)
-    read_mail_count = models.IntegerField(default=0)
+    view_count = models.IntegerField(default=0)
     links_clicked = models.TextField(blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
@@ -46,17 +44,18 @@ def post_save_send_custom_email_from_log(sender, instance, *args, **kwargs):
             email_id=instance.id,
             email_type="custom"
         )
-        send_email_custom_schedule_task.delay(
-            to_email=instance.email,
-            subject=email_scheduler.email_subject,
+        # Create the EmailLog which once created sends an email
+        email_log, created = EmailLog.objects.get_or_create(
+            company=instance.company,
+            message_id=instance.id,
+            message_type="CUSTOM",
+            email_to=instance.email,
+            email_from=instance.company.name,
+            email_subject=email_scheduler.email_subject,
+            description=email_scheduler.description,
             reply_to=instance.company.customer_support_email,
-            description=description,
-            scheduled_date=email_scheduler.scheduled_date,
-            company_info_email=instance.company.info_email,
-            company_name=instance.company.name,
-            email_id=instance.id,
+            scheduled_date=email_scheduler.scheduled_date
         )
-        instance.status = "SENT"
 
 
 post_save.connect(post_save_send_custom_email_from_log, sender=SendCustomEmailSchedulerLog)
@@ -89,23 +88,8 @@ class SendCustomEmailScheduler(models.Model):
             if not check_email(item):
                 # remove the email from the list if not value
                 custom_email_list.remove(item)
-        return custom_email_list
-
-
-def post_save_create_send_custom_email_log(sender, instance, *args, **kwargs):
-    """"
-    This creates a custom email log for the custom email that was added and the user is willing to send
-    """
-    if instance.get_custom_emails():
-        for item in instance.get_custom_emails():
-            send_custom_email_scheduler, created = SendCustomEmailSchedulerLog.objects.get_or_create(
-                email=item,
-                company=instance.company,
-                send_custom_email_scheduler=instance,
-            )
-
-
-post_save.connect(post_save_create_send_custom_email_log, sender=SendCustomEmailScheduler)
+        # remove duplicate emails
+        return list(dict.fromkeys(custom_email_list))
 
 
 ####################################################################################################
@@ -127,10 +111,8 @@ class SendGroupsEmailSchedulerLog(models.Model):
     first_name = models.CharField(max_length=250, blank=True, null=True)
     last_name = models.CharField(max_length=250, blank=True, null=True)
     links_clicked = models.TextField(blank=True, null=True)
+    view_count = models.IntegerField(default=0)
     status = models.CharField(choices=EMAIL_STATUS, max_length=50, default="PENDING", blank=True, null=True)
-    emails_view_count = models.IntegerField(default=0)
-    sent_mail_count = models.IntegerField(default=0)
-    read_mail_count = models.IntegerField(default=0)
     timestamp = models.DateTimeField(default=timezone.now)
 
 
@@ -144,20 +126,21 @@ def post_save_send_group_email_from_log(sender, instance, *args, **kwargs):
             email_id=instance.id,
             email_type="custom"
         )
-        send_email_group_schedule_task.delay(
-            to_email=instance.email,
-            subject=instance.send_groups_email_scheduler.email_subject,
-            reply_to=instance.company.customer_support_email,
-            first_name=instance.first_name,
-            last_name=instance.last_name,
+        # modify the names on the description
+        description = modify_names_on_description(description, instance.first_name, instance.last_name)
+
+        # Create the EmailLog which once created sends an email
+        email_log, created = EmailLog.objects.get_or_create(
+            company=instance.company,
+            message_id=instance.id,
+            message_type="GROUP",
+            email_to=instance.email,
+            email_from=instance.company.name,
+            email_subject=instance.send_groups_email_scheduler.email_subject,
             description=description,
-            scheduled_date=instance.send_groups_email_scheduler.scheduled_date,
-            company_info_email=instance.company.info_email,
-            company_name=instance.company.name,
-            email_id=instance.id,
+            reply_to=instance.company.customer_support_email,
+            scheduled_date=instance.send_groups_email_scheduler.scheduled_date
         )
-        # Set the status to sent
-        instance.status = "SENT"
 
 
 post_save.connect(post_save_send_group_email_from_log, sender=SendGroupsEmailSchedulerLog)
@@ -191,7 +174,9 @@ class SendGroupsEmailScheduler(models.Model):
         #  Get the leads email  that are connected to the SendGroupsEmailScheduler
         #  and also the id of the SendGroupsEmailScheduler
         from leads.models import LeadContact
-        value_list_info = LeadContact.objects.filter(company=self.company, groups__in=self.email_to.all()).values_list(
+        value_list_info = LeadContact.objects.filter(
+            company=self.company,
+            groups__in=self.email_to.all()).distinct().values_list(
             "email",
             "first_name",
             "last_name",
@@ -206,30 +191,3 @@ class SendGroupsEmailScheduler(models.Model):
             }
             schedule_email_list_info.append(info)
         return schedule_email_list_info
-
-
-def post_save_create_send_group_email_log(sender, instance, *args, **kwargs):
-    """
-   This creates a log on the SendGroupsEmailSchedulerLog which enables us to get more information about
-     the email
-    :return:
-    """
-    if instance.email_to.count() > 0:
-        # The email to must be added before sending the email
-        pending_mail_info = instance.get_lead_emails()
-        for item in pending_mail_info:
-            # Try getting to send group email log if it exists before and if it doesn't
-            # exist I just add extra fields
-            send_group_email_log, created = SendGroupsEmailSchedulerLog.objects.get_or_create(
-                email=item.get("email"),
-                send_groups_email_scheduler=instance,
-                company=instance.company
-            )
-            if created:
-                # Get the first name and last name from the dictionary on the list
-                send_group_email_log.first_name = item.get("first_name")
-                send_group_email_log.last_name = item.get("last_name")
-                send_group_email_log.save()
-
-
-post_save.connect(post_save_create_send_group_email_log, sender=SendGroupsEmailScheduler)

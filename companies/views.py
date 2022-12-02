@@ -1,4 +1,7 @@
+import uuid
+
 from django.http import Http404
+from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.response import Response
@@ -6,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from email_logs.models import EmailLog
 from users.models import User
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset
@@ -14,7 +18,6 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     CompanyEmployeeSerializer
-from .tasks import send_request_to_user
 from .utils import check_admin_access_company
 
 
@@ -297,13 +300,21 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             return Response(
                 {"error": "Error creating invite. If the error continues please contact our customer support"},
                 status=500)
-        send_request_to_user.delay(
-            company_name=company.name,
-            invitation_id=company_invite.invite_id,
-            first_name=first_name,
-            last_name=last_name,
-            user_email=email
+        # Send request to user to join the company
+        email_Log = EmailLog.objects.create(
+            company=company,
+            message_id=uuid.uuid4(),
+            message_type="OTHERS",
+            email_from=company.name,
+            email_to=email,
+            reply_to=company.customer_support_email,
+            email_subject=f"Invitation to Join {company.company_name}",
+            description=f"""<h1> Hello {first_name} - {last_name}. </h1>
+                     <p>{company.name} has invited you to join the their organisation you can use this code to join 
+                     {company_invite.invite_id}</p>   """,
+            scheduled_date=timezone.now()
         )
+
         return Response(serializer.data, status=201)
 
 

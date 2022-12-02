@@ -9,8 +9,10 @@ from communications.serializers import SendGroupsEmailSchedulerSerializer, SendG
     SendCustomEmailSchedulerSerializer, SendCustomEmailListSchedulerSerializer
 from companies.models import Company
 from companies.utils import check_admin_access_company
+from high_value_contents.models import DownloadHighValueContent
 from users.permissions import LoggedInPermission
 from .models import SendCustomEmailSchedulerLog, SendGroupsEmailSchedulerLog
+from .tasks import create_custom_schedule_log, create_group_schedule_log
 
 
 class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
@@ -52,8 +54,10 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())
-        # Calling the task to schedule the mail we need to send
-
+        # Get the instance we just saved using the ID
+        instance = SendGroupsEmailScheduler.objects.get(id=serializer.data.get("id"))
+        # Create Logs under thus SendCustomEmailScheduler using the task
+        create_group_schedule_log.delay(instance.id)
         return Response(serializer.data, status=201)
 
 
@@ -95,12 +99,21 @@ class SendCustomEmailSchedulerListCreateAPIView(ListCreateAPIView):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())
+        # Get the instance we just saved using the ID
+        instance = SendCustomEmailScheduler.objects.get(id=serializer.data.get("id"))
+        # Create Logs under thus SendCustomEmailScheduler using the task
+        create_custom_schedule_log.delay(instance.id)
         return Response(serializer.data, status=201)
 
 
 class EmailUpdateLinkClickedView(View):
     """
     This update the view counts of email logs  for custom and group emails
+    ALso it used to verify the email of the user
+    Base on the email_type we set of logic
+    if the email_type is custom or group we only need to append the links clicked
+    , if it is high_value_content then we set the email to be verified
+
     """
 
     def get(self, request, *args, **kwargs):
@@ -118,6 +131,16 @@ class EmailUpdateLinkClickedView(View):
             if log:
                 log.links_clicked = f"{log.links_clicked},{redirect_url}"
                 log.save()
+        if email_type == "high_value_content":
+            # filter for the high value content
+            download_high_value_content = DownloadHighValueContent.objects.filter(
+                id=email_id).first()
+            # Verify the user email
+            if download_high_value_content:
+                download_high_value_content.verified = True
+                download_high_value_content.is_safe = True
+                download_high_value_content.save()
+
         return HttpResponseRedirect(redirect_url)
 
 
@@ -136,12 +159,12 @@ class EmailUpdateViewCountAPIView(APIView):
             # Update the SendGroupsEmailSchedulerLog  view count if the email type is custom
             log = SendGroupsEmailSchedulerLog.objects.filter(id=email_id).first()
             if log:
-                log.emails_view_count += 1
+                log.view_count += 1
                 log.save()
         if email_type == "custom":
             # Update the SendCustomEmailSchedulerLog  view count if the email type is custom
             log = SendCustomEmailSchedulerLog.objects.filter(id=email_id).first()
             if log:
-                log.emails_view_count += 1
+                log.view_count += 1
                 log.save()
         return Response({"message": "Successfully open mail"}, status=200)

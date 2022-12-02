@@ -1,4 +1,7 @@
+import uuid
+
 from django.http import Http404
+from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
@@ -8,12 +11,12 @@ from rest_framework.viewsets import ModelViewSet
 
 from companies.models import Company
 from companies.utils import check_admin_access_company
+from email_logs.models import EmailLog
 from users.permissions import NotLoggedInPermission, IsAuthenticatedOrReadOnly, LoggedInPermission
 from users.utils import date_filter_queryset
 from .models import Job, JobType, Applicant
 from .serializers import JobCreateUpdateSerializer, JobListDetailSerializer, JobTypeSerializer, ApplicantSerializer, \
     ApplicantActionSerializer
-from .tasks import send_accepted_mail, send_rejection_mail
 
 
 class JobListCreateAPIView(ListCreateAPIView):
@@ -27,6 +30,7 @@ class JobListCreateAPIView(ListCreateAPIView):
         "title",
         "description",
     ]
+
     def get_queryset(self):
         # get the company we need
         company = self.get_company()
@@ -65,7 +69,6 @@ class JobListCreateAPIView(ListCreateAPIView):
             return self.get_paginated_response(serializer.data)
         serializer = JobListDetailSerializer(queryset, many=True)
         return Response(serializer.data)
-
 
     def create(self, request, *args, **kwargs):
         if not self.get_company():
@@ -236,15 +239,36 @@ class JobAcceptAPIView(APIView):
         if serializer.validated_data.get("status") == "INVITED":
             applicant.status = "INVITED"
             applicant.save()
-            send_accepted_mail.delay(
-                email=applicant.email, first_name=applicant.first_name, last_name=applicant.last_name,
-                company_email=applicant.company.owner.email)
+            # Send accepted mail
+            email_Log = EmailLog.objects.create(
+                company=applicant.company,
+                message_id=uuid.uuid4(),
+                message_type="CAREER",
+                email_from=applicant.company.name,
+                email_to=serializer.validated_data.get("email"),
+                reply_to=applicant.company.customer_support_email,
+                email_subject=f"Accepted by {applicant.company.name}",
+                description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
+                     <p> You have been accepted come for interview.""",
+                scheduled_date=timezone.now()
+            )
+
             return Response({"message": "Successfully sent invite to the applicant"}, status=200)
         elif serializer.validated_data.get("status") == "REJECTED":
             applicant.status = "REJECTED"
             applicant.save()
-            send_rejection_mail.delay(
-                email=applicant.email, first_name=applicant.first_name, last_name=applicant.last_name,
-                company_email=applicant.company.owner.email)
+            # Send rejected mail
+            email_Log = EmailLog.objects.create(
+                company=applicant.company,
+                message_id=uuid.uuid4(),
+                message_type="CAREER",
+                email_from=applicant.company.name,
+                email_to=serializer.validated_data.get("email"),
+                reply_to=applicant.company.customer_support_email,
+                email_subject=f"Rejected by {applicant.company.name}",
+                description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
+                                 <p> You have been Rejected dont  come for interview.""",
+                scheduled_date=timezone.now()
+            )
             return Response({"message": "Successfully sent rejection mail to the applicant"}, status=200)
         return Response({"error": "An unknown error occurred"}, status=400)

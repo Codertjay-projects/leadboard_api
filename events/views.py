@@ -1,3 +1,5 @@
+import uuid
+
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -6,11 +8,11 @@ from rest_framework.response import Response
 
 from companies.models import Company
 from companies.utils import check_admin_access_company
+from email_logs.models import EmailLog
 from events.models import Event
 from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from users.utils import date_filter_queryset
-from .tasks import send_user_register_event
 
 
 class EvenListAPIView(ListAPIView):
@@ -154,13 +156,27 @@ class EventRegisterAPIView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(event=event)
         # Send in the email to the user registering for the event
-        # we cant pass in the event instance that's why I pass the id instead
-        send_user_register_event.delay(
-            first_name=serializer.validated_data.get("first_name"),
-            last_name=serializer.validated_data.get("last_name"),
-            email=serializer.validated_data.get("email"),
-            event_id=event.id,
+        first_name = serializer.validated_data.get("first_name")
+        email = serializer.validated_data.get("last_name")
+        last_name = serializer.validated_data.get("last_name")
+        # Send rejected mail
+        email_Log = EmailLog.objects.create(
+            company=event.company,
+            message_id=uuid.uuid4(),
+            message_type="EVENT",
+            email_from=event.company.name,
+            email_to=email,
+            reply_to=event.company.customer_support_email,
+            email_subject=f"Event Successfully Registered",
+            description=f"""
+            <h2>Hi {first_name} - {last_name},</h2>"
+             <p>You have successfully registered for an event </p>
+             <p>The event date {event.start_date} and the end time is {event.end_date}.
+             The location of the event is {event.location}
+            """,
+            scheduled_date=timezone.now()
         )
+
         return Response(
             {"message": "Successfully registered for an event and email has been sent about the event",
              "data": serializer.data}, status=201)

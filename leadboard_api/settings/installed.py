@@ -24,8 +24,6 @@ EXTERNAL_INSTALLED_APPS = [
     'django_celery_beat',
     #  for logging and sending mail
     #  it enable us to view failed and sent mails
-    'post_office',
-
 
 ]
 
@@ -34,12 +32,13 @@ LOCAL_INSTALLED_APPS = [
     'companies',
     'feedbacks',
     'leads',
-    'newsletters',
     'schedules',
     'high_value_contents',
     'events',
     'careers',
     'communications',
+    'email_logs',
+    'contacts',
 ]
 INSTALLED_APPS += EXTERNAL_INSTALLED_APPS
 INSTALLED_APPS += LOCAL_INSTALLED_APPS
