@@ -47,6 +47,13 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
     def get_queryset(self):
         # Filter the queryset and the backend filter also
         queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        schedule_category = self.request.query_params.get("cat")
+        if schedule_category:
+            # if past was passed in the params the just filter for the past schedule_category
+            if schedule_category.title() == "Past":
+                queryset = queryset.filter(scheduled_date__lte=timezone.now())
+            else:
+                queryset = queryset.filter(schedule_category=schedule_category)
         if queryset:
             # Filter the date if it is passed in the params like
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
@@ -65,13 +72,7 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         if self.request.user.id in self.get_company().all_marketers_user_ids():
             # Filter to get the leads where the user is the assigned marketer
             queryset = queryset.filter(assigned_marketer=self.request.user)
-        # Check if the user has permission to view this schedule call
-        if not check_marketer_and_admin_access_company(
-                company=self.get_company(),
-                user=self.request.user):
-            return Response(
-                {"error": "You dont have permission to view all schedule calls from this company "},
-                status=401)
+
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

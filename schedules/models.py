@@ -33,6 +33,11 @@ AGE_RANGE = (
     ("41+", "41+"),
 )
 
+SCHEDULE_CATEGORY_CHOICES = (
+    ("PENDING", "PENDING"),
+    ("RESOLVED", "RESOLVED"),
+)
+
 
 class UserScheduleCall(models.Model):
     """
@@ -79,6 +84,7 @@ class UserScheduleCall(models.Model):
                                       related_name='schedule_calls')
     lead_contact = models.ForeignKey(LeadContact, on_delete=models.CASCADE, blank=True, null=True,
                                      related_name='lead_contacts')
+    schedule_category = models.CharField(max_length=100, default="PENDING", choices=SCHEDULE_CATEGORY_CHOICES)
     eligible = models.BooleanField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 

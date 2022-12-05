@@ -30,6 +30,8 @@ SECRET_KEY = config("SECRET_KEY")
 INSTALLED_APPS = INSTALLED_APPS
 
 MIDDLEWARE = [
+    # Todo : for heroku will be removed later
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -197,11 +199,15 @@ CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379"
 # Send test mail and other bugs info
 ADMINS = [("Afenikhena Favour", ("dev.codertjay@gmail.com"))]
 
+# Todo: note i installed  gunicorn dj-database-url whitenoise psycopg2 for heroku
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
+    r"^http://localhost:3001",
+    r"^http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

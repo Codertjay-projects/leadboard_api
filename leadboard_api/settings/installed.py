@@ -26,6 +26,8 @@ EXTERNAL_INSTALLED_APPS = [
     #  it enable us to view failed and sent mails
     # Corsheaders
     "corsheaders",
+    # heroku
+    "whitenoise.runserver_nostatic",
 ]
 
 LOCAL_INSTALLED_APPS = [

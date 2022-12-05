@@ -1,0 +1,1 @@
+web: gunicorn leadboard_api.wsgi --log-file -
