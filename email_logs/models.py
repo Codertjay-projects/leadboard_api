@@ -56,23 +56,23 @@ def post_save_send_email_log(sender, instance, *args, **kwargs):
             # if the time has passed I just use the current time
             if instance.scheduled_date <= timezone.now():
                 scheduled_date = timezone.now()
-            leadboard_send_mail(
-                instance.message_id,
-                instance.company.name,
-                instance.email_to,
-                instance.reply_to,
-                instance.email_subject,
-                instance.description
-            )
-            # leadboard_send_mail.apply_async(
-            #     args=[instance.message_id,
-            #           instance.company.name,
-            #           instance.email_to,
-            #           instance.reply_to,
-            #           instance.email_subject,
-            #           instance.description
-            #           ],
-            #     eta=scheduled_date)
+            # leadboard_send_mail(
+            #     instance.message_id,
+            #     instance.company.name,
+            #     instance.email_to,
+            #     instance.reply_to,
+            #     instance.email_subject,
+            #     instance.description
+            # )
+            leadboard_send_mail.apply_async(
+                args=[instance.message_id,
+                      instance.company.name,
+                      instance.email_to,
+                      instance.reply_to,
+                      instance.email_subject,
+                      instance.description
+                      ],
+                eta=scheduled_date)
 
 
 post_save.connect(post_save_send_email_log, sender=EmailLog)

@@ -24,7 +24,8 @@ EXTERNAL_INSTALLED_APPS = [
     'django_celery_beat',
     #  for logging and sending mail
     #  it enable us to view failed and sent mails
-
+    # Corsheaders
+    "corsheaders",
 ]
 
 LOCAL_INSTALLED_APPS = [

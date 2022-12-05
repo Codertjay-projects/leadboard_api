@@ -47,11 +47,8 @@ def create_group_schedule_log(group_schedule_id):
         send_group_email_log, created = SendGroupsEmailSchedulerLog.objects.get_or_create(
             email=item.get("email"),
             send_groups_email_scheduler=group_schedule,
-            company=group_schedule.company
+            company=group_schedule.company,
+            first_name=item.get("first_name"),
+            last_name=item.get("last_name"),
         )
-        if created:
-            # Get the first name and last name from the dictionary on the list
-            send_group_email_log.first_name = item.get("first_name")
-            send_group_email_log.last_name = item.get("last_name")
-            send_group_email_log.save()
     return True

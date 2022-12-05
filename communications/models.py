@@ -52,7 +52,7 @@ def post_save_send_custom_email_from_log(sender, instance, *args, **kwargs):
             email_to=instance.email,
             email_from=instance.company.name,
             email_subject=email_scheduler.email_subject,
-            description=email_scheduler.description,
+            description=description,
             reply_to=instance.company.customer_support_email,
             scheduled_date=email_scheduler.scheduled_date
         )
@@ -118,29 +118,31 @@ class SendGroupsEmailSchedulerLog(models.Model):
 
 def post_save_send_group_email_from_log(sender, instance, *args, **kwargs):
     # This creates a task on celery and sends an email on the scheduled time
-    if instance.status == "PENDING" or instance.status == "FAILED":
-        # The task to send the mail
-        # Update the description and append redirect url to all links which enables us to know links clicked
-        description = append_links_and_id_to_description(
-            description=instance.send_groups_email_scheduler.description,
-            email_id=instance.id,
-            email_type="custom"
-        )
-        # modify the names on the description
-        description = modify_names_on_description(description, instance.first_name, instance.last_name)
+    if instance.send_groups_email_scheduler.email_to.count() > 0:
+        # if the groups is  set because an instance is created before adding the many-to-many field
+        if instance.status == "PENDING" or instance.status == "FAILED":
+            # The task to send the mail
+            # Update the description and append redirect url to all links which enables us to know links clicked
+            description = append_links_and_id_to_description(
+                description=instance.send_groups_email_scheduler.description,
+                email_id=instance.id,
+                email_type="group"
+            )
+            # modify the names on the description
+            description = modify_names_on_description(description, instance.first_name, instance.last_name)
 
-        # Create the EmailLog which once created sends an email
-        email_log, created = EmailLog.objects.get_or_create(
-            company=instance.company,
-            message_id=instance.id,
-            message_type="GROUP",
-            email_to=instance.email,
-            email_from=instance.company.name,
-            email_subject=instance.send_groups_email_scheduler.email_subject,
-            description=description,
-            reply_to=instance.company.customer_support_email,
-            scheduled_date=instance.send_groups_email_scheduler.scheduled_date
-        )
+            # Create the EmailLog which once created sends an email
+            email_log, created = EmailLog.objects.get_or_create(
+                company=instance.company,
+                message_id=instance.id,
+                message_type="GROUP",
+                email_to=instance.email,
+                email_from=instance.company.name,
+                email_subject=instance.send_groups_email_scheduler.email_subject,
+                description=description,
+                reply_to=instance.company.customer_support_email,
+                scheduled_date=instance.send_groups_email_scheduler.scheduled_date
+            )
 
 
 post_save.connect(post_save_send_group_email_from_log, sender=SendGroupsEmailSchedulerLog)
