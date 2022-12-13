@@ -206,8 +206,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
-    r"^http://localhost:3001",
-    r"^http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3000",
+]
+CSRF_TRUSTED_ORIGINS = [
+    'https://localhost:3000',
+    'https://www.test-cors.org',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
