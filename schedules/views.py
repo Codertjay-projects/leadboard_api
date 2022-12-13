@@ -26,6 +26,7 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
     search_fields = [
         "first_name",
         "last_name",
+        "email",
         "assigned_marketer__first_name",
         "assigned_marketer__last_name",
         "age_range",

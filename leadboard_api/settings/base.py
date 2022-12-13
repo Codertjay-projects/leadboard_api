@@ -16,6 +16,7 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from decouple import config
 from .installed import INSTALLED_APPS
+from corsheaders.defaults import default_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -30,8 +31,6 @@ SECRET_KEY = config("SECRET_KEY")
 INSTALLED_APPS = INSTALLED_APPS
 
 MIDDLEWARE = [
-    # Todo : for heroku will be removed later
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -47,8 +46,7 @@ ROOT_URLCONF = "leadboard_api.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / 'templates']
-        ,
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -137,7 +135,8 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
 EMAIL_HOST = config('EMAIL_HOST', default="smtp.sendgrid.net")
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
@@ -199,19 +198,21 @@ CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379"
 # Send test mail and other bugs info
 ADMINS = [("Afenikhena Favour", ("dev.codertjay@gmail.com"))]
 
-# Todo: note i installed  gunicorn dj-database-url whitenoise psycopg2 for heroku
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
 
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
-    "http://localhost:3001",
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:5500",
 ]
+
+# CORS_ALLOW_ALL_ORIGINS = True
+
+
 CSRF_TRUSTED_ORIGINS = [
-    'https://localhost:3000',
-    'https://www.test-cors.org',
+    'http://localhost:3001',
+    'http://localhost:3000',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -224,15 +225,7 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'leadboard-sk-header'
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "leadboard-sk-header",
 ]
