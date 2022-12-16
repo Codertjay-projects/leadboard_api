@@ -130,7 +130,6 @@ class UserProfile(models.Model):
     date_of_birth = models.DateField(blank=True, null=True)
     profile_image = models.ImageField(blank=True, null=True, upload_to="user_profile")
     address = models.CharField(max_length=250, blank=True, null=True)
-    business_name = models.CharField(max_length=250, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     nationality = models.CharField(max_length=250, blank=True, null=True)
     country = models.CharField(max_length=250, blank=True, null=True)

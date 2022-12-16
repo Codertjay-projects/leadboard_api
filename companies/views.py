@@ -308,7 +308,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             email_from=company.name,
             email_to=email,
             reply_to=company.customer_support_email,
-            email_subject=f"Invitation to Join {company.company_name}",
+            email_subject=f"Invitation to Join {company.name}",
             description=f"""<h1> Hello {first_name} - {last_name}. </h1>
                      <p>{company.name} has invited you to join the their organisation you can use this code to join 
                      {company_invite.invite_id}</p>   """,

@@ -5,7 +5,6 @@ from django.db import models
 from companies.models import Group, Company
 # Create your models here.
 from feedbacks.models import Feedback
-from high_value_contents.models import HighValueContent
 from users.models import User
 
 LEAD_SOURCE = (

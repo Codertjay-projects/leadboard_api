@@ -133,6 +133,8 @@ class CompanySerializer(serializers.ModelSerializer):
             "industry",
             "overview",
             "company_size",
+            "info_email",
+            "customer_support_email",
             "headquater",
             "founded",
             "locations",
