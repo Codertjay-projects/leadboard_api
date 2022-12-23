@@ -68,6 +68,7 @@ class Company(models.Model):
     )
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     name = models.CharField(max_length=250)
+    username = models.SlugField(unique=True, blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     phone = models.CharField(max_length=25)
     info_email = models.EmailField(blank=True, null=True)
@@ -82,7 +83,8 @@ class Company(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
-
+    def __str__(self):
+        return f"{self.username} -- {self.name}"
     def admins_count(self):
         """
         this returns the total number of admin in a company
@@ -171,7 +173,8 @@ class CompanyEmployee(models.Model):
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
-    role = models.CharField(choices=ROLE_CHOICES, max_length=250)
+    role = models.CharField(choices=ROLE_CHOICES, max_length=250,blank=True,null=True)
+    invited= models.BooleanField(default=True)
     status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
     timestamp = models.DateTimeField(default=timezone.now)
     lead_actions_count = models.IntegerField(default=0)
@@ -191,13 +194,15 @@ INVITE_STATUS = (
 class CompanyInvite(models.Model):
     """This is meant to create an invitation which would be sent to the user to join the company """
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    first_name = models.CharField(max_length=250)
-    last_name = models.CharField(max_length=250)
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    first_name = models.CharField(max_length=250, blank=True, null=True)
+    last_name = models.CharField(max_length=250, blank=True, null=True)
     # this id is sent to the user upon creating
     invite_id = models.CharField(max_length=50, blank=True, null=True)
     email = models.EmailField()
-    role = models.CharField(max_length=250, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=250, choices=ROLE_CHOICES, blank=True, null=True)
     status = models.CharField(max_length=250, choices=INVITE_STATUS, default="PENDING")
+    invited = models.BooleanField(default=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -236,5 +241,3 @@ def pre_save_group_receiver(sender, instance, *args, **kwargs):
 
 
 pre_save.connect(pre_save_group_receiver, sender=Group)
-
-

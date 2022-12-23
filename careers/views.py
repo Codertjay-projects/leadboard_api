@@ -42,7 +42,7 @@ class JobListCreateAPIView(ListCreateAPIView):
             # if only the company was passed
             queryset = self.filter_queryset(self.queryset.filter(company=company))
         else:
-            queryset = self.filter_queryset(self.queryset)
+            queryset = self.filter_queryset(self.queryset.all())
         # Filter the date if it is passed in the params like
         # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
         # You will get more from the documentation

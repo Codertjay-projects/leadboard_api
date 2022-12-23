@@ -1,6 +1,21 @@
+import random
+import string
+
 from high_value_contents.models import HighValueContent
 from users.models import User
 from companies.models import Group, Company
+
+
+def get_username_not_in_db(company: Company, username) -> str:
+    """"this returns a username that is not in the  database"""
+    item_exist = Company.objects.filter(username=username).first()
+    if item_exist:
+        # if the item exist recreate the username
+        # create random to string
+        append_string = random.choices(string.ascii_letters, k=2)
+        append_int = random.randint(1, 100)
+        get_username_not_in_db(company, f"{username}_{append_string}{append_int}")
+    return username
 
 
 def check_group_is_under_company(company: Company, group: Group):

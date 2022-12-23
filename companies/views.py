@@ -18,7 +18,7 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     CompanyEmployeeSerializer
-from .utils import check_admin_access_company
+from .utils import check_admin_access_company, get_username_not_in_db
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -292,7 +292,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         if email:
             if CompanyInvite.objects.filter(email=email, company=self.get_company()).first():
                 return Response({"error": "User has already been sent an invitation"}, status=400)
-        serializer.save(company=self.get_company())
+        serializer.save(company=self.get_company(), staff=self.request.user)
         # Get the invitation created
         company_invite = CompanyInvite.objects.filter(company=self.get_company(),
                                                       email=serializer.validated_data.get("email")).first()
@@ -371,3 +371,43 @@ class InvitedEmployeeSearchCompanyAPIView(ListAPIView):
             if company:
                 company_list.append(company)
         return company_list
+
+
+class CompanyLittleInfoListAPIView(ListAPIView):
+    permission_classes = [NotLoggedInPermission]
+    serializer_class = CompanyInfoSerializer
+    queryset = Company.objects.all()
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "username"
+    ]
+
+    def list(self, request, *args, **kwargs):
+        """
+        :return all company with little info and also add upto three username which is not in the company
+        """
+
+        search = self.request.query_params.get("search")
+        if not search:
+            return Response({"error": "Search params must be passed"}, status=400)
+        # Norms the request has been filtered but with the search I need to also return username that has not been used
+        queryset = self.filter_queryset(self.get_queryset())
+        usernames = [
+            get_username_not_in_db(queryset, search),
+            get_username_not_in_db(queryset, f"{search}_1"),
+            get_username_not_in_db(queryset, f"{search}_2"),
+        ]
+
+        serializer = self.get_serializer(queryset, many=True)
+        if queryset.count() == 0:
+            company_exists = False
+        else:
+            company_exists = True
+        serialized_data = [
+            {
+                "company_exists": company_exists
+            },
+            usernames,
+            serializer.data
+        ]
+        return Response(serialized_data)

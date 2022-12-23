@@ -86,6 +86,7 @@ class CompanyCreateUpdateSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "username",
             "website",
             "phone",
             "info_email",
@@ -128,6 +129,7 @@ class CompanySerializer(serializers.ModelSerializer):
             "id",
             "owner",
             "name",
+            "username",
             "website",
             "phone",
             "industry",
@@ -153,19 +155,15 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
     """
     This is  contains little info about a company
     """
-    industry = IndustrySerializer()
 
     class Meta:
         model = Company
         fields = [
             "id",
             "name",
-            "website",
-            "phone",
-            "industry",
-            "timestamp",
+            "username",
         ]
-        read_only_fields = ["id", "timestamp", ]
+        read_only_fields = ["id", ]
 
 
 class CompanyModifyUserSerializer(serializers.Serializer):
@@ -197,11 +195,13 @@ class CompanyInviteSerializer(serializers.ModelSerializer):
     """
     this serializer is meant to create an invitation for a user to JOIN
     """
+    staff = UserDetailSerializer(read_only=True)
 
     class Meta:
         model = CompanyInvite
         fields = [
             "id",
+            "staff",
             "first_name",
             "invite_id",
             "email",
@@ -209,4 +209,4 @@ class CompanyInviteSerializer(serializers.ModelSerializer):
             "status",
             "timestamp",
         ]
-        read_only_fields = ["invite_id", "timestamp", "status"]
+        read_only_fields = ["invite_id", "timestamp", "status", "staff"]
