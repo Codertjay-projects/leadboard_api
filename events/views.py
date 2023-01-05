@@ -33,10 +33,10 @@ class EvenListAPIView(ListAPIView):
         queryset = self.filter_queryset(self.queryset.all())
         # Base on PENDING,PAST and default returns all
         event_time = self.request.query_params.get("company_id")
-        if event_time == "PENDING":
+        if event_time == "UPCOMING":
             # Which means the event has not yet started
             queryset = self.filter_queryset(self.queryset.filter(start_date__gte=timezone.now()))
-        elif event_time == "PAST":
+        elif event_time == "COMPLETED":
             # Which means the event has started and have being completed
             queryset = self.filter_queryset(self.queryset.filter(start_date__lt=timezone.now()))
 
