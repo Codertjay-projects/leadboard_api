@@ -286,35 +286,36 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         serializer = CompanyInviteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # Check if the mail has been used by the company before and also get the info
-        email = serializer.validated_data.get("email")
-        first_name = serializer.validated_data.get("first_name")
-        last_name = serializer.validated_data.get("last_name")
-        if email:
-            if CompanyInvite.objects.filter(email=email, company=self.get_company()).first():
-                return Response({"error": "User has already been sent an invitation"}, status=400)
-        serializer.save(company=self.get_company(), staff=self.request.user)
-        # Get the invitation created
-        company_invite = CompanyInvite.objects.filter(company=self.get_company(),
-                                                      email=serializer.validated_data.get("email")).first()
-        if not company_invite:
-            return Response(
-                {"error": "Error creating invite. If the error continues please contact our customer support"},
-                status=500)
+        if CompanyInvite.objects.filter(email=serializer.validated_data.get("email"),
+                                        company=self.get_company()).first():
+            return Response({"error": "User has already been sent an invitation"}, status=400)
+        company_invite = serializer.save(company=self.get_company(), staff=self.request.user)
+        # Check if the user is part of the leadboard and if he is we just
+        # add the user to the company employee
+        user = User.objects.filter(email=company_invite.email).first()
+        if user:
+            # if the user exists we create the company employee and add this user
+            CompanyEmployee.objects.create(
+                user=user, company=self.get_company(), role=company_invite.role,
+                invited=True,
+                status="ACTIVE"
+            )
+            # Make the invite active
+            company_invite.status = "ACTIVE"
+            company_invite.save()
         # Send request to user to join the company
         email_Log = EmailLog.objects.create(
-            company=company,
-            message_id=uuid.uuid4(),
-            message_type="OTHERS",
-            email_from=company.name,
-            email_to=email,
-            reply_to=company.customer_support_email,
-            email_subject=f"Invitation to Join {company.name}",
-            description=f"""<h1> Hello {first_name} - {last_name}. </h1>
-                     <p>{company.name} has invited you to join the their organisation you can use this code to join 
-                     {company_invite.invite_id}</p>   """,
+            company=company, message_id=uuid.uuid4(), message_type="OTHERS",
+            email_from=company.name, email_to=serializer.validated_data.get("email"),
+            reply_to=company.customer_support_email, email_subject=f"Invitation to Join {company.name}",
+            description=f"""
+            <h1> Hello {serializer.validated_data.get("first_name")} - 
+            {serializer.validated_data.get("last_name")}. </h1>
+             <p>{company.name} has invited you to join the their organisation
+              you can use this code to join 
+             {company_invite.invite_id}</p>   """,
             scheduled_date=timezone.now()
         )
-
         return Response(serializer.data, status=201)
 
 
@@ -343,6 +344,14 @@ class CompanyEmployeesListAPIView(ListAPIView):
         company = self.get_company()
         company_employees = company.company_employees()
         queryset = self.filter_queryset(company_employees)
+
+        # Get the role of the user
+        role = self.request.query_params.get("role")
+        if role == "ADMIN":
+            queryset = self.filter_queryset(company_employees.filter(role="ADMIN"))
+        elif role == "MARKETER":
+            queryset = self.filter_queryset(company_employees.filter(role="MARKETER"))
+
         # Filter the date if it is passed in the params like
         # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
         # You will get more from the documentation

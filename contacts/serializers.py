@@ -48,6 +48,7 @@ class UnSubscriberSerializer(serializers.ModelSerializer):
     """
     This is used to list all users that unsubsribe and does not want to recieve email
     """
+    email = serializers.EmailField(required=False)
 
     class Meta:
         model = UnSubscriber
@@ -58,3 +59,4 @@ class UnSubscriberSerializer(serializers.ModelSerializer):
             "message",
             "timestamp",
         ]
+        read_only_fields = ["id", "company", "timestamp"]

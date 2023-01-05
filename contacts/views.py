@@ -1,16 +1,20 @@
 from django.http import Http404
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, DestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from communications.utils import check_email
 from companies.models import Company, Group
-from companies.utils import check_marketer_and_admin_access_company, get_assigned_marketer_from_company_lead
+from companies.utils import check_marketer_and_admin_access_company, get_assigned_marketer_from_company_lead, \
+    check_admin_access_company
+
 from leads.models import LeadContact
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from users.utils import date_filter_queryset
-from .models import ContactUs, Newsletter
-from .serializers import ContactUsSerializer, AddToLeadBoardSerializer, NewsletterSerializer
+from .models import ContactUs, Newsletter, UnSubscriber
+from .serializers import ContactUsSerializer, AddToLeadBoardSerializer, NewsletterSerializer, UnSubscriberSerializer
 
 
 class ContactUsViewSetsAPIView(ModelViewSet):
@@ -186,4 +190,80 @@ class NewsletterDeleteAPIView(DestroyAPIView):
         return Response(status=204)
 
 
+class UnSubscribeAPIView(ListCreateAPIView):
+    """
+    This is used to list all unsubscribers in a company and also unsubscriber from a company using the
+    create function call
+    """
+    serializer_class = UnSubscriberSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "email",
+        "message",
+    ]
+    permission_classes = [NotLoggedInPermission]
+    queryset = UnSubscriber.objects.all()
 
+    def get_company(self, *args, **kwargs):
+        # the company id
+        company_id = self.request.query_params.get("company_id")
+        #  this filter base on the company id  provided
+        if not company_id:
+            raise Http404
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def get_queryset(self):
+        company = self.get_company()
+        queryset = self.filter_queryset(self.queryset.filter(company=company))
+        if queryset:
+            # Filter the date if it is passed in the params like
+            # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+            # You will get more from the documentation
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        # Check if the user is authenticated
+        if not request.user.is_authenticated:
+            return Response({"error": "Currently not authenticated. Please login to view this page"}, status=401)
+        queryset = self.filter_queryset(self.get_queryset())
+        # Check if the user have permission to view the list
+        if not check_admin_access_company(self.request.user, self.get_company()):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        # The user email is passed in the params
+        email = self.request.query_params.get("email")
+        if not email:
+            # Check if the mail is not none
+            return Response({"error": "Email not passed"}, status=400)
+        # Check if the email is valid
+        if not check_email(email):
+            return Response({"error": "Email not valid"}, status=400)
+
+        # Remove the lead group tied to this user on the lead contact
+        lead_contact = LeadContact.objects.filter(company=self.get_company(), email=email).first()
+        if not lead_contact:
+            return Response({"error": "Not a subscriber. Contact our support team to get help "}, status=400)
+        # if the lead_contact exists i remove all the groups which the lead contact contains
+        if lead_contact.groups.count() == 0:
+            return Response({"error": "Already unsubscribed"}, status=400)
+        lead_contact.groups.clear()
+        lead_contact.save()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(email=email, company=self.get_company())
+
+        return Response({"message": "Successfully unsubscribed"}, status=200)

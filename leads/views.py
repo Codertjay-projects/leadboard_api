@@ -3,7 +3,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
-from companies.models import Company
+from companies.models import Company, CompanyEmployee
 from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access, \
     get_assigned_marketer_from_company_user_schedule_call, get_assigned_marketer_from_company_lead
 from feedbacks.models import Feedback
@@ -153,7 +153,14 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
                 next_schedule=feedback_next_schedule,
                 staff=self.request.user
             )
-        """End Feedback create"""
+
+            """End Feedback create"""
+            # Update the lead feedback action count
+            company_employee = CompanyEmployee.objects.filter(company=instance.company, user=self.request.user).first()
+            if company_employee:
+                company_employee.lead_actions_count += 1
+                company_employee.save()
+
         ################################################################
 
         return Response(serializer.data)
