@@ -60,7 +60,8 @@ class EventSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "company",
-            "timestamp"
+            "timestamp",
+            "slug",
         ]
 
     def validate_start_date(self, start_date):
