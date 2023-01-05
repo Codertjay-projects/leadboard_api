@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ContactUs, Newsletter
+from .models import ContactUs, Newsletter, UnSubscriber
 
 
 class ContactUsSerializer(serializers.ModelSerializer):
@@ -42,3 +42,19 @@ class NewsletterSerializer(serializers.ModelSerializer):
         ]
         model = Newsletter
         read_only_fields = ["id", "company", "timestamp"]
+
+
+class UnSubscriberSerializer(serializers.ModelSerializer):
+    """
+    This is used to list all users that unsubsribe and does not want to recieve email
+    """
+
+    class Meta:
+        model = UnSubscriber
+        fields = [
+            "id",
+            "company",
+            "email",
+            "message",
+            "timestamp",
+        ]

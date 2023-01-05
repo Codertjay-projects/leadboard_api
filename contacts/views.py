@@ -184,3 +184,6 @@ class NewsletterDeleteAPIView(DestroyAPIView):
             return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)
+
+
+

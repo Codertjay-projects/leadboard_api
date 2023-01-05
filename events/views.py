@@ -31,6 +31,15 @@ class EvenListAPIView(ListAPIView):
         """this is getting the filtered queryset from search filter
                  then adding more filtering   """
         queryset = self.filter_queryset(self.queryset.all())
+        # Base on PENDING,PAST and default returns all
+        event_time = self.request.query_params.get("company_id")
+        if event_time == "PENDING":
+            # Which means the event has not yet started
+            queryset = self.filter_queryset(self.queryset.filter(start_date__gte=timezone.now()))
+        elif event_time == "PAST":
+            # Which means the event has started and have being completed
+            queryset = self.filter_queryset(self.queryset.filter(start_date__lt=timezone.now()))
+
         if queryset:
             # Filter the date if it is passed in the params like
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...

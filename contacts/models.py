@@ -47,3 +47,16 @@ class Newsletter(models.Model):
     email = models.EmailField()
     on_blog = models.BooleanField(default=False)
     timestamp = models.DateTimeField(default=timezone.now)
+
+
+class UnSubscriber(models.Model):
+    """
+    This contains list of info about a user who would like to unsubscribe from the lead
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    email = models.EmailField()
+    message = models.CharField(max_length=500)
+    timestamp = models.DateTimeField(default=timezone.now)

@@ -83,8 +83,10 @@ class Company(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
+
     def __str__(self):
         return f"{self.username} -- {self.name}"
+
     def admins_count(self):
         """
         this returns the total number of admin in a company
@@ -173,8 +175,8 @@ class CompanyEmployee(models.Model):
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
-    role = models.CharField(choices=ROLE_CHOICES, max_length=250,blank=True,null=True)
-    invited= models.BooleanField(default=True)
+    role = models.CharField(choices=ROLE_CHOICES, max_length=250, blank=True, null=True)
+    invited = models.BooleanField(default=True)
     status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
     timestamp = models.DateTimeField(default=timezone.now)
     lead_actions_count = models.IntegerField(default=0)

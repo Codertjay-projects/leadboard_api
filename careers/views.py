@@ -1,5 +1,5 @@
 import uuid
-
+import ast
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -16,7 +16,7 @@ from users.permissions import NotLoggedInPermission, IsAuthenticatedOrReadOnly, 
 from users.utils import date_filter_queryset
 from .models import Job, JobType, Applicant
 from .serializers import JobCreateUpdateSerializer, JobListDetailSerializer, JobTypeSerializer, ApplicantSerializer, \
-    ApplicantActionSerializer
+    ApplicantActionSerializer, ApplicantEducationSerializer, ApplicantExperienceSerializer
 
 
 class JobListCreateAPIView(ListCreateAPIView):
@@ -38,6 +38,9 @@ class JobListCreateAPIView(ListCreateAPIView):
         if company and job_category:
             # if the company exists and also the job_category was passed
             queryset = self.filter_queryset(self.queryset.filter(company=company, job_category__icontains=job_category))
+        elif job_category:
+            # if only the job_category was passed
+            queryset = self.filter_queryset(self.queryset.filter(job_category__icontains=job_category))
         elif company:
             # if only the company was passed
             queryset = self.filter_queryset(self.queryset.filter(company=company))
@@ -154,13 +157,26 @@ class JobApplyAPIView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         if self.get_job().applicants.filter(email=serializer.validated_data.get("email")).exists():
             return Response(status=400, data={"error": "Already applied to this job post."})
-        serializer.save(company=self.get_job().company)
-        # Get the applicant which was saved
-        applicant = Applicant.objects.filter(id=serializer.data.get("id"), company=self.get_job().company).first()
-        if not applicant:
-            return Response(status=404, data={"error": "Applicant not saved"})
-        job = self.get_job()
-        job.applicants.add(applicant)
+        # Once saved it returns the applicants
+        applicant = serializer.save(company=self.get_job().company, job=self.get_job())
+
+        # Make sure the list is not stringify
+        education_data = ast.literal_eval(self.request.data.get("education"))
+        if isinstance(education_data,list):
+            # Check if the instance is a list and also check the length below
+            if len(education_data) >0:
+                education_serializer = ApplicantEducationSerializer(data=education_data, many=True)
+                education_serializer.is_valid(raise_exception=True)
+                education_serializer.save(applicant=applicant, job=self.get_job())
+
+        # Make sure the list is not stringify
+        if isinstance(education_data,list):
+            # Check if the instance is a list and also check the length below
+            if len(education_data) >0:
+                experience_data = ast.literal_eval(self.request.data.get("experience"))
+                experience_serializer = ApplicantExperienceSerializer(data=experience_data, many=True)
+                experience_serializer.is_valid(raise_exception=True)
+                experience_serializer.save(applicant=applicant, job=self.get_job())
         return Response({"message": "Successfully applied to this job"}, status=200)
 
 
@@ -245,7 +261,7 @@ class JobAcceptAPIView(APIView):
                 message_id=uuid.uuid4(),
                 message_type="CAREER",
                 email_from=applicant.company.name,
-                email_to=serializer.validated_data.get("email"),
+                email_to=applicant.email,
                 reply_to=applicant.company.customer_support_email,
                 email_subject=f"Accepted by {applicant.company.name}",
                 description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
@@ -263,7 +279,7 @@ class JobAcceptAPIView(APIView):
                 message_id=uuid.uuid4(),
                 message_type="CAREER",
                 email_from=applicant.company.name,
-                email_to=serializer.validated_data.get("email"),
+                email_to=applicant.email,
                 reply_to=applicant.company.customer_support_email,
                 email_subject=f"Rejected by {applicant.company.name}",
                 description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>

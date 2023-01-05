@@ -1,9 +1,7 @@
 from rest_framework import serializers
 
-from careers.models import Job, Applicant, JobType, APPLICANT_STATUS_CHOICES
+from careers.models import Job, Applicant, JobType, APPLICANT_STATUS_CHOICES, ApplicantExperience, ApplicantEducation
 from django.core.validators import FileExtensionValidator
-
-from users.validators import MaxSizeValidator
 
 
 class JobCreateUpdateSerializer(serializers.ModelSerializer):
@@ -55,9 +53,12 @@ class ApplicantSerializer(serializers.ModelSerializer):
     this contains list of the applicants in a serialized format on a job detail
     I actually set the maximum file size for pdf to be 10
     """
-    resume = serializers.FileField(validators=[FileExtensionValidator(['pdf'], MaxSizeValidator(10))])
+    resume = serializers.FileField(validators=[FileExtensionValidator(['pdf'])])
     position = serializers.SerializerMethodField(read_only=True)
     job_id = serializers.SerializerMethodField(read_only=True)
+    # The experience and education are both json field
+    experience = serializers.SerializerMethodField(read_only=True)
+    education = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Applicant
@@ -84,13 +85,30 @@ class ApplicantSerializer(serializers.ModelSerializer):
             "message",
             "timestamp",
         ]
-        read_only_fields = ["status", "id", "timestamp", "job_id"]
+        read_only_fields = ["status", "id", "timestamp", "job_id", "experience", "education"]
 
     def get_position(self, obj):
         return str(obj.job_position)
 
     def get_job_id(self, obj):
+        """Returns the ID of the job post"""
         return str(obj.job_id)
+
+    def get_experience(self, obj: Applicant):
+        """
+        The applicant experience helper to return the serializer
+        :param obj:
+        :return:
+        """
+        serializer = ApplicantExperienceSerializer(obj.applicant_experience(), many=True)
+        return serializer.data
+
+    def get_education(self, obj: Applicant):
+        """
+         The applicant education helper to return the serialzier
+        """
+        serializer = ApplicantEducationSerializer(obj.applicant_education(), many=True)
+        return serializer.data
 
 
 class JobListDetailSerializer(serializers.ModelSerializer):
@@ -118,6 +136,50 @@ class JobListDetailSerializer(serializers.ModelSerializer):
     def get_applicants_counts(self, obj: Job):
         """return the total numbers of applicants"""
         return obj.applicant_counts
+
+
+class ApplicantExperienceSerializer(serializers.ModelSerializer):
+    """
+    This serializer is used to create experience under the applicant and also list
+    """
+
+    class Meta:
+        model = ApplicantExperience
+        fields = [
+            "id",
+            "job_id",
+            "applicant_id",
+            "job_title",
+            "company_name",
+            "description",
+            "from_date",
+            "to_date",
+            "still_working",
+            "timestamp",
+        ]
+        read_only_fields = ["id", "timestamp", ]
+
+
+class ApplicantEducationSerializer(serializers.ModelSerializer):
+    """
+    This serializer is used to create education under the applicant and also list
+    """
+
+    class Meta:
+        model = ApplicantEducation
+        fields = [
+            "id",
+            "job_id",
+            "applicant_id",
+            "institution",
+            "course",
+            "description",
+            "from_date",
+            "to_date",
+            "still_schooling",
+            "timestamp",
+        ]
+        read_only_fields = ["id", "timestamp", ]
 
 
 class ApplicantActionSerializer(serializers.Serializer):
