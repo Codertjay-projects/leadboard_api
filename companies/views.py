@@ -452,8 +452,8 @@ class CompanyAnalyTicsAPIView(APIView):
         # List of file downloaded by users
         downloaded_file_count = DownloadHighValueContent.objects.filter(high_value_content__company=company).count()
         # list of all zipped files
-        zipped_files_count = company.highvaluecontent_set.filter(file__endswith="pdf")
-        pdf_files_count = company.highvaluecontent_set.filter(file__endswith="zip")
+        zipped_files_count = company.highvaluecontent_set.filter(file__endswith="zip").count()
+        pdf_files_count = company.highvaluecontent_set.filter(file__endswith="pdf").count()
 
         data = {
             "lead_count": lead_count,

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-import high_value_contents
 from high_value_contents.models import HighValueContent, DownloadHighValueContent
 from users.serializers import UserSerializer
 
@@ -14,6 +13,7 @@ class HighValueContentSerializer(serializers.ModelSerializer):
     file_size = serializers.SerializerMethodField(read_only=True)
     created_by = UserSerializer(read_only=True)
     last_edit_by = UserSerializer(read_only=True)
+    download_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = HighValueContent
@@ -35,6 +35,7 @@ class HighValueContentSerializer(serializers.ModelSerializer):
             "schedule_link",
             "last_edit",
             "file_extension",
+            "download_count",
             "file_size",
             "upload_date",
             "publish",
@@ -58,6 +59,9 @@ class HighValueContentSerializer(serializers.ModelSerializer):
             file_size_megabytes = file.size / 1048576
             return round(file_size_megabytes, 2)
         return None
+
+    def get_download_count(self, obj: HighValueContent):
+        return obj.downloadhighvaluecontent_set.count()
 
 
 class DownloadHighValueContentSerializer(serializers.ModelSerializer):

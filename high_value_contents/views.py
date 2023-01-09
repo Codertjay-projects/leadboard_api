@@ -64,7 +64,7 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
             company=self.get_company()
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(company=company, group=group,created_by=self.request.user)
+        serializer.save(company=company, group=group, created_by=self.request.user)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=201, headers=headers)
 
@@ -131,7 +131,7 @@ class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
             You made a request request to download {high_value_content.title} Click the link to download <a 
             href="{config("DOMAIN_NAME")}/api/v1/communications/update_links_clicked/?email_id=
             {serializer.data.get("id")}&email_type=high_value_content&redirect_url={high_value_content.link}"> 
-            {high_value_content.title}</a>
+            {high_value_content.title} or click to download file {high_value_content.file}</a>
             """,
             scheduled_date=timezone.now()
         )
