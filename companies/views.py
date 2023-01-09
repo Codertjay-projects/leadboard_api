@@ -438,14 +438,14 @@ class CompanyAnalyTicsAPIView(APIView):
         # Get the company
         company = self.get_company()
         lead_count = company.leadcontact_set.count()
-        schedule_count_count = company.userschedulecall_set.count()
+        schedule_count = company.userschedulecall_set.count()
         marketer_count = company.company_employees().filter(role="MARKETER").count()
         admin_count = company.company_employees().filter(role="ADMIN").count()
         # to get the conversion count I use the schedule
         conversion_count = company.userschedulecall_set.filter(will_pay=True, eligible=True,
                                                                will_get_laptop=True).count()
         # Get the last 24 hours lead created
-        last_24_hours_lead = timezone.datetime.now() - timezone.timedelta(days=1)
+        last_24_hours_lead = timezone.now() - timezone.timedelta(days=1)
         last_24_hours_lead_count = company.leadcontact_set.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_schedule_count = company.userschedulecall_set.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_feedback = company.feedback_set.filter(timestamp__gte=last_24_hours_lead).count()
@@ -454,10 +454,12 @@ class CompanyAnalyTicsAPIView(APIView):
         # list of all zipped files
         zipped_files_count = company.highvaluecontent_set.filter(file__endswith="zip").count()
         pdf_files_count = company.highvaluecontent_set.filter(file__endswith="pdf").count()
+        other_files_count = company.highvaluecontent_set.all().exclude(
+            file__endswith="pdf").exclude(file__endswith="zip").count()
 
         data = {
             "lead_count": lead_count,
-            "schedule_count_count": schedule_count_count,
+            "schedule_count": schedule_count,
             "marketer_count": marketer_count,
             "conversion_count": conversion_count,
             "last_24_hours_lead_count": last_24_hours_lead_count,
@@ -467,5 +469,6 @@ class CompanyAnalyTicsAPIView(APIView):
             "downloaded_file_count": downloaded_file_count,
             "zipped_files_count": zipped_files_count,
             "pdf_files_count": pdf_files_count,
+            "other_files_count": other_files_count,
         }
         return Response({"message": "company analytics", "data": data}, status=200)

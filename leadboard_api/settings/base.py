@@ -145,7 +145,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
-
 #  the default rest framework setting
 # anon is for the AnonRateThrottle base on anonymous user
 #  is for the UserRateThrottle base on logged-in user
@@ -198,7 +197,6 @@ CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379"
 # Send test mail and other bugs info
 ADMINS = [("Afenikhena Favour", ("dev.codertjay@gmail.com"))]
 
-
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
@@ -225,7 +223,7 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "leadboard-sk-header",
 ]
+
