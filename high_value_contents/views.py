@@ -64,7 +64,7 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
             company=self.get_company()
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(company=company, group=group)
+        serializer.save(company=company, group=group,created_by=self.request.user)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=201, headers=headers)
 
@@ -76,7 +76,7 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
             return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        serializer.save(last_edit_by=self.request.user)
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):

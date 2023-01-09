@@ -6,6 +6,7 @@ from django.db.models.signals import pre_save
 from django.utils import timezone
 
 from companies.models import Company, Group
+from users.models import User
 from users.utils import create_slug
 
 LEAD_SOURCE = (
@@ -26,6 +27,10 @@ class HighValueContent(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, blank=True,
+                                   null=True, related_name="created_by")
+    last_edit_by = models.ForeignKey(User, on_delete=models.CASCADE, blank=True,
+                                     null=True, related_name="last_edit_by")
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, blank=True, null=True)
     title = models.CharField(max_length=120)
     slug = models.SlugField(max_length=120, null=False, unique=True)
