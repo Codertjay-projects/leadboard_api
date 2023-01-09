@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 # Create your models here.
+from companies.models import Company
 from users.models import User
 
 ACTION_CHOICES = (
@@ -56,6 +57,7 @@ class Feedback(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
+    company = models.ForeignKey(Company, blank=True, null=True, on_delete=models.CASCADE)
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField()

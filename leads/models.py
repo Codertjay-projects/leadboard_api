@@ -73,7 +73,6 @@ class LeadContact(models.Model):
     category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    # fixme : custom fields
 
     class Meta:
         ordering = ["-timestamp"]

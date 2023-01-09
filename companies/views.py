@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from email_logs.models import EmailLog
+from high_value_contents.models import DownloadHighValueContent
 from users.models import User
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset
@@ -420,3 +421,51 @@ class CompanyLittleInfoListAPIView(ListAPIView):
             serializer.data
         ]
         return Response(serialized_data)
+
+
+class CompanyAnalyTicsAPIView(APIView):
+    permission_classes = [LoggedInPermission]
+
+    def get_company(self):
+        #  get the company id from kwargs and also the group id
+        company_id = self.request.query_params.get("company_id")
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def get(self, request):
+        # Get the company
+        company = self.get_company()
+        lead_count = company.leadcontact_set.count()
+        schedule_count_count = company.userschedulecall_set.count()
+        marketer_count = company.company_employees().filter(role="MARKETER").count()
+        admin_count = company.company_employees().filter(role="ADMIN").count()
+        # to get the conversion count I use the schedule
+        conversion_count = company.userschedulecall_set.filter(will_pay=True, eligible=True,
+                                                               will_get_laptop=True).count()
+        # Get the last 24 hours lead created
+        last_24_hours_lead = timezone.datetime.now() - timezone.timedelta(days=1)
+        last_24_hours_lead_count = company.leadcontact_set.filter(timestamp__gte=last_24_hours_lead).count()
+        last_24_hours_schedule_count = company.userschedulecall_set.filter(timestamp__gte=last_24_hours_lead).count()
+        last_24_hours_feedback = company.feedback_set.filter(timestamp__gte=last_24_hours_lead).count()
+        # List of file downloaded by users
+        downloaded_file_count = DownloadHighValueContent.objects.filter(high_value_content__company=company).count()
+        # list of all zipped files
+        zipped_files_count = company.highvaluecontent_set.filter(file__endswith="pdf")
+        pdf_files_count = company.highvaluecontent_set.filter(file__endswith="zip")
+
+        data = {
+            "lead_count": lead_count,
+            "schedule_count_count": schedule_count_count,
+            "marketer_count": marketer_count,
+            "conversion_count": conversion_count,
+            "last_24_hours_lead_count": last_24_hours_lead_count,
+            "last_24_hours_schedule_count": last_24_hours_schedule_count,
+            "last_24_hours_feedback": last_24_hours_feedback,
+            "admin_count": admin_count,
+            "downloaded_file_count": downloaded_file_count,
+            "zipped_files_count": zipped_files_count,
+            "pdf_files_count": pdf_files_count,
+        }
+        return Response({"message": "company analytics", "data": data}, status=200)

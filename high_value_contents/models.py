@@ -36,7 +36,7 @@ class HighValueContent(models.Model):
     slug = models.SlugField(max_length=120, null=False, unique=True)
     description = models.TextField(max_length=500)
     thumbnail = models.FileField(upload_to='downloads', blank=True)
-    pdf_file = models.FileField(upload_to='downloads', blank=True)
+    file = models.FileField(upload_to='downloads', blank=True)
     link = models.URLField(blank=True, null=True)
     youtube_link = models.URLField(blank=True, null=True)
     vimeo_link = models.URLField(blank=True, null=True)

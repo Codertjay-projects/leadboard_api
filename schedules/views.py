@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
@@ -164,7 +165,8 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
                 feedback=feedback_content,
                 action=feedback_action,
                 next_schedule=feedback_next_schedule,
-                staff=self.request.user
+                staff=self.request.user,
+                company=company
             )
             """End Feedback create"""
             # Update the lead feedback action count

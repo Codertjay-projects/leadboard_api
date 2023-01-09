@@ -151,7 +151,8 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
                 feedback=feedback_content,
                 action=feedback_action,
                 next_schedule=feedback_next_schedule,
-                staff=self.request.user
+                staff=self.request.user,
+                company=instance.company
             )
 
             """End Feedback create"""

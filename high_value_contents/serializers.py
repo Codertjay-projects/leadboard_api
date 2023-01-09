@@ -27,7 +27,7 @@ class HighValueContentSerializer(serializers.ModelSerializer):
             "slug",
             "description",
             "thumbnail",
-            "pdf_file",
+            "file",
             "link",
             "youtube_link",
             "vimeo_link",
@@ -46,17 +46,17 @@ class HighValueContentSerializer(serializers.ModelSerializer):
                             "group"]
 
     def get_file_extension(self, obj):
-        file_extension = obj.pdf_file.name
+        file_extension = obj.file.name
         if file_extension:
             return file_extension.split(".")[-1]
         return None
 
-    def get_file_size(self, obj:HighValueContent):
-        file = obj.pdf_file
+    def get_file_size(self, obj: HighValueContent):
+        file = obj.file
         if file:
             # Convert the file size to megabytes
             file_size_megabytes = file.size / 1048576
-            return file_size_megabytes
+            return round(file_size_megabytes, 2)
         return None
 
 
