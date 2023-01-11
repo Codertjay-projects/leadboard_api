@@ -200,17 +200,15 @@ ADMINS = [("Afenikhena Favour", ("dev.codertjay@gmail.com"))]
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
+    r"^https://instincthub-oxyka.ondigitalocean.app$",
     "http://localhost:3000",
     "http://localhost:3001",
-    # "http://127.0.0.1:5500",
 ]
-
-# CORS_ALLOW_ALL_ORIGINS = True
-
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3001',
     'http://localhost:3000',
+    "https://instincthub-oxyka.ondigitalocean.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -226,4 +224,3 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "leadboard-sk-header",
 ]
-
