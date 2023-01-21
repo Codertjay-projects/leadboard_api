@@ -32,7 +32,8 @@ urlpatterns = [
     path("api/v1/events/", include("events.urls")),
     path("api/v1/contacts/", include("contacts.urls")),
     path("api/v1/careers/", include("careers.urls")),
-    path("api/v1/communications/", include("communications.urls"))
+    path("api/v1/communications/", include("communications.urls")),
+    path('api/v1/easy_tax_ussds/', include('easy_tax_ussds.urls')),
 ]
 
 # The authentication urls which contains login, register, request otp and verify account

@@ -40,6 +40,7 @@ LOCAL_INSTALLED_APPS = [
     'communications',
     'email_logs',
     'contacts',
+    'easy_tax_ussds',
 ]
 INSTALLED_APPS += EXTERNAL_INSTALLED_APPS
 INSTALLED_APPS += LOCAL_INSTALLED_APPS
