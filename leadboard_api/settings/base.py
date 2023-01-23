@@ -201,6 +201,7 @@ ADMINS = [("Afenikhena Favour", ("dev.codertjay@gmail.com"))]
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
+    r"^https://instincthub.com$",
     r"^https://instincthub-oxyka.ondigitalocean.app$",
     "http://localhost:3000",
     "http://localhost:3001",
