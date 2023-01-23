@@ -15,6 +15,9 @@ class EasyTaxUSSDAPIView(APIView):
     """
     permission_classes = [AllowAny]
 
+    def get(self,request):
+        return Response(status=200)
+
     def post(self, request):
         """
         the is a post request that get info from the USSD
