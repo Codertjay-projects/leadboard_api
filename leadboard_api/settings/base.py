@@ -205,9 +205,11 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://instincthub-oxyka.ondigitalocean.app$",
     "http://localhost:3000",
     "http://localhost:3001",
+    "https://gw.novajii.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://gw.novajii.com",
     'http://localhost:3001',
     'http://localhost:3000',
     "https://instincthub-oxyka.ondigitalocean.app",
