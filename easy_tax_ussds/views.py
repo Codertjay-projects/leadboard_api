@@ -53,7 +53,11 @@ class EasyTaxUSSDAPIView(APIView):
         elif command == "Continue":
             if easy_tax_ussd.get_last_command() == "stage_begin":
                 # This means the user have tin
+                print("the content",content)
+                print("the content",content == "1")
                 if content == "1":
+                    print("the content chose one first", content)
+
                     # If the stage is begun and the user chooses he has tin
                     return stage_have_tin(
                         phone_number=phone_number,

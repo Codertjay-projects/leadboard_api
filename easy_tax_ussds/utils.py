@@ -37,7 +37,7 @@ def stage_have_tin(
     content += "2. Check Balance"
     # Set the last command if the user chooses 1
     easy_tax_ussd.set_command("stage_have_tin")
-
+    print("the content one last",content)
     return Response({
         "command": "Continue",
         "msisdn": phone_number,
