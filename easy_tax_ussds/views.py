@@ -15,7 +15,7 @@ class EasyTaxUSSDAPIView(APIView):
     """
     permission_classes = [AllowAny]
 
-    def get(self,request):
+    def get(self, request):
         return Response(status=200)
 
     def post(self, request):
@@ -33,7 +33,7 @@ class EasyTaxUSSDAPIView(APIView):
         # The content could be 1,2 or text
         content = request.data.get("content")
 
-        print("the requet data ",request.data)
+        print("the requet data ", request.data)
         # Phone number instance
         if not phone_number:
             # Phone number not passed
@@ -42,7 +42,7 @@ class EasyTaxUSSDAPIView(APIView):
         print(command)
         print(command == "Begin")
         print(command == "begin")
-        if command:
+        if command == "Begin":
             # The first command the user
             return stage_begin(
                 phone_number=phone_number,
