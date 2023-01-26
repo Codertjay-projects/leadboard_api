@@ -197,7 +197,7 @@ class EasyTaxUSSDAPIView(APIView):
                 )
 
             elif easy_tax_ussd.get_last_command() == "stage_select_state":
-                if content == "Next":
+                if content == "99":
                     # This means the user chose next
                     state_range = easy_tax_ussd.get_state_range()
                     if not state_range:
@@ -250,7 +250,7 @@ class EasyTaxUSSDAPIView(APIView):
                         service_provider=service_provider
                     )
             elif easy_tax_ussd.get_last_command() == "stage_select_local_government":
-                if content == "Next":
+                if content == "99":
                     # This means the user chose next
                     if not easy_tax_ussd.get_lga_range():
                         return stage_cancel(

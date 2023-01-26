@@ -250,7 +250,7 @@ def stage_select_state(
     easy_tax_ussd.set_state_range(from_range, to_range)
     for item in EasyTaxUSSDState.objects.all()[from_range:to_range]:
         content += f"{item.id} {item.name} \n"
-    content += "Next"
+    content += "99. Next"
     easy_tax_ussd.set_command("stage_select_state")
     return Response({
         "command": "Continue",
@@ -278,7 +278,7 @@ def stage_select_local_government(
         content += f"{item.id}. {item.name} \n"
     # Check if the count is greater than 10
     if easy_tax_ussd.state.easytaxussdlga_set.all().count() > to_range:
-        content += "Next"
+        content += "99. Next"
     easy_tax_ussd.set_command("stage_select_local_government")
     return Response({
         "command": "Continue",
