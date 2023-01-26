@@ -39,8 +39,10 @@ class EasyTaxUSSDAPIView(APIView):
             # Phone number not passed
             return Response({"command": "End", "Content": "Phone number not passed"}, status=200)
         easy_tax_ussd, created = EasyTaxUSSD.objects.get_or_create(phone_number=phone_number)
-
-        if command == "Begin":
+        print(command)
+        print(command == "Begin")
+        print(command == "begin")
+        if command:
             # The first command the user
             return stage_begin(
                 phone_number=phone_number,
