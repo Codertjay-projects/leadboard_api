@@ -51,6 +51,7 @@ class EasyTaxUSSDAPIView(APIView):
                 service_provider=service_provider
             )
         elif command == "Continue":
+            print("the last command",easy_tax_ussd.get_last_command())
             if easy_tax_ussd.get_last_command() == "stage_begin":
                 # This means the user have tin
                 print("the content",content)
