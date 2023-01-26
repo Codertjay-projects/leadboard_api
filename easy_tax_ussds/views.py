@@ -33,6 +33,7 @@ class EasyTaxUSSDAPIView(APIView):
         # The content could be 1,2 or text
         content = request.data.get("content")
 
+        print("the requet data ",request.data)
         # Phone number instance
         if not phone_number:
             # Phone number not passed
