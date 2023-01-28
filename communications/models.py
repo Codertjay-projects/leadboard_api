@@ -28,6 +28,7 @@ class SendCustomEmailSchedulerLog(models.Model):
     status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
     view_count = models.IntegerField(default=0)
     links_clicked = models.TextField(blank=True, null=True)
+    links_clicked_count = models.IntegerField(default=0)
     timestamp = models.DateTimeField(default=timezone.now)
 
 
@@ -111,6 +112,7 @@ class SendGroupsEmailSchedulerLog(models.Model):
     first_name = models.CharField(max_length=250, blank=True, null=True)
     last_name = models.CharField(max_length=250, blank=True, null=True)
     links_clicked = models.TextField(blank=True, null=True)
+    links_clicked_count = models.IntegerField(default=0)
     view_count = models.IntegerField(default=0)
     status = models.CharField(choices=EMAIL_STATUS, max_length=50, default="PENDING", blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
