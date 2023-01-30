@@ -124,12 +124,14 @@ class EmailUpdateLinkClickedView(View):
             log = SendCustomEmailSchedulerLog.objects.filter(id=email_id).first()
             if log:
                 log.links_clicked = f"{log.links_clicked},{redirect_url}"
+                log.links_clicked_count += 1
                 log.save()
         if email_type == "group":
             # if the email type is group then we add the links to the group
             log = SendGroupsEmailSchedulerLog.objects.filter(id=email_id).first()
             if log:
                 log.links_clicked = f"{log.links_clicked},{redirect_url}"
+                log.links_clicked_count += 1
                 log.save()
         if email_type == "high_value_content":
             # filter for the high value content

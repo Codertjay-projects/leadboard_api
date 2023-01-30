@@ -15,7 +15,7 @@ class EasyTaxUSSDAPIView(APIView):
     """
     permission_classes = [AllowAny]
 
-    def get(self,request):
+    def get(self, request):
         return Response(status=200)
 
     def post(self, request):
@@ -33,12 +33,15 @@ class EasyTaxUSSDAPIView(APIView):
         # The content could be 1,2 or text
         content = request.data.get("content")
 
+        print("the requet data ", request.data)
         # Phone number instance
         if not phone_number:
             # Phone number not passed
             return Response({"command": "End", "Content": "Phone number not passed"}, status=200)
         easy_tax_ussd, created = EasyTaxUSSD.objects.get_or_create(phone_number=phone_number)
-
+        print(command)
+        print(command == "Begin")
+        print(command == "begin")
         if command == "Begin":
             # The first command the user
             return stage_begin(
@@ -48,9 +51,14 @@ class EasyTaxUSSDAPIView(APIView):
                 service_provider=service_provider
             )
         elif command == "Continue":
+            print("the last command",easy_tax_ussd.get_last_command())
             if easy_tax_ussd.get_last_command() == "stage_begin":
                 # This means the user have tin
+                print("the content",content)
+                print("the content",content == "1")
                 if content == "1":
+                    print("the content chose one first", content)
+
                     # If the stage is begun and the user chooses he has tin
                     return stage_have_tin(
                         phone_number=phone_number,
@@ -196,7 +204,7 @@ class EasyTaxUSSDAPIView(APIView):
                 )
 
             elif easy_tax_ussd.get_last_command() == "stage_select_state":
-                if content == "Next":
+                if content == "99":
                     # This means the user chose next
                     state_range = easy_tax_ussd.get_state_range()
                     if not state_range:
@@ -249,7 +257,7 @@ class EasyTaxUSSDAPIView(APIView):
                         service_provider=service_provider
                     )
             elif easy_tax_ussd.get_last_command() == "stage_select_local_government":
-                if content == "Next":
+                if content == "99":
                     # This means the user chose next
                     if not easy_tax_ussd.get_lga_range():
                         return stage_cancel(

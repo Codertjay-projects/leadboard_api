@@ -1,5 +1,6 @@
 import uuid
 
+from django.db.models import Sum
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -9,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from communications.models import SendCustomEmailSchedulerLog, SendGroupsEmailSchedulerLog
 from email_logs.models import EmailLog
 from high_value_contents.models import DownloadHighValueContent
 from users.models import User
@@ -457,6 +459,25 @@ class CompanyAnalyTicsAPIView(APIView):
         other_files_count = company.highvaluecontent_set.all().exclude(
             file__endswith="pdf").exclude(file__endswith="zip").count()
 
+        sent_email_count = EmailLog.objects.filter(company=company, status="SENT").count()
+        pending_email_count = EmailLog.objects.filter(company=company, status="PENDING").count()
+        bounced_email_count = EmailLog.objects.filter(company=company, status="FAILED").count()
+
+        # Get the links clicked count from our logs
+        custom_email_links_clicked_count = SendCustomEmailSchedulerLog.objects.filter(
+            company=company).aggregate(Sum('links_clicked_count'))[
+            'links_clicked_count__sum']
+        group_email_links_clicked_count = SendGroupsEmailSchedulerLog.objects.filter(
+            company=company).aggregate(Sum('links_clicked_count'))[
+            'links_clicked_count__sum']
+
+        # Change the count to zero if it is none
+        if custom_email_links_clicked_count == None:
+            custom_email_links_clicked_count = 0
+        if group_email_links_clicked_count == None:
+            group_email_links_clicked_count = 0
+        total_link_clicked_count = custom_email_links_clicked_count + group_email_links_clicked_count
+
         data = {
             "lead_count": lead_count,
             "schedule_count": schedule_count,
@@ -470,5 +491,11 @@ class CompanyAnalyTicsAPIView(APIView):
             "zipped_files_count": zipped_files_count,
             "pdf_files_count": pdf_files_count,
             "other_files_count": other_files_count,
+            "sent_email_count": sent_email_count,
+            "pending_email_count": pending_email_count,
+            "bounced_email_count": bounced_email_count,
+            "custom_email_links_clicked_count": custom_email_links_clicked_count,
+            "group_email_links_clicked_count": group_email_links_clicked_count,
+            "total_link_clicked_count": total_link_clicked_count,
         }
         return Response({"message": "company analytics", "data": data}, status=200)
