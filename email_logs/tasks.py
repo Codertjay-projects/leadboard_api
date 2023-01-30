@@ -5,7 +5,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from communications.utils import update_group_schedule_log_status, update_custom_schedule_log_status
-from leadboard_api.celery import app
+from leadboard_api.lead_celery import app
 
 
 @app.task

@@ -198,21 +198,6 @@ CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379"
 # Send test mail and other bugs info
 ADMINS = [("Afenikhena Favour", ("dev.codertjay@gmail.com"))]
 
-# CORS headers
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://\w+\.instincthub\.com$",
-    r"^https://instincthub.com$",
-    r"^https://instincthub-oxyka.ondigitalocean.app$",
-    "http://localhost:3000",
-    "http://localhost:3001",
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3001',
-    'http://localhost:3000',
-    "https://instincthub-oxyka.ondigitalocean.app",
-]
-
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',

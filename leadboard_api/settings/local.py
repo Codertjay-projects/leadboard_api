@@ -13,3 +13,18 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# CORS headers
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://\w+\.instincthub\.com$",
+    r"^https://instincthub.com$",
+    r"^https://instincthub-oxyka.ondigitalocean.app$",
+    "http://localhost:3000",
+    "http://localhost:3001",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3001',
+    'http://localhost:3000',
+    "https://instincthub-oxyka.ondigitalocean.app",
+]
