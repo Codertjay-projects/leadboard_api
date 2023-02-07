@@ -28,3 +28,6 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     "https://instincthub-oxyka.ondigitalocean.app",
 ]
+
+SENDGRID_SANDBOX_MODE_IN_DEBUG = True
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

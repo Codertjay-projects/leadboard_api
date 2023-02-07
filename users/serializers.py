@@ -5,7 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from users.tasks import login_notification_email
-from companies.models import CompanyInvite, Company, CompanyEmployee
+from companies.models import CompanyInvite, Company, CompanyEmployee, Industry
 
 ORGANISATION_CHOICES = (
     ("JOIN", "JOIN"),

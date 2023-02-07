@@ -76,7 +76,7 @@ class Company(models.Model):
     industry = models.ForeignKey(Industry, on_delete=models.CASCADE, blank=True, null=True)
     overview = models.TextField(blank=True, null=True)
     company_size = models.CharField(choices=COMPANY_SIZE_CHOICES, max_length=250, blank=True, null=True)
-    headquater = models.CharField(max_length=250, blank=True, null=True)
+    headquarter = models.CharField(max_length=250, blank=True, null=True)
     founded = models.DateField(blank=True, null=True)
     locations = models.ManyToManyField(Location, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)

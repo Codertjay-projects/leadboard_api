@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
+from companies.serializers import CompanySerializer
+from companies.models import Company
 
 from users.models import User
 from users.permissions import NotLoggedInPermission, LoggedInPermission
@@ -26,17 +28,26 @@ class LeaderboardLoginAPIView(LoginView):
         if the user
         is not then it uses the default response from the  TokenSerializer
         """
+        
         self.request = request
-        self.serializer = self.get_serializer(data=self.request.data,
-                                              context={'request': request})
+        self.serializer = self.get_serializer(data=self.request.data, context={'request': request})
         self.serializer.is_valid(raise_exception=True)
         self.login()
+        
+        # Every user that owned a company should get the  company objects.
+        try: 
+            company = CompanySerializer(Company.objects.filter(owner=request.user), many=True)
+            response = super().post(request, *args, **kwargs)
+            response.data['company'] = company.data
+        except: response = self.get_response()
+
         # login the user to access him/ her on the request
         #  overriding the login of allauth to add this if user is not verified
         if not request.user.verified:
             # fixme :add verify mail send otp or a link
             return Response({"message": "Please verify your email address."},
                             status=400)
+        return response
         return self.get_response()
 
 
@@ -97,7 +108,7 @@ class RequestEmailOTPAPIView(APIView):
 
 class ForgotPasswordWithOTPAPIView(APIView):
     """
-    Used when the kid forgot password
+    Used when forgot password
     """
     permission_classes = [NotLoggedInPermission]
     throttle_scope = 'monitor'
@@ -117,7 +128,8 @@ class ForgotPasswordWithOTPAPIView(APIView):
                 return Response({'message': 'New password cannot be same as current password'},
                                 status=400)
             user.set_password(password)
-            return Response({'message': ' You have successfully changed your password'}, status=200)
+            user.save()
+            return Response({'message': ' You have successfully changed your password', 'next': True}, status=200)
         return Response({'message': 'There was an error performing your request '}, status=400)
 
 
@@ -207,7 +219,7 @@ class ChangePasswordAPIView(APIView):
             if user.check_password(old_password):
                 user.set_password(new_password)
                 user.save()
-                return Response({'message': ' You have successfully changed your password'}, status=200)
+                return Response({'message': ' You have successfully changed your password', 'next': 'true'}, status=200)
             elif not user.check_password(old_password):
                 return Response({'message': 'Your old password is incorrect'},
                                 status=400)

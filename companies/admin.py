@@ -22,7 +22,7 @@ class CompanyAdmin(admin.ModelAdmin):
         "name",
         "username",
         "company_size",
-        "headquater",
+        "headquarter",
         "timestamp",
     ]
     search_fields = [
@@ -34,7 +34,7 @@ class CompanyAdmin(admin.ModelAdmin):
         "customer_support_email",
         "overview",
         "company_size",
-        "headquater",
+        "headquarter",
     ]
 
 

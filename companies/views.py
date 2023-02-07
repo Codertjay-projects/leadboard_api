@@ -249,6 +249,13 @@ class IndustryViewSetsAPIView(ModelViewSet):
     queryset = Industry.objects.all()
 
 
+class IndustryListAPIView(ListAPIView):
+    """this viewset enables the full crud which are create, retrieve,update and delete  """
+    serializer_class = IndustrySerializer
+    permission_classes = [NotLoggedInPermission]
+    queryset = Industry.objects.all()
+
+
 class CompanyInviteListCreateAPIView(ListCreateAPIView):
     """
     This is meant to list, create the CompanyInvite
@@ -394,35 +401,35 @@ class CompanyLittleInfoListAPIView(ListAPIView):
         "username"
     ]
 
-    def list(self, request, *args, **kwargs):
-        """
-        :return all company with little info and also add upto three username which is not in the company
-        """
+    # def list(self, request, *args, **kwargs):
+    #     """
+    #     :return all company with little info and also add upto three username which is not in the company
+    #     """
 
-        search = self.request.query_params.get("search")
-        if not search:
-            return Response({"error": "Search params must be passed"}, status=400)
-        # Norms the request has been filtered but with the search I need to also return username that has not been used
-        queryset = self.filter_queryset(self.get_queryset())
-        usernames = [
-            get_username_not_in_db(queryset, search),
-            get_username_not_in_db(queryset, f"{search}_1"),
-            get_username_not_in_db(queryset, f"{search}_2"),
-        ]
+    #     search = self.request.query_params.get("search")
+    #     if not search:
+    #         return Response({"error": "Search params must be passed"}, status=400)
+    #     # Norms the request has been filtered but with the search I need to also return username that has not been used
+    #     queryset = self.filter_queryset(self.get_queryset())
+    #     usernames = [
+    #         get_username_not_in_db(queryset, search),
+    #         get_username_not_in_db(queryset, f"{search}_1"),
+    #         get_username_not_in_db(queryset, f"{search}_2"),
+    #     ]
 
-        serializer = self.get_serializer(queryset, many=True)
-        if queryset.count() == 0:
-            company_exists = False
-        else:
-            company_exists = True
-        serialized_data = [
-            {
-                "company_exists": company_exists
-            },
-            usernames,
-            serializer.data
-        ]
-        return Response(serialized_data)
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     if queryset.count() == 0:
+    #         company_exists = False
+    #     else:
+    #         company_exists = True
+    #     serialized_data = [
+    #         {
+    #             "company_exists": company_exists
+    #         },
+    #         usernames,
+    #         serializer.data
+    #     ]
+    #     return Response(serialized_data)
 
 
 class CompanyAnalyTicsAPIView(APIView):

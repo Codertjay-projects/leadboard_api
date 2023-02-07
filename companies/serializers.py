@@ -48,7 +48,6 @@ class IndustrySerializer(serializers.ModelSerializer):
     """
     this is used to list the industry , create, update
     """
-
     class Meta:
         model = Industry
         fields = [
@@ -162,6 +161,7 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "username",
+            "website",
         ]
         read_only_fields = ["id", ]
 
