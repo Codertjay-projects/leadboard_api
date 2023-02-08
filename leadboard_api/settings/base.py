@@ -39,6 +39,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    "maintenance_mode.middleware.MaintenanceModeMiddleware",  # maintenance mode middleware (must be the las)
 ]
 
 ROOT_URLCONF = "leadboard_api.urls"
@@ -209,3 +211,18 @@ CACHES = {
         'LOCATION': 'leadboard_api_cackhe_table',
     }
 }
+
+# maintenance mode
+MAINTENANCE_MODE_TEMPLATE = "errors/503.html"
+MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
+
+# EMAIL CONFIGURATION
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
+EMAIL_HOST = config('EMAIL_HOST', default="smtp.sendgrid.net")
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')

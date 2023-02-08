@@ -26,6 +26,8 @@ EXTERNAL_INSTALLED_APPS = [
     #  it enable us to view failed and sent mails
     # Corsheaders
     "corsheaders",
+    # for maintenance mode
+    'maintenance_mode',
 ]
 
 LOCAL_INSTALLED_APPS = [
@@ -41,6 +43,7 @@ LOCAL_INSTALLED_APPS = [
     'email_logs',
     'contacts',
     'easy_tax_ussds',
+    'home_pages',
 ]
 INSTALLED_APPS += EXTERNAL_INSTALLED_APPS
 INSTALLED_APPS += LOCAL_INSTALLED_APPS

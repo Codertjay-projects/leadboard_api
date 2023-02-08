@@ -16,13 +16,19 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 
 from users.views import LeaderboardRegisterAPIView, LeaderboardLoginAPIView, VerifyEmailOTPAPIView, \
     RequestEmailOTPAPIView, ForgotPasswordWithOTPAPIView, ChangePasswordAPIView, LeadboardVerifyTokenAPIView
+from django.conf import urls
+
+from home_pages import views as homepages_view
+
+urls.handler4503 = homepages_view.view_503
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", include("home_pages.urls")),
     path("api/v1/users/", include("users.urls")),
     path("api/v1/companies/", include("companies.urls")),
     path("api/v1/leads/", include("leads.urls")),
@@ -34,6 +40,9 @@ urlpatterns = [
     path("api/v1/careers/", include("careers.urls")),
     path("api/v1/communications/", include("communications.urls")),
     path('api/v1/easy_tax_ussds/', include('easy_tax_ussds.urls')),
+
+    # for maintenance mode
+    re_path(r"^maintenance-mode/", include("maintenance_mode.urls")),
 ]
 
 # The authentication urls which contains login, register, request otp and verify account

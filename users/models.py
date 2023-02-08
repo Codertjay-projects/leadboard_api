@@ -78,7 +78,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         # importing send_otp_to_email locally to prevent issues when importing from both
         from users.tasks import send_otp_to_email_task
         try:
-            otp = random.randint(1000, 9999)
+            otp = random.randint(100000, 999999)
             next_ten_minutes = timezone.now() + timedelta(minutes=10)
             #  set the cache to be deleted in 10 minutes from our cache system
             cache.set(f'{self.email}{otp}', next_ten_minutes, 605)
