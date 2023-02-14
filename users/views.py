@@ -71,6 +71,7 @@ class LeaderboardRegisterAPIView(RegisterView):
         if data:
             if not user.verified:
                 #  I am sending 400 status to enable the frontend know the user is not verified
+                user.send_email_otp()
                 response = Response(
                     {"message": "Please verify your email address."},
                     status=201,

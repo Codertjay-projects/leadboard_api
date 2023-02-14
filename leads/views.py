@@ -14,6 +14,7 @@ from .models import LeadContact
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
 
 
+
 class LeadContactCreateListAPIView(ListCreateAPIView):
     """
     This class is meant to list all the lead contact and also create a new one
