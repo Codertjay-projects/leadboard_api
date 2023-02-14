@@ -49,9 +49,9 @@ class CustomRegisterSerializer(RegisterSerializer):
             # Check if the username has been used before
             company_exists = Company.objects.filter(username=attrs.get('company_username')).first()
             if company_exists:
-                raise serializers.ValidationError("Company username has already been please try another")
+                raise serializers.ValidationError({'organisation_choice': "Company username has already been please try another"})
             if not attrs.get("company_name"):
-                raise serializers.ValidationError("You need the company name if creating a company")
+                raise serializers.ValidationError({'company_name': "You need the company name if creating a company"})
         return attrs
 
     def get_cleaned_data(self):

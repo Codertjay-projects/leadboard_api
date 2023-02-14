@@ -36,7 +36,7 @@ class LeaderboardLoginAPIView(LoginView):
         
         # Every user that owned a company should get the  company objects.
         try: 
-            company = CompanySerializer(Company.objects.filter(owner=request.user), many=True)
+            company = CompanySerializer(Company.objects.filter(owner=self.request.user), many=True)
             response = super().post(request, *args, **kwargs)
             response.data['company'] = company.data
         except: response = self.get_response()
@@ -48,7 +48,6 @@ class LeaderboardLoginAPIView(LoginView):
             return Response({"message": "Please verify your email address."},
                             status=400)
         return response
-        return self.get_response()
 
 
 class LeaderboardRegisterAPIView(RegisterView):
