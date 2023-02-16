@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 from users.tasks import login_notification_email
 from companies.models import CompanyInvite, Company, CompanyEmployee, Industry
 
-ORGANISATION_CHOICES = (
+ACTIONS = (
     ("JOIN", "JOIN"),
     ("CREATE", "CREATE"),
 )
@@ -23,7 +23,7 @@ class CustomRegisterSerializer(RegisterSerializer):
     mobile = serializers.CharField(max_length=150, required=False)
     company_name = serializers.CharField(max_length=150, required=False)
     industry_id = serializers.UUIDField(required=False)
-    organisation_choice = serializers.ChoiceField(choices=ORGANISATION_CHOICES)
+    actions = serializers.ChoiceField(choices=ACTIONS)
     company_username = serializers.SlugField()
     email = serializers.EmailField()
     password1 = serializers.CharField(write_only=True)
@@ -38,20 +38,24 @@ class CustomRegisterSerializer(RegisterSerializer):
             'mobile',
             'industry_id',
             'company_name',
-            'organisation_choice',
+            'actions',
             'company_username',
             'password1',
             'password2',
         )
 
     def validate(self, attrs):
-        if attrs.get('organisation_choice') == "CREATE":
+        if attrs.get('actions') == "CREATE":
             # Check if the username has been used before
             company_exists = Company.objects.filter(username=attrs.get('company_username')).first()
+            user = User.objects.filter(email=attrs.get('email')).first()
             if company_exists:
-                raise serializers.ValidationError({'organisation_choice': "Company username has already been please try another"})
+                raise serializers.ValidationError({'company_username': "Company username has already been please try another"})
             if not attrs.get("company_name"):
                 raise serializers.ValidationError({'company_name': "You need the company name if creating a company"})
+            
+            if user:
+                raise serializers.ValidationError({'email': "A user is already registered with this e-mail address."})
         return attrs
 
     def get_cleaned_data(self):
@@ -66,7 +70,7 @@ class CustomRegisterSerializer(RegisterSerializer):
             'last_name': self.validated_data.get('last_name', ''),
             'email': self.validated_data.get('email', ''),
             'company_name': self.validated_data.get('company_name', ''),
-            'organisation_choice': self.validated_data.get('organisation_choice', ''),
+            'actions': self.validated_data.get('actions', ''),
             'company_username': self.validated_data.get('company_username', ''),
             'mobile': self.validated_data.get('mobile', ''),
             'password1': self.validated_data.get('password1', ''),
@@ -85,7 +89,7 @@ class CustomRegisterSerializer(RegisterSerializer):
         adapter.save_user(request, user, self)
         ##############################
         # Create a company for the user or Join an Organisation base on what the user chose
-        if self.cleaned_data.get("organisation_choice") == "JOIN":
+        if self.cleaned_data.get("actions") == "JOIN":
             company = Company.objects.filter(username=self.cleaned_data.get("company_username")).first()
             if not company:
                 raise serializers.ValidationError("Company does not Exist")
@@ -118,7 +122,7 @@ class CustomRegisterSerializer(RegisterSerializer):
             else:
                 # Just create the employee with no role and also not invited
                 CompanyEmployee.objects.create(user=user, company=company, status="ACTIVE", invited=False)
-        if self.cleaned_data.get("organisation_choice") == "CREATE":
+        if self.cleaned_data.get("actions") == "CREATE":
             company = Company.objects.create(
                 owner=user,
                 name=self.cleaned_data.get("company_name"),
@@ -234,7 +238,7 @@ class VerifyEmailSerializer(serializers.Serializer):
     """
     This is used to verify the email address with otp of a user
     """
-    otp = serializers.CharField(max_length=4)
+    otp = serializers.CharField(max_length=6)
     email = serializers.EmailField()
 
 
@@ -318,7 +322,7 @@ class ForgotPasswordOTPSerializer(serializers.Serializer):
     so he would have request otp to his mail before sending the otp his new password and hs email
     used when user forgot password
     """
-    otp = serializers.CharField(max_length=4)
+    otp = serializers.CharField(max_length=6)
     email = serializers.EmailField()
     password = serializers.CharField(max_length=100)
 

@@ -141,22 +141,25 @@ class VerifyEmailOTPAPIView(APIView):
     throttle_scope = 'monitor'
 
     def post(self, request):
+        print(request.data)
         try:
+            
             serializer = VerifyEmailSerializer(data=self.request.data)
             serializer.is_valid(raise_exception=True)
             email = serializer.data.get('email')
             otp = serializer.data.get('otp')
             user = User.objects.filter(email=email).first()
+            print(otp, user)
             if not user:
-                return Response({'error': 'Please pass in the correct data'}, status=400)
+                return Response({'error': 'Please pass in the correct data'}, status=status.HTTP_400_BAD_REQUEST)
             if user.validate_email_otp(otp):
                 user.verified = True
                 user.save()
-                return Response({'message': 'Successfully verify your mail'}, status=200)
-            return Response({'error': 'Email Not Verified .Time exceeded or OTP is invalid'}, status=400)
+                return Response({'message': 'Successfully verify your mail'}, status=status.HTTP_200_OK)
+            return Response({'error': 'Email Not Verified .Time exceeded or OTP is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as a:
-            print("error-----", a)
-            return Response({'error': 'There was an error performing your request.Email Not Verified'}, status=400)
+            print(a)
+            return Response({'error': 'There was an error performing your request. Email Not Verified'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserUpdateAPIView(APIView):

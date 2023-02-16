@@ -18,8 +18,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include, re_path
 
-from users.views import LeaderboardRegisterAPIView, LeaderboardLoginAPIView, VerifyEmailOTPAPIView, \
-    RequestEmailOTPAPIView, ForgotPasswordWithOTPAPIView, ChangePasswordAPIView, LeadboardVerifyTokenAPIView
 from django.conf import urls
 
 from home_pages import views as homepages_view
@@ -44,21 +42,6 @@ urlpatterns = [
     # for maintenance mode
     re_path(r"^maintenance-mode/", include("maintenance_mode.urls")),
 ]
-
-# The authentication urls which contains login, register, request otp and verify account
-auth_urlpatterns = [
-    path("api/v1/auth/login/", LeaderboardLoginAPIView.as_view(), name="Leaderboard_login"),
-    path("api/v1/auth/registration/", LeaderboardRegisterAPIView.as_view(), name="Leaderboard_register"),
-    #  requesting otp via email
-    path("api/v1/auth/request_email_otp/", RequestEmailOTPAPIView.as_view(), name="Leaderboard_request_otp"),
-    #  verify account with the otp passed on posted data
-    path("api/v1/auth/verify_account/", VerifyEmailOTPAPIView.as_view(), name="Leaderboard_verify_account"),
-    path('api/v1/auth/forgot_password/', ForgotPasswordWithOTPAPIView.as_view(), name='forgot_password'),
-    path('api/v1/auth/change_password/', ChangePasswordAPIView.as_view(), name='change_password'),
-    path('api/v1/auth/verify_token/', LeadboardVerifyTokenAPIView.as_view(), name='verify_token'),
-]
-
-urlpatterns += auth_urlpatterns
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL,
