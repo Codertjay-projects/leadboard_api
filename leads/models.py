@@ -1,11 +1,14 @@
 import uuid
 
 from django.db import models
+from django.utils import timezone
 
 from companies.models import Group, Company
 # Create your models here.
 from feedbacks.models import Feedback
 from users.models import User
+from django.db.models import Q
+from django.contrib.contenttypes.models import ContentType
 
 LEAD_SOURCE = (
     ("SKILLS_APP", "SKILLS_APP"),
@@ -51,8 +54,33 @@ class CustomLeadManager(models.Manager):
             print(Feedback.objects.filter(object_id=instance_id, company__id=c_id).count())
             if Feedback.objects.filter(object_id=instance_id, company__id=c_id).count():
                 return self.all()
-            else: return None
+            else:
+                return None
 
+    def filter_by_actions(self, company, action_type):
+        """
+        this is used to filter base on the action provided
+        :param company: The company instance
+        :param action_type:
+        :return:
+        """
+        Feedback.objects.filter(content_type=ContentType.objects.get_for_model(LeadContact))
+
+        if action_type == "ACTIONED":
+            lead_contact_qs = [lead_contact.id for lead_contact in self.filter(company=company) if
+                               lead_contact.previous_feedback()]
+            return self.filter(id__in=lead_contact_qs)
+
+        elif action_type == "UN-ACTIONED":
+            lead_contact_qs = [lead_contact.id for lead_contact in self.filter(company=company) if
+                               not lead_contact.previous_feedback()]
+            return self.filter(id__in=lead_contact_qs)
+
+        elif action_type == "SCHEDULED":
+            lead_contact_qs = [lead_contact.id for lead_contact in self.filter(company=company) if
+                               lead_contact.has_scheduled()]
+            return self.filter(id__in=lead_contact_qs)
+        return self.filter(company=company)
 
 
 class LeadContact(models.Model):
@@ -89,7 +117,6 @@ class LeadContact(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     objects = CustomLeadManager()
 
-
     class Meta:
         ordering = ["-timestamp"]
 
@@ -97,12 +124,15 @@ class LeadContact(models.Model):
         # Get the last feedback
         return Feedback.objects.filter(object_id=self.id).first()
 
+    def has_scheduled(self):
+        # Get the leads that has last scheduled
+        last_feed_back = self.previous_feedback()
+        if last_feed_back:
+            # Check if the last feedback exist
+            if last_feed_back.next_schedule > timezone.now():
+                return True
+        return False
+
     def all_previous_feedbacks(self):
         # Get all feedbacks made by this user
         return Feedback.objects.filter(object_id=self.id)
-
-    # def actioned(self):
-    #     # Get all feedbacks made by this user
-    #     if Feedback.objects.filter(object_id=self.id).first():
-    #         return True
-    #     else: return False

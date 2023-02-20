@@ -16,7 +16,6 @@ from .models import LeadContact
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
 
 
-
 class LeadContactCreateListAPIView(ListCreateAPIView):
     """
     This class is meant to list all the lead contact and also create a new one
@@ -46,23 +45,20 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         """
         this filter using the company id passed on the urls to get the leads associated with it
         """
-        queryset = self.filter_queryset(self.get_company().leadcontact_set.all())
         lead_type = self.request.query_params.get("lead_type")
         cat = self.request.query_params.get("cat")
+        # Check if the category is passed
+        # get leads base on the company and the cat
+        queryset = self.filter_queryset(LeadContact.objects.filter_by_actions(
+            action_type=cat, company=self.get_company()))
         # if the lead_type is passed on the params then we set it on the request
         if lead_type:
             queryset = queryset.filter(lead_type=lead_type)
+        # Filter the date if it is passed in the params like
         if queryset:
-            # Filter the date if it is passed in the params like
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
             # You will get more from the documentation
             queryset = date_filter_queryset(request=self.request, queryset=queryset)
-
-        print(cat)
-        if cat == 'ACTIONED':
-            queryset = LeadContact.objects.actioned(self.get_company().id)
-            print(queryset)
-            # print("CAT:>>>>>>>>: ", queryset.actioned.custom_filter(True))
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -193,8 +189,8 @@ class LeadStatsRetrieveAPIView(RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         company = self.get_object()
 
-        now = timezone.now() # get the current time
-        time_24_hours_ago = now - timezone.timedelta(hours=24) # calculate the time 24 hours ago
+        now = timezone.now()  # get the current time
+        time_24_hours_ago = now - timezone.timedelta(hours=24)  # calculate the time 24 hours ago
 
         schedules = None
         conversion = None
@@ -206,14 +202,16 @@ class LeadStatsRetrieveAPIView(RetrieveAPIView):
         if self.request.user == company.owner or marketer.role == 'ADMIN':
             schedules = Feedback.objects.filter(company=company, next_schedule__gt=now).count()
             conversion = LeadContact.objects.filter(company=company, paying=True).count()
-             # filter the objects to include only those created within the last 24 hours
+            # filter the objects to include only those created within the last 24 hours
             recent_action = Feedback.objects.filter(company=company, timestamp__gte=time_24_hours_ago).count()
         elif marketer.role == 'MARKETER':
             schedules = Feedback.objects.filter(company=company, next_schedule__gt=now, staff=self.request.user).count()
-            conversion = LeadContact.objects.filter(company=company, paying=True, assigned_marketer=self.request.user).count()
-            recent_action = Feedback.objects.filter(company=company, timestamp__gte=time_24_hours_ago, staff=self.request.user).count()
+            conversion = LeadContact.objects.filter(company=company, paying=True,
+                                                    assigned_marketer=self.request.user).count()
+            recent_action = Feedback.objects.filter(company=company, timestamp__gte=time_24_hours_ago,
+                                                    staff=self.request.user).count()
 
-        context={
+        context = {
             'schedules': schedules,
             'all_leads': LeadContact.objects.filter(company=company).count(),
             'conversion': conversion,
