@@ -156,7 +156,7 @@ class VerifyEmailOTPAPIView(APIView):
                 user.verified = True
                 user.save()
                 return Response({'message': 'Successfully verify your mail'}, status=status.HTTP_200_OK)
-            return Response({'error': 'Email Not Verified .Time exceeded or OTP is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Account not verified. Time exceeded or OTP is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as a:
             print(a)
             return Response({'error': 'There was an error performing your request. Email Not Verified'}, status=status.HTTP_400_BAD_REQUEST)

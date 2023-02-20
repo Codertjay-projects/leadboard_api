@@ -1,7 +1,9 @@
 from django.http import Http404
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
 from rest_framework.response import Response
+from django.utils import timezone
+from rest_framework import status
 
 from companies.models import Company, CompanyEmployee
 from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access, \
@@ -46,6 +48,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         """
         queryset = self.filter_queryset(self.get_company().leadcontact_set.all())
         lead_type = self.request.query_params.get("lead_type")
+        cat = self.request.query_params.get("cat")
         # if the lead_type is passed on the params then we set it on the request
         if lead_type:
             queryset = queryset.filter(lead_type=lead_type)
@@ -54,6 +57,12 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
             # You will get more from the documentation
             queryset = date_filter_queryset(request=self.request, queryset=queryset)
+
+        print(cat)
+        if cat == 'ACTIONED':
+            queryset = LeadContact.objects.actioned(self.get_company().id)
+            print(queryset)
+            # print("CAT:>>>>>>>>: ", queryset.actioned.custom_filter(True))
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -78,14 +87,14 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         #  before creating a lead we have to make sure the user is a member of that company
         company = self.get_company()
-        serializer = LeadContactUpdateCreateSerializer(data=request.data)
+        serializer = LeadContactUpdateCreateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         # Getting the email and checking if an email exists on this leads under the company
         email = serializer.validated_data.get("email")
         lead_contact_email_exists = LeadContact.objects.filter(email=email, company=company).first()
         if lead_contact_email_exists:
             # The lead email must be unique under an organisation
-            return Response({"error": "Lead with that email already exists under this organisation"}, status=400)
+            return Response({"email": "Lead with that email already exists under this organisation"}, status=400)
 
         #  first check for then company owner then the company admins or  the assigned marketer
         if not check_marketer_and_admin_access_company(self.request.user, company):
@@ -174,3 +183,42 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)
+
+
+class LeadStatsRetrieveAPIView(RetrieveAPIView):
+    queryset = Company.objects.all()
+    permission_classes = [LoggedInPermission]
+    lookup_field = 'id'
+
+    def get(self, request, *args, **kwargs):
+        company = self.get_object()
+
+        now = timezone.now() # get the current time
+        time_24_hours_ago = now - timezone.timedelta(hours=24) # calculate the time 24 hours ago
+
+        schedules = None
+        conversion = None
+        recent_action = None
+
+        marketer = CompanyEmployee.objects.filter(company=company, user=self.request.user).first()
+
+        # Check if request user is company owner, ADMIN or MARKETER
+        if self.request.user == company.owner or marketer.role == 'ADMIN':
+            schedules = Feedback.objects.filter(company=company, next_schedule__gt=now).count()
+            conversion = LeadContact.objects.filter(company=company, paying=True).count()
+             # filter the objects to include only those created within the last 24 hours
+            recent_action = Feedback.objects.filter(company=company, timestamp__gte=time_24_hours_ago).count()
+        elif marketer.role == 'MARKETER':
+            schedules = Feedback.objects.filter(company=company, next_schedule__gt=now, staff=self.request.user).count()
+            conversion = LeadContact.objects.filter(company=company, paying=True, assigned_marketer=self.request.user).count()
+            recent_action = Feedback.objects.filter(company=company, timestamp__gte=time_24_hours_ago, staff=self.request.user).count()
+
+        context={
+            'schedules': schedules,
+            'all_leads': LeadContact.objects.filter(company=company).count(),
+            'conversion': conversion,
+            'recent_action': recent_action,
+
+        }
+
+        return Response(context, status=status.HTTP_200_OK)

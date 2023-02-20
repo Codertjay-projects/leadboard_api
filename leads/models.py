@@ -37,9 +37,22 @@ WANT = (
     ("CHILD_AND_SELF", "CHILD_AND_SELF"),
 )
 LEAD_TYPE_CHOICES = (
-    ("CONTACTUS", "CONTACTUS"),
-    ("HIGHVALUECONTENT", "HIGHVALUECONTENT"),
+    ("CONTACT_US", "Contact Us"),
+    ("HIGH_VALUE_CONTENT", "High Value Content"),
 )
+
+
+class CustomLeadManager(models.Manager):
+    def actioned(self, c_id):
+        queryset = self.all()
+        for instance in queryset:
+            instance_id = instance.pk
+            print('<><>: ', instance_id)
+            print(Feedback.objects.filter(object_id=instance_id, company__id=c_id).count())
+            if Feedback.objects.filter(object_id=instance_id, company__id=c_id).count():
+                return self.all()
+            else: return None
+
 
 
 class LeadContact(models.Model):
@@ -69,9 +82,12 @@ class LeadContact(models.Model):
                                           related_name="assigned_marketers")
     is_safe = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
+    paying = models.BooleanField(default=False)
+    send_email = models.BooleanField(null=True)
     gender = models.CharField(choices=GENDER, max_length=50, blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    objects = CustomLeadManager()
 
 
     class Meta:
@@ -84,3 +100,9 @@ class LeadContact(models.Model):
     def all_previous_feedbacks(self):
         # Get all feedbacks made by this user
         return Feedback.objects.filter(object_id=self.id)
+
+    # def actioned(self):
+    #     # Get all feedbacks made by this user
+    #     if Feedback.objects.filter(object_id=self.id).first():
+    #         return True
+    #     else: return False
