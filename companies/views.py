@@ -446,7 +446,9 @@ class CompanyAnalyTicsAPIView(APIView):
     def get(self, request):
         # Get the company
         company = self.get_company()
-        lead_count = company.leadcontact_set.count()
+        leads = company.lead_companies.all()
+        total_unsubscribe = leads.filter(send_email=False).count()
+        lead_count = leads.count()
         schedule_count = company.userschedulecall_set.count()
         marketer_count = company.company_employees().filter(role="MARKETER").count()
         admin_count = company.company_employees().filter(role="ADMIN").count()
@@ -455,7 +457,7 @@ class CompanyAnalyTicsAPIView(APIView):
                                                                will_get_laptop=True).count()
         # Get the last 24 hours lead created
         last_24_hours_lead = timezone.now() - timezone.timedelta(days=1)
-        last_24_hours_lead_count = company.leadcontact_set.filter(timestamp__gte=last_24_hours_lead).count()
+        last_24_hours_lead_count = leads.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_schedule_count = company.userschedulecall_set.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_feedback = company.feedback_set.filter(timestamp__gte=last_24_hours_lead).count()
         # List of file downloaded by users
@@ -486,6 +488,7 @@ class CompanyAnalyTicsAPIView(APIView):
         total_link_clicked_count = custom_email_links_clicked_count + group_email_links_clicked_count
 
         data = {
+            "message": "company analytics",
             "lead_count": lead_count,
             "schedule_count": schedule_count,
             "marketer_count": marketer_count,
@@ -504,5 +507,6 @@ class CompanyAnalyTicsAPIView(APIView):
             "custom_email_links_clicked_count": custom_email_links_clicked_count,
             "group_email_links_clicked_count": group_email_links_clicked_count,
             "total_link_clicked_count": total_link_clicked_count,
+            "total_unsubscribe": total_unsubscribe,
         }
-        return Response({"message": "company analytics", "data": data}, status=200)
+        return Response(data, status=200)

@@ -92,7 +92,7 @@ class LeadContact(models.Model):
     )
     prefix = models.CharField(max_length=50, blank=True, null=True, help_text="Mr, Mrs, Dr etc.")
     lead_type = models.CharField(max_length=250, blank=True, null=True, choices=LEAD_TYPE_CHOICES)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="lead_companies")
     groups = models.ManyToManyField(Group, related_name="lead_groups", blank=True)
     last_name = models.CharField(max_length=250)
     first_name = models.CharField(max_length=250)
