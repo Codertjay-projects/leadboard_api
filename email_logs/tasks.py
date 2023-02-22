@@ -54,6 +54,11 @@ def leadboard_send_mail(
             log.status = "SENT"
             log.max_retries += 1
             log.save()
+            # increase the number of email the company has send with one
+            company = log.company
+            if not company.premium_access:
+                company.email_sent_count += 1
+                company.save()
         return True
     except Exception as a:
         # the update updates all queryset with the id

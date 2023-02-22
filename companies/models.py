@@ -79,6 +79,12 @@ class Company(models.Model):
     headquarter = models.CharField(max_length=250, blank=True, null=True)
     founded = models.DateField(blank=True, null=True)
     locations = models.ManyToManyField(Location, blank=True)
+
+    # we have this total email send count on our .env to prevent users from sending more than
+    email_sent_count = models.IntegerField(default=0)
+    # company with premium access
+    premium_access = models.BooleanField(default=False)
+
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

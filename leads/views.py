@@ -47,6 +47,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         """
         lead_type = self.request.query_params.get("lead_type")
         cat = self.request.query_params.get("cat")
+        staff = self.request.query_params.get("staff")
         # Check if the category is passed
         # get leads base on the company and the cat
         queryset = self.filter_queryset(LeadContact.objects.filter_by_actions(
@@ -54,6 +55,9 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         # if the lead_type is passed on the params then we set it on the request
         if lead_type:
             queryset = queryset.filter(lead_type=lead_type)
+        if staff:
+            # get the leads of that's staff
+            queryset = queryset.filter(assigned_marketer__id=staff)
         # Filter the date if it is passed in the params like
         if queryset:
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
