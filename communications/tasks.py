@@ -8,6 +8,7 @@ def create_custom_schedule_log(custom_schedule_id):
     :param custom_schedule_id: the SendCustomEmailScheduler id since we cant pass instance to task
     :return: True (Note Required)
     """
+    print("<<<<<<<>>>>>>>>>CUSTOM")
     # Using this import to avoid conflict
     from .models import SendCustomEmailSchedulerLog, SendCustomEmailScheduler
     # Filter base on the ID Provided

@@ -50,7 +50,7 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if not check_admin_access_company(user=self.request.user, company=self.get_company()):
+        if not check_admin_access_company(self):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())

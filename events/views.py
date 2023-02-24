@@ -72,7 +72,7 @@ class EventCreateAPIView(CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         company = self.get_company()
         #  first check for then company owner then the company admins
-        if not check_admin_access_company(self.request.user, company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=company, staff=self.request.user)
@@ -116,7 +116,7 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         company = self.get_company()
         #  first check for then company owner then the company admins
-        if not check_admin_access_company(self.request.user, company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -130,7 +130,7 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         company = self.get_company()
         #  first check for then company owner then the company admins
-        if not check_admin_access_company(self.request.user, company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)

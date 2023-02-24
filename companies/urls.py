@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import CompanyRetrieveUpdateDeleteAPIView, CompanyListCreateAPIView, CompanyModifyEmployeeAPIView, \
     CompanyGroupRetrieveUpdateDestroy, CompanyGroupListCreate, LocationViewSetsAPIView, IndustryViewSetsAPIView, \
     CompanyInviteListCreateAPIView, InvitedEmployeeSearchCompanyAPIView, CompanyEmployeesListAPIView, \
-    CompanyLittleInfoListAPIView,CompanyAnalyTicsAPIView, IndustryListAPIView
+    CompanyLittleInfoListAPIView,CompanyAnalyTicsAPIView, IndustryListAPIView, UpdateStaffView
 
 urlpatterns = [
     path("", CompanyListCreateAPIView.as_view(), name="company_list_create"),
@@ -20,6 +20,7 @@ urlpatterns = [
     path("company_little_info/", CompanyLittleInfoListAPIView.as_view(), name="company_little_info"),
     path("company_analytics/", CompanyAnalyTicsAPIView.as_view(), name="company_analytics"),
     path("industry_listing/", IndustryListAPIView.as_view(), name="industry_listing"),
+    path("updates/<id>/", UpdateStaffView.as_view(), name=""),
 ]
 
 router = DefaultRouter()

@@ -4,8 +4,9 @@ from django.db.models import Sum
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, UpdateAPIView
 from rest_framework.response import Response
+from rest_framework.exceptions import APIException
 # Create your views here.
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -20,7 +21,7 @@ from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEm
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyInfoSerializer, \
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
-    CompanyEmployeeSerializer
+    CompanyEmployeeSerializer, UpdateStaffSerializer
 from .utils import check_admin_access_company, get_username_not_in_db
 
 
@@ -278,7 +279,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         company = self.get_company()
         # Check if the user have permission as an admin or owner
-        if not check_admin_access_company(self.request.user, company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission to view invites"}, status=401)
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -291,7 +292,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         # check the permission
         company = self.get_company()
-        if not check_admin_access_company(self.request.user, company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission to view invites"}, status=401)
         serializer = CompanyInviteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -327,6 +328,22 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             scheduled_date=timezone.now()
         )
         return Response(serializer.data, status=201)
+
+
+class UpdateStaffView(UpdateAPIView):
+    queryset = CompanyEmployee.objects.all()
+    serializer_class = UpdateStaffSerializer
+    permission_classes = [LoggedInPermission]
+    lookup_field = 'id'
+
+    def put(self, request, *args, **kwargs):
+        if not check_admin_access_company(self):
+            return Response({"error": "You dont have permission to view invites"}, status=401)
+        elif check_admin_access_company(self):
+            status = request.data['status']
+            kwargs['partial'] = True
+            # self.get_object().status = status
+            return self.update(request, *args, **kwargs)
 
 
 class CompanyEmployeesListAPIView(ListAPIView):

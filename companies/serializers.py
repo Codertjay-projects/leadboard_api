@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from users.serializers import UserDetailSerializer
+from feedbacks.serializers import FeedbackSerializer
 from .models import Company, Group, Industry, Location, CompanyInvite, CompanyEmployee
 
 
@@ -9,6 +10,7 @@ class CompanyEmployeeSerializer(serializers.ModelSerializer):
     user = UserDetailSerializer(read_only=True)
     lead_feedbacks = serializers.SerializerMethodField(read_only=True)
     schedule_feedbacks = serializers.SerializerMethodField(read_only=True)
+    last_activity = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CompanyEmployee
@@ -23,19 +25,25 @@ class CompanyEmployeeSerializer(serializers.ModelSerializer):
             "timestamp",
             "lead_feedbacks",
             "schedule_feedbacks",
+            "last_activity"
         ]
 
     def get_lead_feedbacks(self, obj: CompanyEmployee):
         """" This returns the lead feedbacks made by the user"""
-        from feedbacks.serializers import FeedbackSerializer
         user = obj.user
         feedbacks = user.feedback_set.filter(content_type__model="leadcontact")
         serializer = FeedbackSerializer(feedbacks, many=True)
         return serializer.data
 
+    def get_last_activity(self, obj: CompanyEmployee):
+        """" This returns the lead feedbacks made by the user"""
+        user = obj.user
+        feedbacks = user.feedback_set.filter(content_type__model="leadcontact").first()
+        serializer = FeedbackSerializer(feedbacks)
+        return serializer.data
+
     def get_schedule_feedbacks(self, obj: CompanyEmployee):
         """" This returns the lead feedbacks made by the user"""
-        from feedbacks.serializers import FeedbackSerializer
         user = obj.user
         # Return all feedbacks made by the user . the content_type__model enables me to get the
         #  particular model because the feedback is used for schedule and lead
@@ -210,3 +218,8 @@ class CompanyInviteSerializer(serializers.ModelSerializer):
             "timestamp",
         ]
         read_only_fields = ["invite_id", "timestamp", "status", "staff"]
+
+class UpdateStaffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyInvite
+        fields = '__all__'

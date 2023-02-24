@@ -1,5 +1,18 @@
 from django.utils import timezone
 from django.utils.text import slugify
+import uuid
+
+
+def is_valid_uuid(uuid_str):
+    # Turn uuid string in to <class 'uuid.UUID'>
+    # UUIDs are expected to be in the format of 8-4-4-4-12 characters separated by dashes, 
+    # where each character is a hexadecimal digit (0-9, a-f).
+    if uuid_str:
+        try:
+            return uuid.UUID(uuid_str, version=4)
+        except ValueError:
+            return False
+    else: return False
 
 
 def create_slug(instance, instances, new_slug=None):

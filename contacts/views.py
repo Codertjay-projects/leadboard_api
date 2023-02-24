@@ -231,7 +231,7 @@ class UnSubscribeAPIView(ListCreateAPIView):
             return Response({"error": "Currently not authenticated. Please login to view this page"}, status=401)
         queryset = self.filter_queryset(self.get_queryset())
         # Check if the user have permission to view the list
-        if not check_admin_access_company(self.request.user, self.get_company()):
+        if not check_admin_access_company(self):
             # If it doesn't raise an error that means the user is part of the organisation
             return Response({"error": "You dont have permission"}, status=401)
         page = self.paginate_queryset(queryset)

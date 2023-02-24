@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from companies.serializers import CompanySerializer
 from companies.models import Company
+from .utils import is_valid_uuid
 
 from users.models import User
 from users.permissions import NotLoggedInPermission, LoggedInPermission
@@ -239,12 +240,12 @@ class LeadboardVerifyTokenAPIView(APIView):
     def get(self, request):
         try:
             access_token = self.request.query_params.get("access_token")
-            user_id = self.request.query_params.get("user_id")
+            user_id = is_valid_uuid(self.request.query_params.get("user_id"))
             if not access_token or not user_id:
                 return Response({"status": False}, status=401)
             token = AccessToken(token=access_token)
             # Check if the token user id is the same as the one passed
-            if str(token.get("user_id")) == user_id:
+            if str(token.get("user_id")) == str(user_id):
                 return Response({"status": True}, status=200)
             return Response({"status": False}, status=401)
         except Exception as a:

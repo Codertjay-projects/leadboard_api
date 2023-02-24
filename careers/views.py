@@ -78,7 +78,7 @@ class JobListCreateAPIView(ListCreateAPIView):
             return Response({"error": "Company id required on params"}, status=400)
         if not self.request.user.is_authenticated:
             return Response({"error": "You are currently not authenticated"}, status=400)
-        if not check_admin_access_company(self.request.user, self.get_company()):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission to create a job under the company "}, status=401)
         serializer = JobCreateUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -97,7 +97,7 @@ class JobRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         if not self.request.user.is_authenticated:
             return Response({"error": "You are currently not authenticated"}, status=401)
-        if not check_admin_access_company(self.request.user, instance.company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission to create a job under the company "}, status=401)
         serializer = JobCreateUpdateSerializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -108,7 +108,7 @@ class JobRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         if not self.request.user.is_authenticated:
             return Response({"error": "You are currently not authenticated"}, status=401)
-        if not check_admin_access_company(self.request.user, instance.company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission to delete a job under the company "}, status=401)
         instance.applicants.all().delete()
         instance.delete()
@@ -214,7 +214,7 @@ class JobApplicantListAPIView(ListAPIView):
 
     def get_queryset(self):
         # Check if the user has access
-        if not check_admin_access_company(self.request.user, self.get_job().company):
+        if not check_admin_access_company(self):
             return Response({"error": "You dont have permission to delete a job under the company "}, status=401)
         queryset = self.filter_queryset(self.get_job().applicants.all())
         # Filter the date if it is passed in the params like

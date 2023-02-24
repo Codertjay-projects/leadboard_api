@@ -38,8 +38,22 @@ def check_marketer_and_admin_access_company(user: User, company: Company):
     return False
 
 
-def check_admin_access_company(user: User, company: Company):
+# def check_admin_access_company(user: User, company: Company):
+#     # check if the user is the owner of the company
+#     if user == company.owner:
+#         return True
+#     # check if the user is one of the admin
+#     if company.companyemployee_set.filter(user=user, status="ACTIVE", role="ADMIN").first():
+#         return True
+#     return False
+
+
+def check_admin_access_company(self):
     # check if the user is the owner of the company
+    company = self.request.query_params.get("company_id")
+    company = Company.objects.filter(id=company).first()
+    user = self.request.user
+
     if user == company.owner:
         return True
     # check if the user is one of the admin

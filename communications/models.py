@@ -162,7 +162,7 @@ class SendGroupsEmailScheduler(models.Model):
     email_to = models.ManyToManyField(Group, blank=True)
     email_from = models.CharField(max_length=250)
     email_subject = models.CharField(max_length=250)
-    scheduled_date = models.DateTimeField()
+    scheduled_date = models.DateTimeField(null=True, blank=True)
     description = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
 

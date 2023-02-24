@@ -196,6 +196,7 @@ class CompanyEmployee(models.Model):
 INVITE_STATUS = (
     ("ACTIVE", "ACTIVE"),
     ("PENDING", "PENDING"),
+    ("DEACTIVATED", "DEACTIVATED"),
 )
 
 

@@ -1,9 +1,11 @@
 from django.http import Http404
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from django.utils import timezone
 from rest_framework import status
+import uuid
 
 from companies.models import Company, CompanyEmployee
 from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access, \
@@ -11,7 +13,8 @@ from companies.utils import check_marketer_and_admin_access_company, check_compa
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
-from users.utils import date_filter_queryset
+from users.utils import date_filter_queryset, is_valid_uuid
+from users.models import User
 from .models import LeadContact
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
 
@@ -47,7 +50,8 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         """
         lead_type = self.request.query_params.get("lead_type")
         cat = self.request.query_params.get("cat")
-        staff = self.request.query_params.get("staff")
+        uuid_params = self.request.query_params.get("staff")
+        staff = User.objects.filter(id=is_valid_uuid(uuid_params)).first()
         # Check if the category is passed
         # get leads base on the company and the cat
         queryset = self.filter_queryset(LeadContact.objects.filter_by_actions(
@@ -57,7 +61,11 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             queryset = queryset.filter(lead_type=lead_type)
         if staff:
             # get the leads of that's staff
-            queryset = queryset.filter(assigned_marketer__id=staff)
+            queryset = queryset.filter(assigned_marketer=staff)
+            print(queryset)
+        elif uuid_params and not staff:
+            raise APIException({'message': 'No result found'})
+            
         # Filter the date if it is passed in the params like
         if queryset:
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
