@@ -74,7 +74,7 @@ class SendCustomEmailScheduler(models.Model):
     #  list of email comma seperated
     email_list = models.TextField()
     description = models.TextField()
-    scheduled_date = models.DateTimeField()
+    scheduled_date = models.DateTimeField(blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
     def get_custom_emails(self) -> list:
