@@ -4,6 +4,7 @@ import string
 from high_value_contents.models import HighValueContent
 from users.models import User
 from companies.models import Group, Company
+from leads.models import LeadContact
 
 
 def get_username_not_in_db(company: Company, username) -> str:
@@ -116,7 +117,7 @@ def get_assigned_marketer_from_company_lead(company: Company):
     or
     it uses the owner of the company
     """
-    last_lead = company.leadcontact_set.first()
+    last_lead = LeadContact.objects.filter(company=company).first()
     if not last_lead:
         # the first lead is managed by the owner
         return company.owner

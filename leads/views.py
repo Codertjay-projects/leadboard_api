@@ -131,7 +131,7 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         if not company:
             raise Http404
         # get the lead base on the id of the company on the urls
-        lead = company.leadcontact_set.filter(id=id).first()
+        lead = LeadContact.objects.filter(company=company).first()
         if not lead:
             raise Http404
         return lead
