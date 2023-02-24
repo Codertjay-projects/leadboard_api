@@ -1,0 +1,45 @@
+Celery beat
+sudo nano /etc/systemd/system/leadboard_api_celerybeat.service
+
+[Unit]
+Description=Celery Beat Service
+After=network.target
+
+[Service]
+User=noaholatoye
+Group=www-data
+WorkingDirectory=/home/noaholatoye/projects/leadboard_api
+ExecStart=/home/noaholatoye/projects/leadboard_api/venv/bin/celery -A leadboard_api beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl start leadboard_api_celerybeat
+sudo systemctl enable leadboard_api_celerybeat
+sudo systemctl status leadboard_api_celerybeat
+
+
+Celery Service
+sudo nano /etc/systemd/system/leadboard_api_celery.service
+
+[Unit]
+Description=Celery Service
+After=network.target
+
+[Service]
+User=noaholatoye
+Group=www-data
+WorkingDirectory=/home/noaholatoye/projects/leadboard_api
+ExecStart=/home/noaholatoye/projects/leadboard_api/venv/bin/celery -A leadboard_api worker -c 1 --loglevel=info
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl start leadboard_api_celery
+sudo systemctl disable leadboard_api_celery
+sudo systemctl enable leadboard_api_celery
+sudo systemctl status leadboard_api_celery
