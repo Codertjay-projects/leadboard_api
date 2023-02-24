@@ -38,7 +38,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
 
     def get_company(self):
         #  filter the company base on the id provided
-        company_id = self.request.query_params.get("company_id")
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
         company = Company.objects.filter(id=company_id).first()
         if not company:
             raise Http404
@@ -124,7 +124,7 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         # using the id of the company to filter through the leads
-        company_id = self.request.query_params.get("company_id")
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
         # the lead id on the url
         id = self.kwargs.get("id")
         company = Company.objects.filter(id=company_id).first()
