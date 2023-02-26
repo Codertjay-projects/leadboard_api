@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 from companies.serializers import CompanyGroupSerializer, CompanySerializer, CompanyInfoSerializer
 from companies.utils import check_group_is_under_company
 from feedbacks.serializers import FeedbackSerializer
-from schedules.models import UserScheduleCall, ScheduleCall
+from .models import UserScheduleCall, ScheduleCall
 from users.serializers import UserDetailSerializer
 
 
@@ -17,13 +17,7 @@ class ScheduleCallSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ScheduleCall
-        fields = [
-            "id",
-            "title",
-            "minutes",
-            "meeting_link",
-            "timestamp",
-        ]
+        fields = '__all__'
         read_only_fields = ["id", "timestamp", ]
 
 
@@ -34,44 +28,7 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserScheduleCall
-        fields = [
-            "id",
-            "assigned_marketer",
-            "groups",
-            "first_name",
-            "last_name",
-            "age_range",
-            "email",
-            "location",
-            "gender",
-            "phone",
-            "age",
-            "communication_medium",
-            "scheduled_date",
-            "scheduled_time",
-            "employed",
-            "other_training",
-            "other_training_lesson",
-            "will_pay",
-            "income_range",
-            "knowledge_scale",
-            "have_laptop",
-            "will_get_laptop",
-            "when_get_laptop",
-            "good_internet",
-            "weekly_commitment",
-            "saturday_check_in",
-            "more_details",
-            "kids_count",
-            "kids_years",
-            "time_close_from_school",
-            "user_type",
-            "schedule_call",
-            "schedule_category",
-            "lead_contact",
-            "eligible",
-            "timestamp",
-        ]
+        fields = '__all__'
         read_only_fields = ["id", "timestamp", ]
 
     def create(self, validated_data):
@@ -96,7 +53,6 @@ class UserScheduleSerializer(serializers.ModelSerializer):
     """
     schedule_call = ScheduleCallSerializer(read_only=True)
     groups = CompanyGroupSerializer(many=True)
-    company = CompanyInfoSerializer(read_only=True)
     assigned_marketer = UserDetailSerializer(read_only=True)
     previous_feedback = serializers.SerializerMethodField(read_only=True)
     group_list = serializers.SerializerMethodField(read_only=True)
@@ -106,7 +62,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
         model = UserScheduleCall
         fields = [
             "id",
-            "company",
+            "schedule_call",
             "groups",
             "assigned_marketer",
             "first_name",
@@ -119,7 +75,6 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "age",
             "communication_medium",
             "scheduled_date",
-            "scheduled_time",
             "employed",
             "other_training",
             "other_training_lesson",
@@ -139,7 +94,6 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "user_type",
             "group_list",
             "assigned_marketer_list",
-            "schedule_call",
             "lead_contact",
             "schedule_category",
             "eligible",
@@ -190,7 +144,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
         Return status if category selected in UserScheduleCall
         """
         datasets = []
-        for c in obj.company.group_set.all():
+        for c in obj.schedule_call.company.group_set.all():
             # Get all groups currently on this company
             # ( Reason why I use the company is to make it little more fast)
             if c in obj.groups.all():

@@ -26,7 +26,11 @@ def check_group_is_under_company(company: Company, group: Group):
     return False
 
 
-def check_marketer_and_admin_access_company(user: User, company: Company):
+def check_marketer_and_admin_access_company(self):
+    company = self.request.query_params.get("company_id")
+    company = Company.objects.filter(id=company).first()
+    user = self.request.user
+
     # check if the user is the owner of the company
     if user == company.owner:
         return True
@@ -160,7 +164,7 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
     or
     it uses the owner of the company
     """
-    last_user_schedule_call = company.userschedulecall_set.first()
+    last_user_schedule_call = company.employees.all().first()
     if not last_user_schedule_call:
         # the first user_schedule_call is managed by the owner
         return company.owner

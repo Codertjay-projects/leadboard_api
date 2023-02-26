@@ -76,7 +76,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         # Check if the user have permission to view the list
-        if not check_marketer_and_admin_access_company(self.request.user, self.get_company()):
+        if not check_marketer_and_admin_access_company(self):
             # If it doesn't raise an error that means the user is part of the organisation
             return Response({"error": "You dont have permission"}, status=401)
         # Check if the user is among marketers in the company
@@ -105,7 +105,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             return Response({"email": "Lead with that email already exists under this organisation"}, status=400)
 
         #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         # Get an assigned marketer for the schedule call
         assigned_marketer = get_assigned_marketer_from_company_lead(company)
@@ -139,7 +139,7 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, instance.company):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         serializer = LeadContactDetailSerializer(instance)
         return Response(serializer.data)
@@ -147,7 +147,7 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, instance.company):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -187,7 +187,7 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, instance.company):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)
