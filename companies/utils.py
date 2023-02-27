@@ -196,3 +196,14 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
         return company.first_admin_user()
     else:
         return company.owner
+def get_or_create_test_group(company):
+    """
+    this is used to get or create a test group on a lead
+    :return:
+    """
+    from companies.models import Group
+
+    test_group, created = Group.objects.get_or_create(title="Test",
+                                                      company=company)
+
+    return test_group

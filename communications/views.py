@@ -1,4 +1,5 @@
 from django.http import Http404, HttpResponseRedirect
+from django.utils import timezone
 from django.views import View
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
@@ -58,11 +59,14 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
         test_group = get_or_create_test_group(self.get_company())
-        instance = serializer.save(company=self.get_company())
-        if is_test:
-            # add the test groups
+        # it's on string format
+        if is_test == "True":
+            # add the test groups and also make the schedule date now
+            instance = serializer.save(company=self.get_company(), scheduled_date=timezone.now())
             instance.email_to.clear()
             instance.email_to.add(test_group)
+        else:
+            instance = serializer.save(company=self.get_company())
         # Create Logs under thus SendCustomEmailScheduler using the task
         create_group_schedule_log.delay(instance.id)
         return Response(serializer.data, status=201)

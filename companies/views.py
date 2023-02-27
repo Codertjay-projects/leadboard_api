@@ -6,7 +6,6 @@ from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, UpdateAPIView
 from rest_framework.response import Response
-from rest_framework.exceptions import APIException
 # Create your views here.
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -22,7 +21,7 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     CompanyEmployeeSerializer, UpdateStaffSerializer
-from .utils import check_admin_access_company, get_username_not_in_db, get_or_create_test_group
+from .utils import check_admin_access_company, get_or_create_test_group
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
