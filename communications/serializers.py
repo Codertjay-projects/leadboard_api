@@ -50,7 +50,9 @@ class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # the email_to are in this form email_to=[<email_to instance>, ...] which are the instances
         # of a category
-        email_to = validated_data.pop('email_to')
+        email_to = []
+        if validated_data.get("email_to"):
+            email_to = validated_data.pop('email_to')
         instance = SendGroupsEmailScheduler.objects.create(**validated_data)
         for item in email_to:
             try:

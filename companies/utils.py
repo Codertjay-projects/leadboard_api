@@ -116,7 +116,7 @@ def get_assigned_marketer_from_company_lead(company: Company):
     or
     it uses the owner of the company
     """
-    last_lead = company.leadcontact_set.first()
+    last_lead = company.lead_companies.first()
     if not last_lead:
         # the first lead is managed by the owner
         return company.owner
@@ -191,3 +191,17 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
         return company.first_admin_user()
     else:
         return company.owner
+
+
+
+def get_or_create_test_group(company):
+    """
+    this is used to get or create a test group on a lead
+    :return:
+    """
+    from companies.models import Group
+
+    test_group, created = Group.objects.get_or_create(title="Test",
+                                                      company=company)
+
+    return test_group

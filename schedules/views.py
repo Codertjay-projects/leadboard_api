@@ -140,8 +140,7 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
         company = self.get_company()
         # Check if the user is the assigned marker
         if self.request.user != instance.assigned_marketer:
-            if not check_admin_access_company(company=company,
-                                              user=self.request.user):
+            if not check_admin_access_company(self):
                 return Response({"error": "You don not have access to update the schedule ."
                                           " Please ask your admin to provide you access"}, status=401)
 
@@ -185,8 +184,7 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
         company = self.get_company()
         # Check if the user is the assigned marker
         if self.request.user != instance.assigned_marketer:
-            if not check_admin_access_company(company=company,
-                                              user=self.request.user):
+            if not check_admin_access_company(self):
                 return Response({"error": "You don not have access to update the schedule ."
                                           " Please ask your admin to provide you access"}, status=401)
 
@@ -197,7 +195,7 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
         instance = self.get_object()
         if instance.assigned_marketer != self.request.user:
             # if the user is not the assigned marketer
-            if not check_admin_access_company(user=self.request.user, company=self.get_company()):
+            if not check_admin_access_company(self):
                 return Response({"error": "You dont have permission to perform this action"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)

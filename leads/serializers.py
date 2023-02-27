@@ -24,18 +24,20 @@ class LeadContactUpdateCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # the groups are in this form groups=[<group instance>, ...] which are the instances
         # of a category
-        global groups
 
         # if the group was sent from the frontend I have to pop it out because i cant create
         # lead if it exists it would return an error
-        groups =validated_data.pop('groups')
+        groups = []
+        if validated_data.get("groups"):
+            groups = validated_data.pop('groups')
         instance = LeadContact.objects.create(**validated_data)
-
-        """ Assigned a marketer to the lead"""
         instance.assigned_marketer = get_assigned_marketer_from_company_lead(instance.company)
-        if groups: instance.groups.add(*groups)
+        for item in groups:
+            try:
+                instance.groups.add(item)
+            except Exception as a:
+                print(a)
         instance.save()
-
         return instance
 
 
@@ -150,7 +152,7 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
             serializer = FeedbackSerializer(feedback, many=True)
             return serializer.data
         return []
-    
+
     def get_conversion_count(self, obj):
         req_user = self.context['request'].user
         marketer = CompanyEmployee.objects.filter(company=obj.company, user=req_user).first()

@@ -67,3 +67,4 @@ def update_group_schedule_log_status(id, status):
     if custom_schedule:
         custom_schedule.status = status
         custom_schedule.save()
+

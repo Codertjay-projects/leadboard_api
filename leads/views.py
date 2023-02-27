@@ -1,20 +1,18 @@
 from django.http import Http404
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
-from rest_framework.exceptions import APIException
-from rest_framework.response import Response
 from django.utils import timezone
 from rest_framework import status
-import uuid
+from rest_framework.exceptions import APIException
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
+from rest_framework.response import Response
 
 from companies.models import Company, CompanyEmployee
-from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access, \
-    get_assigned_marketer_from_company_user_schedule_call, get_assigned_marketer_from_company_lead
+from companies.utils import check_marketer_and_admin_access_company, get_assigned_marketer_from_company_lead
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
-from users.permissions import LoggedInPermission, NotLoggedInPermission
-from users.utils import date_filter_queryset, is_valid_uuid
 from users.models import User
+from users.permissions import LoggedInPermission
+from users.utils import date_filter_queryset, is_valid_uuid
 from .models import LeadContact
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
 
@@ -65,7 +63,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             print(queryset)
         elif uuid_params and not staff:
             raise APIException({'message': 'No result found'})
-            
+
         # Filter the date if it is passed in the params like
         if queryset:
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
@@ -95,6 +93,8 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         #  before creating a lead we have to make sure the user is a member of that company
         company = self.get_company()
+        # if this is passed that means it's a test mail
+
         serializer = LeadContactUpdateCreateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         # Getting the email and checking if an email exists on this leads under the company
@@ -131,7 +131,7 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         if not company:
             raise Http404
         # get the lead base on the id of the company on the urls
-        lead = company.leadcontact_set.filter(id=id).first()
+        lead = company.lead_companies.filter(id=id).first()
         if not lead:
             raise Http404
         return lead

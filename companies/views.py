@@ -22,7 +22,7 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     CompanyEmployeeSerializer, UpdateStaffSerializer
-from .utils import check_admin_access_company, get_username_not_in_db
+from .utils import check_admin_access_company, get_username_not_in_db, get_or_create_test_group
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -167,6 +167,8 @@ class CompanyGroupListCreate(ListCreateAPIView):
         return company
 
     def get_queryset(self):
+        # add the test group
+        test_group = get_or_create_test_group(self.get_company())
         groups = Group.objects.filter(company_id=self.get_company().id)
         return groups
 

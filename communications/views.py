@@ -8,7 +8,7 @@ from communications.models import SendGroupsEmailScheduler, SendCustomEmailSched
 from communications.serializers import SendGroupsEmailSchedulerSerializer, SendGroupsEmailSchedulerListSerializer, \
     SendCustomEmailSchedulerSerializer, SendCustomEmailListSchedulerSerializer
 from companies.models import Company
-from companies.utils import check_admin_access_company
+from companies.utils import check_admin_access_company, get_or_create_test_group
 from high_value_contents.models import DownloadHighValueContent
 from users.permissions import LoggedInPermission
 from .models import SendCustomEmailSchedulerLog, SendGroupsEmailSchedulerLog
@@ -49,13 +49,20 @@ class SendGroupsEmailSchedulerListCreateAPIView(ListCreateAPIView):
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
+        # this is used if it's a test mail
+        is_test = request.data.get("test")
+        if is_test:
+            is_test = is_test.capitalize()
         serializer = self.get_serializer(data=request.data)
         if not check_admin_access_company(self):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
-        serializer.save(company=self.get_company())
-        # Get the instance we just saved using the ID
-        instance = SendGroupsEmailScheduler.objects.get(id=serializer.data.get("id"))
+        test_group = get_or_create_test_group(self.get_company())
+        instance = serializer.save(company=self.get_company())
+        if is_test:
+            # add the test groups
+            instance.email_to.clear()
+            instance.email_to.add(test_group)
         # Create Logs under thus SendCustomEmailScheduler using the task
         create_group_schedule_log.delay(instance.id)
         return Response(serializer.data, status=201)
@@ -95,7 +102,7 @@ class SendCustomEmailSchedulerListCreateAPIView(ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if not check_admin_access_company(user=self.request.user, company=self.get_company()):
+        if not check_admin_access_company(self):
             return Response({"error": "You do not have access to this Company"}, status=401)
         serializer.is_valid(raise_exception=True)
         serializer.save(company=self.get_company())
