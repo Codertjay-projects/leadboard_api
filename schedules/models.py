@@ -102,11 +102,14 @@ class ScheduleCall(models.Model):
     )
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, blank=True, null=True)
     title = models.CharField(max_length=250, )
     slug = models.SlugField()
     minutes = models.IntegerField()
     description = models.TextField(null=True, max_length=250)
     meeting_link = models.URLField(blank=True, null=True)
+    redirect_link = models.URLField(blank=True, null=True)
+    redirect_link_title = models.CharField(blank=True, null=True, max_length=15)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

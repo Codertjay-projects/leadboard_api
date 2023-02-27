@@ -14,7 +14,6 @@ class ScheduleCallSerializer(serializers.ModelSerializer):
     """
     This serializes the schedule call which is either
     """
-
     class Meta:
         model = ScheduleCall
         fields = '__all__'
@@ -38,7 +37,7 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
         instance = UserScheduleCall.objects.create(**validated_data)
         for item in groups:
             # check if the user has access
-            if not check_group_is_under_company(instance.company, item):
+            if not check_group_is_under_company(instance.schedule_call.company, item):
                 raise ValidationError("You dont have access to the groups provided")
             try:
                 instance.groups.add(item)
