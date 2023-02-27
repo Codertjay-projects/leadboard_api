@@ -4,6 +4,7 @@ import string
 from high_value_contents.models import HighValueContent
 from users.models import User
 from companies.models import Group, Company
+from leads.models import LeadContact
 
 
 def get_username_not_in_db(company: Company, username) -> str:
@@ -25,7 +26,11 @@ def check_group_is_under_company(company: Company, group: Group):
     return False
 
 
-def check_marketer_and_admin_access_company(user: User, company: Company):
+def check_marketer_and_admin_access_company(self):
+    company = self.request.query_params.get("company_id")
+    company = Company.objects.filter(id=company).first()
+    user = self.request.user
+
     # check if the user is the owner of the company
     if user == company.owner:
         return True
@@ -116,7 +121,7 @@ def get_assigned_marketer_from_company_lead(company: Company):
     or
     it uses the owner of the company
     """
-    last_lead = company.lead_companies.first()
+    last_lead = LeadContact.objects.filter(company=company).first()
     if not last_lead:
         # the first lead is managed by the owner
         return company.owner
@@ -159,7 +164,7 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
     or
     it uses the owner of the company
     """
-    last_user_schedule_call = company.userschedulecall_set.first()
+    last_user_schedule_call = company.employees.all().first()
     if not last_user_schedule_call:
         # the first user_schedule_call is managed by the owner
         return company.owner
@@ -191,17 +196,3 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
         return company.first_admin_user()
     else:
         return company.owner
-
-
-
-def get_or_create_test_group(company):
-    """
-    this is used to get or create a test group on a lead
-    :return:
-    """
-    from companies.models import Group
-
-    test_group, created = Group.objects.get_or_create(title="Test",
-                                                      company=company)
-
-    return test_group

@@ -7,7 +7,7 @@ from .models import ScheduleCall, UserScheduleCall
 @admin.register(ScheduleCall)
 class ScheduleCallAdmin(admin.ModelAdmin):
     list_display = [
-        "staff",
+        "company",
         "title",
         "slug",
         "minutes",
@@ -15,7 +15,7 @@ class ScheduleCallAdmin(admin.ModelAdmin):
         "timestamp",
     ]
     search_fields = [
-        "staff",
+        "company",
         "title",
         "slug",
         "minutes",
@@ -27,7 +27,6 @@ class ScheduleCallAdmin(admin.ModelAdmin):
 @admin.register(UserScheduleCall)
 class UserScheduleCallAdmin(admin.ModelAdmin):
     list_display = [
-        "company",
         "assigned_marketer",
         "first_name",
         "last_name",
@@ -39,7 +38,6 @@ class UserScheduleCallAdmin(admin.ModelAdmin):
         "age",
         "communication_medium",
         "scheduled_date",
-        "scheduled_time",
         "employed",
         "other_training",
         "other_training_lesson",

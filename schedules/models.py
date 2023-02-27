@@ -46,7 +46,6 @@ class UserScheduleCall(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     groups = models.ManyToManyField(Group, related_name="user_schedule_groups", blank=True)
     assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
@@ -59,8 +58,7 @@ class UserScheduleCall(models.Model):
     phone = models.CharField(max_length=50)
     age = models.IntegerField(blank=True, null=True)
     communication_medium = models.CharField(choices=COMMUNICATION_MEDIUM, max_length=250)
-    scheduled_date = models.DateField(blank=True, null=True)
-    scheduled_time = models.TimeField(blank=True, null=True)
+    scheduled_date = models.DateTimeField(null=True)
     employed = models.BooleanField(blank=True, null=True)
     other_training = models.BooleanField(blank=True, null=True)
     other_training_lesson = models.CharField(max_length=200, blank=True, null=True)
@@ -73,7 +71,7 @@ class UserScheduleCall(models.Model):
     good_internet = models.BooleanField(blank=True, null=True)
     weekly_commitment = models.CharField(max_length=50, blank=True, null=True)
     saturday_check_in = models.BooleanField(blank=True, null=True)
-    hours_per_week = models.CharField(max_length=20)
+    hours_per_week = models.CharField(max_length=20, blank=True, null=True)
     catch_up_per_hours_weeks = models.CharField(max_length=20, blank=True, null=True)
     more_details = models.TextField(blank=True, null=True)
     kids_count = models.IntegerField(blank=True, null=True)
@@ -103,10 +101,15 @@ class ScheduleCall(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, blank=True, null=True)
     title = models.CharField(max_length=250, )
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField()
     minutes = models.IntegerField()
-    meeting_link = models.URLField()
+    description = models.TextField(null=True, max_length=250)
+    meeting_link = models.URLField(blank=True, null=True)
+    redirect_link = models.URLField(blank=True, null=True)
+    redirect_link_title = models.CharField(blank=True, null=True, max_length=15)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

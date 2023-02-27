@@ -45,6 +45,9 @@ def post_save_send_custom_email_from_log(sender, instance, *args, **kwargs):
             email_id=instance.id,
             email_type="custom"
         )
+        to_email =instance.company.customer_support_email
+        if not to_email:
+            to_email =instance.company.owner.email
         # Create the EmailLog which once created sends an email
         email_log, created = EmailLog.objects.get_or_create(
             company=instance.company,
@@ -54,7 +57,7 @@ def post_save_send_custom_email_from_log(sender, instance, *args, **kwargs):
             email_from=instance.company.name,
             email_subject=email_scheduler.email_subject,
             description=description,
-            reply_to=instance.company.customer_support_email,
+            reply_to=to_email,
             scheduled_date=email_scheduler.scheduled_date
         )
 
@@ -74,7 +77,7 @@ class SendCustomEmailScheduler(models.Model):
     #  list of email comma seperated
     email_list = models.TextField()
     description = models.TextField()
-    scheduled_date = models.DateTimeField()
+    scheduled_date = models.DateTimeField(blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
     def get_custom_emails(self) -> list:
@@ -132,7 +135,9 @@ def post_save_send_group_email_from_log(sender, instance, *args, **kwargs):
             )
             # modify the names on the description
             description = modify_names_on_description(description, instance.first_name, instance.last_name)
-
+            to_email =instance.company.customer_support_email
+            if not to_email:
+                to_email =instance.company.owner.email
             # Create the EmailLog which once created sends an email
             email_log, created = EmailLog.objects.get_or_create(
                 company=instance.company,
@@ -142,7 +147,7 @@ def post_save_send_group_email_from_log(sender, instance, *args, **kwargs):
                 email_from=instance.company.name,
                 email_subject=instance.send_groups_email_scheduler.email_subject,
                 description=description,
-                reply_to=instance.company.customer_support_email,
+                reply_to=to_email,
                 scheduled_date=instance.send_groups_email_scheduler.scheduled_date
             )
 

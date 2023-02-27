@@ -1,7 +1,7 @@
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
 from rest_framework.response import Response
 
 from companies.models import Company, CompanyEmployee
@@ -10,17 +10,36 @@ from companies.utils import get_assigned_marketer_from_company_user_schedule_cal
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from leads.models import LeadContact
-from schedules.models import ScheduleCall, UserScheduleCall
-from schedules.serializers import UserScheduleSerializer, UserScheduleCreateUpdateSerializer
-from users.permissions import LoggedInPermission
-from users.utils import date_filter_queryset
+from .models import ScheduleCall, UserScheduleCall
+from .serializers import UserScheduleSerializer, UserScheduleCreateUpdateSerializer, ScheduleCallSerializer
+from users.permissions import LoggedInPermission, NotLoggedInPermission
+from users.utils import date_filter_queryset, is_valid_uuid
+
+
+class ScheduleCallDetailView(RetrieveAPIView):
+    queryset = ScheduleCall.objects.all()
+    serializer_class = ScheduleCallSerializer
+    lookup_field = 'slug'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get the instance of schedule with slug
+        and company username
+        """
+        instance = ScheduleCall.objects.filter(slug=kwargs['slug'], company__username=kwargs['company']).first()
+
+        if instance:
+            instance = ScheduleCallSerializer(instance)
+            return Response(instance.data, status=200)
+        else: 
+            return Response({"error": "Schedule not found"}, status=404)
 
 
 class UserScheduleCallListCreateAPIView(ListCreateAPIView):
     """
     This is used to list or create a user schedule
     """
-    permission_classes = [LoggedInPermission]
+    permission_classes = [NotLoggedInPermission]
     serializer_class = UserScheduleSerializer
     queryset = UserScheduleCall.objects.all()
     filter_backends = [SearchFilter, OrderingFilter]
@@ -40,7 +59,7 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
 
     def get_company(self):
         #  filter the company base on the id provided
-        company_id = self.request.query_params.get("company_id")
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
         company = Company.objects.filter(id=company_id).first()
         if not company:
             raise Http404
@@ -48,7 +67,7 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
 
     def get_queryset(self):
         # Filter the queryset and the backend filter also
-        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        queryset = self.filter_queryset(self.queryset.filter(schedule_call__company=self.get_company()))
         schedule_category = self.request.query_params.get("cat")
         if schedule_category:
             # if past was passed in the params the just filter for the past schedule_category
@@ -67,14 +86,14 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         queryset = self.get_queryset()
         # Check if the user is logged in
         # Check if the user have permission to view the list
-        if not check_marketer_and_admin_access_company(self.request.user, self.get_company()):
+        if not check_marketer_and_admin_access_company(self):
             # If it doesn't raise an error that means the user is part of the organisation
             return Response({"error": "You dont have permission"}, status=401)
         # Check if the user is among marketers in the company
         if self.request.user.id in self.get_company().all_marketers_user_ids():
             # Filter to get the leads where the user is the assigned marketer
             queryset = queryset.filter(assigned_marketer=self.request.user)
-
+        print('queryset:::::> ', queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -87,15 +106,19 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         Using the schedule call slug which was passed in the urls to get the schedule call
         :return:
         """
-        schedule_call_slug = self.request.query_params.get("schedule_call_slug")
-        schedule_call = ScheduleCall.objects.filter(slug=schedule_call_slug).first()
+        schedule_call_slug = is_valid_uuid(self.request.data["schedule_call"])
+        print(schedule_call_slug)
+        schedule_call = ScheduleCall.objects.filter(id=schedule_call_slug).first()
+        print(schedule_call)
         if not schedule_call:
             raise Http404
         return schedule_call
 
     def create(self, request, *args, **kwargs):
+        print('Checking the reference')
         company = self.get_company()
         schedule_call = self.get_schedule_call()
+        print(schedule_call)
         serializer = UserScheduleCreateUpdateSerializer(
             data=request.data,
             context={"request": request})
@@ -108,7 +131,6 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         # Get an assigned marketer for the schedule call
         assigned_marketer = get_assigned_marketer_from_company_user_schedule_call(company)
         serializer.save(
-            company=company,
             schedule_call=schedule_call,
             lead_contact=lead_contact,
             assigned_marketer=assigned_marketer)
@@ -119,7 +141,7 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
     """
     this is used to get the detail of a user schedule and also delete the user schedule
     """
-    permission_classes = [LoggedInPermission]
+    permission_classes = [NotLoggedInPermission]
     serializer_class = UserScheduleSerializer
     lookup_field = "id"
 

@@ -97,37 +97,37 @@ class Company(models.Model):
         """
         this returns the total number of admin in a company
         """
-        return self.companyemployee_set.filter(role="ADMIN").count()
+        return self.employees.filter(role="ADMIN").count()
 
     def marketers_count(self):
         """
         this returns the total number of marketers in a company
         """
-        return self.companyemployee_set.filter(role="MARKETER").count()
+        return self.employees.filter(role="MARKETER").count()
 
     def company_employees(self):
-        return self.companyemployee_set.all()
+        return self.employees.all()
 
     def first_marketer_user(self):
         """
         this returns first employee in a company but shows only the user on it.
         It is only called when the company have more than zero marketer
         """
-        return self.companyemployee_set.filter(role="MARKETER", status="ACTIVE").first().user
+        return self.employees.filter(role="MARKETER", status="ACTIVE").first().user
 
     def first_admin_user(self):
         """
         this returns first employee in a company but shows only the user on it.
         It is only called when the company have more than zero admin
         """
-        return self.companyemployee_set.filter(role="ADMIN", status="ACTIVE").first().user
+        return self.employees.filter(role="ADMIN", status="ACTIVE").first().user
 
     def all_marketers_user_ids(self):
         """
         This returns list of IDS in the of the marketers but the user id that was used to create it
         :return:
         """
-        user_id = self.companyemployee_set.filter(role="MARKETER", status="ACTIVE").values_list("user_id")
+        user_id = self.employees.filter(role="MARKETER", status="ACTIVE").values_list("user_id")
         user_id_list = []
         for item in user_id:
             user_id_list.append(item[0])
@@ -138,7 +138,7 @@ class Company(models.Model):
         This returns list of IDS in the of the admins but the user id that was used to create it
         :return:
         """
-        user_id = self.companyemployee_set.filter(role="ADMIN", status="ACTIVE").values_list("user_id")
+        user_id = self.employees.filter(role="ADMIN", status="ACTIVE").values_list("user_id")
         user_id_list = []
         for item in user_id:
             user_id_list.append(item[0])
@@ -180,7 +180,7 @@ class CompanyEmployee(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    company = models.ForeignKey("Company", on_delete=models.CASCADE, related_name='employees')
     role = models.CharField(choices=ROLE_CHOICES, max_length=250, blank=True, null=True)
     invited = models.BooleanField(default=True)
     status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
