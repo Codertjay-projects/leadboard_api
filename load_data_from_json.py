@@ -108,11 +108,13 @@ def create_groups():
     data = json.load(groups)
     company = get_or_create_company()
     for item in data:
-        group, created = Group.objects.get_or_create(
-            company=company,
-            title=item.get("title"),
-            slug=item.get("slug"),
-        )
+        group = Group.objects.filter(slug=item.get("slug")).first()
+        if not group:
+            group, created = Group.objects.get_or_create(
+                company=company,
+                title=item.get("title"),
+                slug=item.get("slug"),
+            )
 
 
 def create_high_value_content():
