@@ -125,7 +125,7 @@ class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
             message_type="HIGHVALUECONTENT",
             email_from=high_value_content.company.name,
             email_to=serializer.validated_data.get("email"),
-            reply_to=high_value_content.company.customer_support_email,
+            reply_to=high_value_content.company.reply_to_email,
             email_subject=f"Download {high_value_content.title}",
             description=f"""
             You made a request request to download {high_value_content.title} Click the link to download <a 

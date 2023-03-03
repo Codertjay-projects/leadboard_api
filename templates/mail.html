@@ -1,14 +1,101 @@
-<!doctype html>
-<html lang="en">
+{% load fields %}
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title></title>
-</head>
-<body>
-{{ description|safe }}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            font-family: "Nunito", sans-serif;
+        }
 
-</body>
-</html>
+        a {
+            color: #00838f;
+        }
+
+        h1, h2, h3, h4, h5 {
+            margin-top: 30px;
+        }
+
+        p {
+            color: rgb(0, 0, 0);
+            font-size: 18px;
+            padding: 0px;
+            margin: 15px 0px;
+            line-height: 1.6;
+            max-width: 700px;
+            letter-spacing: 0.016em;
+        }
+
+        .social_links {
+            text-align: center;
+            align-items: center;
+        }
+
+        .contact_thr {
+            margin: 20px 0 10px 0;
+        }
+
+        .contact_thr a {
+            color: transparent
+        }
+
+        .contact_thr a:visited {
+            color: transparent
+        }
+
+        .contact_thr img {
+            padding: 8px;
+        }
+
+        .privacy {
+            text-align: center;
+        }
+
+        div.privacy div {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+{% autoescape off %}
+    <body>
+    {{ description|markdown }}
+
+    <br/><br/>
+    <br/><br/>
+    <div class="social_links">
+        <div class="contact_thr">
+            <a href="https://wa.me/message/5IA2QYCI53SUM1" target="_blank">
+                <img src="https://instincthub.com/static/img/homepage/_whatsapp.png" alt="WhatsApp Icon">
+            </a>
+            <a href="https://twitter.com/instincthub/" target="_blank">
+                <img src="https://instincthub.com/static/img/homepage/_twitter.png" alt="Twitter Icon">
+            </a>
+            <a href="https://facebook.com/instincthub" target="_blank">
+                <img src="https://instincthub.com/static/img/homepage/_facebook.png" alt="Facebook Icon">
+            </a>
+            <a href="https://linkedin.com/company/instincthub" target="_blank">
+                <img src="https://instincthub.com/static/img/homepage/_linkedin.png" alt="LinkedIn Icon">
+            </a>
+            <a href="https://instagram.com/instincthub_" target="_blank">
+                <img src="https://instincthub.com/static/img/homepage/_instagram.png" alt="Instagram Icon">
+            </a>
+            <a href="https://youtube.com/instincthub_" target="_blank">
+                <img src="https://instincthub.com/static/img/homepage/_youtube.png" alt="YouTube Icon">
+            </a>
+        </div>
+
+        <div class="privacy">
+            <!--            <a href="" class="terms_">Terms & Conditions</a>-->
+            <div>
+                <a href="https://instincthub.com/privacy-policy/" class="crumb_">Privacy</a>
+                <span>| 1 Apapa Lane, Dolphin Estate, Ikoyi, Lagos.</span>
+            </div>
+            <div>
+                <a href="https://skills.instincthub.com/" class="crumb_">Course Library</a> | <a
+                    href="https://instincthub.com/blog/" class="crumb_">Skills Articles</a>
+            </div>
+            {% if unsubscribe_link %}
+                <span>You don't want to see this message again? </span><a href="{{ unsubscribe_link }}"> Unsubscribe</a>
+            {% endif %}
+        </div>
+    </div>
+    </body>
+{% endautoescape %}

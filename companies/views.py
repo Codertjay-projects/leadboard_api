@@ -319,7 +319,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         email_Log = EmailLog.objects.create(
             company=company, message_id=uuid.uuid4(), message_type="OTHERS",
             email_from=company.name, email_to=serializer.validated_data.get("email"),
-            reply_to=company.customer_support_email, email_subject=f"Invitation to Join {company.name}",
+            reply_to=company.reply_to_email, email_subject=f"Invitation to Join {company.name}",
             description=f"""
             <h1> Hello {serializer.validated_data.get("first_name")} - 
             {serializer.validated_data.get("last_name")}. </h1>

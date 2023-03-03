@@ -175,7 +175,7 @@ class EventRegisterAPIView(CreateAPIView):
             message_type="EVENT",
             email_from=event.company.name,
             email_to=email,
-            reply_to=event.company.customer_support_email,
+            reply_to=event.company.reply_to_email,
             email_subject=f"Event Successfully Registered",
             description=f"""
             <h2>Hi {first_name} - {last_name},</h2>"

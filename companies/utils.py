@@ -35,10 +35,10 @@ def check_marketer_and_admin_access_company(self):
     if user == company.owner:
         return True
     # check if the user is one of the admin
-    if company.companyemployee_set.filter(user=user, status="ACTIVE", role="ADMIN").first():
+    if company.employees.filter(user=user, status="ACTIVE", role="ADMIN").first():
         return True
     # check if the user is one of the marketers
-    if company.companyemployee_set.filter(user=user, status="ACTIVE", role="MARKETER").first():
+    if company.employees.filter(user=user, status="ACTIVE", role="MARKETER").first():
         return True
     return False
 
@@ -48,7 +48,7 @@ def check_marketer_and_admin_access_company(self):
 #     if user == company.owner:
 #         return True
 #     # check if the user is one of the admin
-#     if company.companyemployee_set.filter(user=user, status="ACTIVE", role="ADMIN").first():
+#     if company.employees.filter(user=user, status="ACTIVE", role="ADMIN").first():
 #         return True
 #     return False
 
@@ -62,7 +62,7 @@ def check_admin_access_company(self):
     if user == company.owner:
         return True
     # check if the user is one of the admin
-    if company.companyemployee_set.filter(user=user, status="ACTIVE", role="ADMIN").first():
+    if company.employees.filter(user=user, status="ACTIVE", role="ADMIN").first():
         return True
     return False
 
@@ -87,7 +87,7 @@ def get_random_marketer_not_last_marketer(last_assigned_marketer: User, company:
     :param last_assigned_marketer: last marketer on a lead or schedule
     :return:
     """
-    random_assigned_marketer = company.companyemployee_set.filter(role="MARKETER").order_by("?").all().first().user
+    random_assigned_marketer = company.employees.filter(role="MARKETER").order_by("?").all().first().user
     if company.marketers_count() > 1:
         # if the random marker gotten was the last it recall the function
         if random_assigned_marketer == last_assigned_marketer:
@@ -104,7 +104,7 @@ def get_random_admin_not_last_admin(last_assigned_admin: User, company: Company)
     :param last_assigned_admin: last admin on a lead or schedule
     :return: random_assigned_admin
     """
-    random_assigned_admin = company.companyemployee_set.filter(role="ADMIN").order_by("?").all().first().user
+    random_assigned_admin = company.employees.filter(role="ADMIN").order_by("?").all().first().user
     if company.admins_count() > 1:
         # if the random marker gotten was the last it recall the function
         if random_assigned_admin == last_assigned_admin:

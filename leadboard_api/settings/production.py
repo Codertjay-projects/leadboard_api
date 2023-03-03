@@ -2,8 +2,7 @@ from .base import *
 
 DEBUG = False
 
-# todo: add the only subdomain
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["leadapi.instinchub.com"]
 
 #  read more https://docs.djangoproject.com/en/4.1/ref/middleware/#http-strict-transport-security
 CSRF_COOKIE_SECURE = True
@@ -34,3 +33,34 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://instincthub.com$",
     r"^https://instincthub-oxyka.ondigitalocean.app$",
 ]
+
+
+##############################################
+# Django S3 Bucket setup
+# This is to set you default upload to use
+# your S3 bucket which is either digital ocean/AWS
+
+# The ID from aws or Digital ocean Spaces
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+# The Secretkey for aws or Digital ocean secret key
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+# The bucket name We're trying to use
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+# The endpoint url
+AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL')
+# This is used to prevent the files from being overwritten if exists
+AWS_S3_FILE_OVERWRITE = False
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+# This enables user to be able to read the file
+AWS_DEFAULT_ACL = 'public-read'
+
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+
+# Location to set the media file
+MEDIAFILES_LOCATION = 'instincthub_apis_media'
+DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'
+
+#####################################################

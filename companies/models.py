@@ -93,6 +93,12 @@ class Company(models.Model):
     def __str__(self):
         return f"{self.username} -- {self.name}"
 
+    @property
+    def reply_to_email(self):
+        if not self.customer_support_email:
+            return self.owner.email
+        return self.customer_support_email
+
     def admins_count(self):
         """
         this returns the total number of admin in a company
