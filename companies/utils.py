@@ -1,6 +1,8 @@
 import random
 import string
 
+from django.http import Http404
+
 from high_value_contents.models import HighValueContent
 from users.models import User
 from companies.models import Group, Company
@@ -57,6 +59,9 @@ def check_admin_access_company(self):
     # check if the user is the owner of the company
     company = self.request.query_params.get("company_id")
     company = Company.objects.filter(id=company).first()
+    if not company:
+        # if the company does not exist i raise an error
+        raise Http404
     user = self.request.user
 
     if user == company.owner:
