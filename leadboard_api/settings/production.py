@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ["leadapi.instinchub.com"]
+ALLOWED_HOSTS = ["leadapi.instincthub.com"]
 
 #  read more https://docs.djangoproject.com/en/4.1/ref/middleware/#http-strict-transport-security
 CSRF_COOKIE_SECURE = True
@@ -33,7 +33,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://instincthub.com$",
     r"^https://instincthub-oxyka.ondigitalocean.app$",
 ]
-
 
 ##############################################
 # Django S3 Bucket setup
