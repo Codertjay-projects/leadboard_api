@@ -127,10 +127,13 @@ class LeadContact(models.Model):
     def has_scheduled(self):
         # Get the leads that has last scheduled
         last_feed_back = self.previous_feedback()
+        print('<><><><><::::: ', last_feed_back)
         if last_feed_back:
-            # Check if the last feedback exist
-            if last_feed_back.next_schedule > timezone.now():
-                return True
+            try:  # Check if the last feedback exist
+                if last_feed_back.next_schedule > timezone.now():
+                    return True
+            except:
+                return False
         return False
 
     def all_previous_feedbacks(self):

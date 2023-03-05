@@ -4,12 +4,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import generics
 from rest_framework import status
+from django.contrib.contenttypes.models import ContentType
 
-from companies.utils import check_marketer_and_admin_access_company
+from companies.utils import check_marketer_and_admin_access_company, is_valid_uuid
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackSerializer
 from users.permissions import LoggedInPermission
 from leads.models import LeadContact, Company
+from schedules.models import UserScheduleCall
 
 
 class LeadContactFeedbackViewSetsAPIView(ModelViewSet):
@@ -63,30 +65,33 @@ class FeedbackCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
 
         # Authorization
-        company = Company.objects.filter(id=kwargs['c_id']).first()
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        company = Company.objects.filter(id=is_valid_uuid(kwargs['c_id'])).first()
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = self.get_serializer(data=request.data)
-        
-        if serializer.is_valid(raise_exception=False):
-            # print(request.data)
 
+        content_type = None
+        contact_uuid = is_valid_uuid(request.data['lead_id'])
+        if request.data['model_type'] == 'schedules.userschedulecall':
+            content_type = ContentType.objects.get_for_model(UserScheduleCall)
+        elif request.data['model_type'] == 'leads.leadcontact':
+            content_type = ContentType.objects.get_for_model(LeadContact)
 
-            feedback = Feedback.objects.create_by_model_type(
-                model_type="leadcontact",
-                other_model_id=request.data['lead_id'],
-                feedback=request.data['feedback'],
-                action=request.data['action'],
-                next_schedule=request.data['next_schedule'],
-                staff=self.request.user,
-                company=company
-            )
-
-            feedback_data = FeedbackSerializer(feedback, partial=True)
-
-            # serializer.save()
-            # Return custom response
-            return Response(feedback_data.data, status=status.HTTP_201_CREATED)
+        if contact_uuid and content_type:
+            if serializer.is_valid(raise_exception=False):
+                feedbacks = Feedback(
+                    content_type=content_type,
+                    object_id=contact_uuid,
+                    feedback=request.data['feedback'],
+                    action=request.data['action'],
+                    staff=self.request.user,
+                    company=company
+                )
+                if request.data['next_schedule']:
+                    feedbacks.next_schedule = request.data['next_schedule']
+                feedbacks.save()
+            feedback_serializer = FeedbackSerializer(feedbacks, partial=True)
+            return Response(feedback_serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

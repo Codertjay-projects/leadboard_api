@@ -53,7 +53,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
     schedule_call = ScheduleCallSerializer(read_only=True)
     groups = CompanyGroupSerializer(many=True)
     assigned_marketer = UserDetailSerializer(read_only=True)
-    previous_feedback = serializers.SerializerMethodField(read_only=True)
+    all_previous_feedbacks = serializers.SerializerMethodField(read_only=True)
     group_list = serializers.SerializerMethodField(read_only=True)
     assigned_marketer_list = serializers.SerializerMethodField(read_only=True)
 
@@ -97,7 +97,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "schedule_category",
             "eligible",
             "timestamp",
-            "previous_feedback",
+            "all_previous_feedbacks",
         ]
         read_only_fields = ["id", "timestamp", ]
 
@@ -159,10 +159,10 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             datasets.append(json_item)
         return datasets
 
-    def get_previous_feedback(self, instance):
+    def get_all_previous_feedbacks(self, instance):
         #  get the previous feedback
-        feedback = instance.previous_feedback()
+        feedback = instance.all_previous_feedbacks()
         if feedback:
-            serializer = FeedbackSerializer(feedback)
+            serializer = FeedbackSerializer(feedback, many=True)
             return serializer.data
-        return None
+        return []

@@ -205,12 +205,12 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 
 #  fixme : later set cache to be redis or memcache
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'leadboard_api_cackhe_table',
-    }
-}
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+#         'LOCATION': 'leadboard_api_cackhe_table',
+#     }
+# }
 
 # maintenance mode
 MAINTENANCE_MODE_TEMPLATE = "errors/503.html"

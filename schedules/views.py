@@ -93,7 +93,6 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         if self.request.user.id in self.get_company().all_marketers_user_ids():
             # Filter to get the leads where the user is the assigned marketer
             queryset = queryset.filter(assigned_marketer=self.request.user)
-        print('queryset:::::> ', queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -107,18 +106,14 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         :return:
         """
         schedule_call_slug = is_valid_uuid(self.request.data["schedule_call"])
-        print(schedule_call_slug)
         schedule_call = ScheduleCall.objects.filter(id=schedule_call_slug).first()
-        print(schedule_call)
         if not schedule_call:
             raise Http404
         return schedule_call
 
     def create(self, request, *args, **kwargs):
-        print('Checking the reference')
         company = self.get_company()
         schedule_call = self.get_schedule_call()
-        print(schedule_call)
         serializer = UserScheduleCreateUpdateSerializer(
             data=request.data,
             context={"request": request})
