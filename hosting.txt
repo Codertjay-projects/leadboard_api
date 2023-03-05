@@ -1,45 +1,86 @@
+sudo nano /etc/systemd/system/gunicorn.service
+
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=leadboard
+Group=www-data
+WorkingDirectory=/home/leadboard/leadboard_api
+ExecStart=/home/leadboard/leadboard_api/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          leadboard_api.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+
+
+# Nginx Configuration
+server {
+    listen 80;
+    server_name 40.76.114.155 leadapi.instincthub.com;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location /static/ {
+        root /home/leadboard/leadboard_api;
+    }
+    location /media/ {
+        root /home/leadboard/leadboard_api;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+
+
+
 Celery beat
-sudo nano /etc/systemd/system/leadboard_api_celerybeat.service
+sudo nano /etc/systemd/system/celerybeat.service
 
 [Unit]
 Description=Celery Beat Service
 After=network.target
 
 [Service]
-User=noaholatoye
+User=leadboard
 Group=www-data
-WorkingDirectory=/home/noaholatoye/projects/leadboard_api
-ExecStart=/home/noaholatoye/projects/leadboard_api/venv/bin/celery -A leadboard_api beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+WorkingDirectory=/home/leadboard/leadboard_api
+ExecStart=/home/leadboard/leadboard_api/venv/bin/celery -A leadboard_api beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 
 sudo systemctl daemon-reload
-sudo systemctl start leadboard_api_celerybeat
-sudo systemctl enable leadboard_api_celerybeat
-sudo systemctl status leadboard_api_celerybeat
+sudo systemctl start celerybeat
+sudo systemctl enable celerybeat
+sudo systemctl status celerybeat
 
 
 Celery Service
-sudo nano /etc/systemd/system/leadboard_api_celery.service
+sudo nano /etc/systemd/system/celery.service
 
 [Unit]
 Description=Celery Service
 After=network.target
 
 [Service]
-User=noaholatoye
+User=leadboard
 Group=www-data
-WorkingDirectory=/home/noaholatoye/projects/leadboard_api
-ExecStart=/home/noaholatoye/projects/leadboard_api/venv/bin/celery -A leadboard_api worker -c 1 --loglevel=info
+WorkingDirectory=/home/leadboard/leadboard_api
+ExecStart=/home/leadboard/leadboard_api/venv/bin/celery -A leadboard_api worker -c 1 --loglevel=info
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 
 sudo systemctl daemon-reload
-sudo systemctl start leadboard_api_celery
-sudo systemctl disable leadboard_api_celery
-sudo systemctl enable leadboard_api_celery
-sudo systemctl status leadboard_api_celery
+sudo systemctl start celery
+sudo systemctl enable celery
+sudo systemctl status celery

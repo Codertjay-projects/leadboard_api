@@ -29,6 +29,8 @@ EXTERNAL_INSTALLED_APPS = [
     "corsheaders",
     # for maintenance mode
     'maintenance_mode',
+    # For django storages
+    'storages',
 ]
 
 LOCAL_INSTALLED_APPS = [

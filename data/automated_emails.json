@@ -1,0 +1,317 @@
+[
+  {
+    "id": 1,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 143,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "custom",
+      "email_subject": "Our fear as parents!",
+      "slug": "our-fear-as-parents",
+      "description": "Dear {{first_name}},\r\n\r\nI really want you to see this video!\r\n\r\nI'm super excited you did that you downloaded my eBook!\r\n\r\nAnd I hope you are getting the best of it.\r\n\r\nI've several things in stock for you! In the next few days, I will be sharing the most optimised way you can help your kids learn technological skills.\r\n\r\nSo make sure you don't miss any of them.\r\n\r\nYou might be thinking, \"why is this guy doing all these things for free?\"\r\n\r\nWell, the simple answer for me is, I love kids.\r\n\r\nI hate to see kids go through the same educational system we went through during the young age that failed us.\r\n\r\nKids these days are extremely intelligent! So we need to do everything we can to help them utilise that superpower.\r\n\r\nAs a parent, I want you to have this focus! Channel your kids' energy to something greater.\r\n[Watch these 6 minutes video;](https://instincthub.com/value-content/get-free-30-minute-growth-strategy-session/) your perspective will change!",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-04-28T00:11:04.886000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 0,
+    "timestamp": "2022-04-28T01:14:30.332000+01:00"
+  },
+  {
+    "id": 11,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 2,
+    "send_email": {
+      "id": 193,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "make-employers-beg-you-with-offers",
+      "email_subject": "You have no boundaries with Tech Skills",
+      "slug": "you-have-no-boundaries-with-tech-skills",
+      "description": "{{first_name}}, you don't have boundaries with tech skills.\r\n\r\nFrom web development to product design to app development and many more. \r\n\r\nAnd one news that I'm sure will excite you is that \"there is no late comer in tech.\"\r\n\r\nEven if you get interested at age 50, I can assure you there are a lot of resources that will help you get to your desired destination in the world of tech. \r\n\r\nThere is space for everybody in the tech world, and you don't have to be a graduate of computer science to learn tech skills. \r\n\r\nThough the world of tech is a vast field, there are different skills in the world of tech.\r\n\r\nLet me do a quick recap on two areas in the world of tech: \r\n\r\n### 1. Web development\r\nWeb development in simple English is the process of building and maintaining a website for the internet that is accessed through a web browser. \r\n\r\nAs a web developer, your job is mainly to build websites using HTML, CSS, and JavaScript. \r\n\r\nIn web development there are two aspects of web development: \r\n\r\n- Front-end: This is the part of the web you see on the browser\r\n- Back-end: This is the part of the website you don't see; it deals with a lot of the logic and functionality. Remember the restaurant description in the book? \r\n\r\n### 2. Mobile Development \r\nThis is one of the last decade's most popular forms of coding. \r\n\r\nThis is because you can't do without apps on your mobile phone. Imagine having a phone, and there are no apps on it?? \r\n\r\nBoring right?? \r\n\r\nNow you know why these skills are relevant. \r\n\r\nThere are two main categories of mobile devices, which are: \r\niOS\r\nAndroid\r\n\r\nAre you excited about the boundless opportunities hovering around tech?\r\n\r\nIf your answer is yes, let us discuss how you can begin a tech career in 12 weeks. [Pick a date and time here](https://instincthub.com/calls/30/).",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-09-14T10:21:42.275000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 0,
+    "timestamp": "2022-09-14T10:44:23.315000+01:00"
+  },
+  {
+    "id": 2,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 144,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "custom",
+      "email_subject": "Free coding book your kids has long waited for!",
+      "slug": "free-coding-book-your-kids-has-long-waited-for",
+      "description": "Hello {{first_name}},\r\n\r\nThere is nothing like sitting down in a massive hall holding a bottle of water watching your kids do amazing things.\r\n\r\nThis kind of feeling can be fulfilling and encouraging, most especially in this current age of technology.\r\n\r\nYou have the opportunity of being in that massive hall if you follow the simple steps in the video you are about to watch.\r\n\r\nBefore you click the link below, please don't underestimate the information I'm sharing with you.\r\n\r\nThe parents who listened and implemented these tips never regretted their action. In fact, they went further to refer other parents to follow their footsteps.\r\n\r\nThe video you are about to watch will show you how you can help your kids succeed with the right skills without spending a kobo.\r\n\r\n[Watch the video here](https://instincthub.com/value-content/python-programming-book-kids/)\r\n\r\nWhen you watch, you will get another email to download the free programming book in the attachment.\r\n\r\nAlso, get your 100% FREE no-obligation 30-minute strategy call session (worth $500 value). One of my team members will show you how to grow your kid's learning process - to not only survive but thrive in today's digital space. [Schedule A Call Here.](https://instincthub.com/calls/30/)\r\n\r\n\r\n-Noah Olatoye",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-04-28T00:15:16.956000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 1,
+    "timestamp": "2022-04-28T01:14:30.334000+01:00"
+  },
+  {
+    "id": 12,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 2,
+    "send_email": {
+      "id": 194,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "make-employers-beg-you-with-offers",
+      "email_subject": "Quickly become a web developer",
+      "slug": "quickly-become-a-web-developer",
+      "description": "{{first_name}}, web developers worldwide are solving problems, and job relevance is improving. \r\n\r\nA web developer's job is to create websites. Web developers always fall into one of these three categories: \r\n\r\n### 1. Front-end web developers: \r\nThink of these individuals as the people in charge of an eatery's open space. The customers can buy food and decide to eat there or request a takeaway. \r\n\r\nThe front-end developers work on the visual part of the website - the pages people interact with. They design the layout of each page, integrate graphics, and use HTML, CSS, and JavaScript to enhance the site's interactivity.\r\n\r\n### 2. Back-end web developers: \r\nThink of these individuals as the people in charge of an eatery's kitchen. They do the behind-the-seen work to ensure the food is appealing, edible and delicious. \r\n\r\nBack-end developers make sure the users and business data are properly managed. They create structure and logic that communicate with the front-end and other third parties applications.\r\n\r\n### 3. Full-stack developer: \r\nThese individuals do the work of the chef in an eatery kitchen and that of the people in charge of the open space.\r\n\r\nThey do the work of both a back-end and front-end developer. These developers know and can implement all it takes to build an entire web application.  \r\n\r\nInterestingly {{first_name}}, you could be one of these great individuals! \r\n\r\nLet us discuss how you can begin a tech career in 12 weeks. [Pick a date and time here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-09-14T10:27:00.989000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 1,
+    "timestamp": "2022-09-14T10:44:23.317000+01:00"
+  },
+  {
+    "id": 3,
+    "wait_for": 1,
+    "wait_type": "minutes",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 145,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "custom",
+      "email_subject": "Free book ready for download",
+      "slug": "free-book-ready-for-download",
+      "description": "Hello {{first_name}},\r\n\r\n[Download the python programming language eBook for kids](https://drive.google.com/file/d/1m3PGnr-zbteI-ThfLDz-jhwy2BzjvZPj/view?usp=sharing)\r\n\r\n<br>\r\nAlso, get your 100% FREE no-obligation 30-minute strategy call session (worth $500 value). One of my team members will show you how to grow your kid's learning process - to not only survive but thrive in today's digital space. [Shedule A Call Here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-04-28T00:44:34.060000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 2,
+    "timestamp": "2022-04-28T01:14:30.335000+01:00"
+  },
+  {
+    "id": 13,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "06:00:00",
+    "automated_email_grouping": 2,
+    "send_email": {
+      "id": 195,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "make-employers-beg-you-with-offers",
+      "email_subject": "Japa with mobile app skills!",
+      "slug": "japa-with-mobile-app-skills",
+      "description": "{{first_name}},\r\n\r\nAs I said in one of my previous emails, mobile development is one of the most popular forms of coding and here are the two categories of mobile devices we have:\r\n\r\n**iOS** is a mobile operating system developed and distributed by Apple Inc. It was initially released in 2007 with the iPhone and today runs on many other devices, including the iPod Touch, iPad, and Apple TV.\r\n\r\n**Android** is an open-source, Linux-based mobile operating system. Android was developed by the Open Handset Alliance, led by Google and featured contributions from many other companies.\r\n\r\nAnd there are many career opportunities in the mobile development world: \r\n\r\n- Java Application Developer\r\n- Mobile Software Engineer \r\n- iOS Software Engineer\r\n\r\nThere are lots of opportunities when you become a Mobile Application Developer.\r\n\r\n Remember, you can't go wrong with tech skills. \r\n\r\nCheck if you are eligible for our free 30 minutes strategy session on how you can begin a tech career in 12 weeks. [Pick a date and time here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-09-14T10:36:03.624000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 2,
+    "timestamp": "2022-09-14T10:44:23.317000+01:00"
+  },
+  {
+    "id": 4,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 146,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "custom",
+      "email_subject": "I almost made this mistake!",
+      "slug": "i-almost-made-this-mistake",
+      "description": "Hello {{first_name}},\r\n\r\nIf you are like me, whenever you see a kid, the first thing that comes to your mind is that they are fragile.\r\n\r\nThey lack the power and instinct to make concrete decisions themselves.\r\n\r\nThis is true!\r\n\r\nChildren need support from a parent or elderly persons to be able to do things effectively.\r\n\r\nUnfortunately, we undermine their IQ and the ability of what they can do based on how we perceive their vulnerability.\r\n\r\nSomething that shocked me is how early in life, the founder of **Facebook, Microsoft and Twitter** started writing code.\r\n\r\nIn fact, the founder of Twitter, Jack Dorsey, started coding when he was eight years old (similar to other tech giant founders).\r\n\r\nSee the result of started early!\r\n\r\nThey created solutions that enhance our everyday lives.\r\n\r\nKids brain is so giant, active and powerful!\r\n\r\nThe reason is easy for them to replicate whatever we do before them.\r\n\r\nAt this point, I want to show you a video clip of the founders saying with their mouth when they started coding.\r\n\r\nAlso, get your 100% FREE no-obligation 30-minute strategy call session (worth $500 value). One of my team members will show you how to grow your kid's learning process - to not only survive but thrive in today's digital space. [Schedule A Call Here.](https://instincthub.com/calls/30/)\r\n\r\nWhen done scheduling the call, [click here](https://instincthub.com/value-content/what-most-schools-dont-teach/) to watch the founders video.",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-04-28T00:49:36.467000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 3,
+    "timestamp": "2022-04-28T01:14:30.337000+01:00"
+  },
+  {
+    "id": 14,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 2,
+    "send_email": {
+      "id": 196,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "make-employers-beg-you-with-offers",
+      "email_subject": "Data Science for the strong!",
+      "slug": "data-science-for-the-strong",
+      "description": "{{first_name}}, prove yourself with data science skills!\r\n\r\nData science is an essential part of many industries today. \r\n\r\nGiven the massive amounts of data produced every second, you will be astonished to see companies making predictions and taking strategic decisions with the data.\r\n\r\nData science uses complex machine learning algorithms to build predictive models for organizations. \r\n\r\nThe career path in data science are numerous; you could begin with any of the following: \r\n\r\n- Data scientist\r\n- Machine learning engineer\r\n- Application architect\r\n- Data Architect\r\n- Data Engineer\r\n- Data analysts and so on.\r\n\r\nSo you now see why you can never go wrong with the world of tech!!!\r\n\r\nLet us discuss how you can begin a tech career in 12 weeks. [Pick a date and time here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-09-14T10:38:22.561000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 3,
+    "timestamp": "2022-09-14T10:44:23.318000+01:00"
+  },
+  {
+    "id": 5,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 147,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "custom",
+      "email_subject": "5 coding games for kids!",
+      "slug": "5-coding-games-for-kids",
+      "description": "Here is another one  {{first_name}}...\r\n\r\nI won't be surprised if you still doubt how to help your kid get technology skills.\r\n\r\nYou are not alone %FIRSTNAME%.\r\n\r\nOne of the most tricky things in starting any technological journey is where to start, even when you get instruction from a friend who already did.\r\n\r\nI have created a short video to help you take a step forward.\r\n\r\nIn the video, I revealed five coding games that you can download for your kid!\r\n\r\nEnough of the talk!\r\n\r\n[Click here to watch it right away.](https://instincthub.com/value-content/5-coding-games-kids/)\r\n\r\nAlso, get your 100% FREE no-obligation 30-minute strategy call session (worth $500 value). One of my team members will show you how to grow your kid's learning process - to not only survive but thrive in today's digital space. [Schedule A Call Here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-04-28T00:51:59.720000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 4,
+    "timestamp": "2022-04-28T01:14:30.338000+01:00"
+  },
+  {
+    "id": 15,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "06:00:00",
+    "automated_email_grouping": 2,
+    "send_email": {
+      "id": 197,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "make-employers-beg-you-with-offers",
+      "email_subject": "Getting a job after all the stress!",
+      "slug": "getting-a-job-after-all-the-stress",
+      "description": "{{first_name}}, nothing they said was easy!\r\n\r\nSecuring a job is even extremely not easy! \r\n\r\nWith the right skillset, you could be one of the lucky folks employers beg to work for them. \r\n\r\nAccording to Software Explorer, a software developer's salary ranges from N144,000 to N498,000 monthly. However, this depends on your skills, experience, company, location, and other factors. \r\n\r\nTo secure a job, you must first build up your skills and learn the necessary skills. \r\n\r\nThe cool thing about the tech world is that there are jobs with good pay, but the question remains, \"are you skilled enough for this job?\" \r\n\r\nWhen I started InstinctHub, I hired some people, but they were not skilled enough to deliver the result I needed. So from that point, I was determined to train people that employers will value forever!\r\n\r\nLet us discuss how you can begin a tech career in 12 weeks. [Pick a date and time here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-09-14T10:40:34.089000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 4,
+    "timestamp": "2022-09-14T10:44:23.319000+01:00"
+  },
+  {
+    "id": 6,
+    "wait_for": 1,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 148,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "custom",
+      "email_subject": "Teaching your kid time management",
+      "slug": "teaching-your-kid-time-management",
+      "description": "Hello {{first_name}},\r\n\r\nwe need to agree on this!\r\n\r\nPlease don't over-schedule your kid!\r\n\r\nI repeat, please don't over stress them!\r\n\r\nOne of the most common mistakes we make as parents is making sure our kids participate in every activity after school.\r\n\r\nWe end up overscheduling the entire family to the point that our schedules no longer seem achievable.\r\n\r\nI was once guilty of this, and I've stopped.\r\n\r\nYou too can!\r\n\r\nLet me show you five steps you can use to teach your kids time management skills.\r\n\r\nView the short video tips.\r\n\r\nAlso, get your 100% FREE no-obligation 30-minute strategy call session (worth $500 value). One of my team members will show you how to grow your kid's learning process - to not only survive but thrive in today's digital space. [Schedule A Call Here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2022-04-28T00:54:33.906000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 5,
+    "timestamp": "2022-04-28T01:14:30.339000+01:00"
+  },
+  {
+    "id": 7,
+    "wait_for": 2,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 1,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "all",
+      "email_subject": "Your children Vs economy, who wins?",
+      "slug": "your-children-vs-economy-who-wins",
+      "description": "Parenting and trying to put food on the table isn't easy! \r\n\r\nI would understand if you haven't read the free eBook \"What no school will ever teach your kid!\"\r\n\r\nAs a parent, setting up a big fight between your children and the economy is not always the right thing to do; they will likely lose the fight because they are at the Marcy of the economy. \r\n\r\nTwo young men grew up wanting to become doctors, so they went to a medical university and graduated with flying colours after eight years of intensive learning. \r\n\r\nBut due to the economy, getting a job was another battle they had to fight, but not for one of them, his name was Philip, at the age of 7, Philip was enrolled on a coding class by his parents, and he worked and master that skill over the years until he becomes a pro.\r\n\r\nPhilip has been creating an Application for managing hospital records ever since JSS3. \r\n\r\nAnd when Philip finally graduated, he marketed this App and Software to all the hospitals in the country. Eventually, almost all the hospitals signed up for his App then income began to flow in. \r\n\r\nNot only was Philip making millions from his creation, but all the hospitals in the country and abroad also wanted to work with him because he wasn't like all the other doctors; he had something different to offer to the medical world. \r\n\r\nThanks to Philip's parents!!!\r\n\r\nSo, as a parent, would you want to set a fight between your children and the economy, or would you want to make your child a winner before the war even starts?\r\n\r\nJust like how Philip's parents did for him, would you also want your child to beat the economy and create something that would give him millions in his profession?\r\n\r\nIf yes, then lets chat on how you can get started with: \r\n\r\n* Skills that school would never teach your kids, \r\n* Morden skills that will make them future billionaires.\r\n* Skills that would secure them brighter future. \r\n\r\n[Click here to schedule a free call now.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2021-11-27T04:07:13.123000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 6,
+    "timestamp": "2022-04-28T01:14:30.341000+01:00"
+  },
+  {
+    "id": 8,
+    "wait_for": 2,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 3,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "all",
+      "email_subject": "My daughter can't marry a poor man!",
+      "slug": "my-daughter-cant-marry-a-poor-man",
+      "description": "{{first_name}},\r\n\r\nThe richest man said his daughter can't marry a poor man.\r\n\r\n \r\n\r\nA few years ago, there was a conference in the United States on investment and finance. One of the speakers was Elon Musk, and during the question and answer session, he was asked a question that had everyone laughing. \r\n\r\n \r\n\r\nIf he, the richest man in the world, could accept that his daughter marries a poor or modest man. \r\n\r\n \r\n\r\nHis answer can change something in everyone.\r\n\r\n \r\n\r\nHis response: First of all, understand that wealth does not mean having a fat bank account. Wealth is primarily the ability to create wealth.\r\n\r\n \r\n\r\nExample: Someone who wins the lottery or gambling. Even if he wins 100 million is not a rich man: He is a poor man with a lot of money. That's the reason why 90% of the lottery millionaires become poor again after five years.\r\n\r\n \r\n\r\nYou also have rich people who have no money.\r\n\r\n \r\n\r\nExample: Most entrepreneurs.\r\n\r\n \r\n\r\nTHEY are already on the road to wealth even though they have no money because they are developing their financial intelligence, and that is wealth. \r\n\r\n \r\n\r\nNow let us talk about you and your children!\r\n\r\n \r\n\r\nI believe you want you and your kids to create wealth and be financially stable! \r\n\r\n \r\n\r\nIf that's the case, the journey begins now.\r\n\r\n \r\n\r\nIf you think you are not achieving so much as a parent or an individual, the right technology skills can help you. \r\n\r\n \r\n\r\nYour investment in you and your kids today determines the results you produce in future. \r\n\r\n \r\n\r\nThis season is the best time to get started with a straightforward career in tech. \r\n\r\n \r\n\r\nIt is a flexible and engaging class with world-class instructors!\r\n\r\n \r\n\r\nWhat you will learn:\r\n\r\nHow the internet works.\r\nMost used programming language.\r\nHow to solve problems with code \r\nPython Programming Language\r\nHow to turn business logic into machine code.\r\n \r\n\r\nWho can take this course?\r\n\r\nAnyone from the age of 7+, willing to become a problem solver with technology tools. \r\n\r\n \r\n\r\nChat with us for free to know more. [Schedule a call](https://instincthub.com/calls/30/)\r\n\r\n \r\n\r\nHurry now and make sure you chat us up or reply to this email.",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2021-12-06T07:13:33.317000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 7,
+    "timestamp": "2022-04-28T01:14:30.343000+01:00"
+  },
+  {
+    "id": 9,
+    "wait_for": 2,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 4,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "all",
+      "email_subject": "This data gives me sleepless nights",
+      "slug": "this-data-gives-me-sleepless-nights",
+      "description": "{{first_name}}, I wish I don't have to go through this stress. \r\n\r\n \r\n\r\nWhenever I think about the unemployment in Nigeria and the global rate,  I get scared most of the time. \r\n\r\n \r\n\r\nAccording to the Nigeria Bureau of Statistics (NBS), 33.1% of Nigerians are unemployed. \r\n\r\n \r\n\r\nWith over **200 million** population, **66.2 million** Nigerians are out of a job. \r\n\r\n \r\n\r\nEvery year, Nigeria produces about **500,000** graduates to compete with the unavailable jobs.\r\n\r\n \r\n\r\nThese figures won't stop increasing until we start grooming our kids with the skills to create jobs rather than ending up seeking and begging for employment opportunities.  \r\n\r\n \r\n\r\nWhat do you need to do?\r\n\r\n \r\n\r\nChat with us, and we will show you a stress-free strategy.\r\n\r\n \r\n\r\nWe will teach your child how to code in 12 weeks. \r\n\r\n \r\n\r\nLets get you started with the process. [Schedule a free call now!](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": null,
+      "timestamp": "2021-12-08T12:59:14.092000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 8,
+    "timestamp": "2022-04-28T01:14:30.344000+01:00"
+  },
+  {
+    "id": 10,
+    "wait_for": 2,
+    "wait_type": "days",
+    "time_run": "20:00:00",
+    "automated_email_grouping": 1,
+    "send_email": {
+      "id": 150,
+      "email_from": "Noah Olatoye <nolatoye@instincthub.com>",
+      "email_to": "parents",
+      "email_subject": "sad but it ended well",
+      "slug": "sad-but-it-ended-well",
+      "description": "{{first_name}},\r\n\r\nRecently, I read a story of a family that touched my heart.\r\n\r\nI wish every family always had the same end result.\r\n\r\nMr Frank and his wife noticed that their kid's (Samuel) performance got worse in school,\r\n\r\nand they tried everything they could but didn't get any tangible result.\r\n\r\nMr frank loves Samuel a lot, and he isn't satisfied with what is going on with his academics.\r\n\r\nNot quite long, Mr Frank and his wife came up with an idea to change Samuel's school,\r\n\r\nhoping that things would improve.\r\n\r\nUnfortunately, it was almost as if things had gotten worst.\r\n\r\nThis continued for a while...\r\n\r\nFew years later, Samuel was able to graduate from the university with a fantastic turnaround grade.\r\n\r\nAfter some time, Samuel got an incredible job with a notable tech company.\r\n\r\nReally, {{first_name}}!\r\n\r\nThe offer was a very outrageous take-home salary.\r\n\r\nAside from the salary, Samuel was made the technical adviser of his unit;\r\n\r\nwith this position, he will have to travel a lot to sensitise other people.\r\n\r\nIn one of his presentations, his father paid a surprise visit to be one of the participants.\r\n\r\nBefore Samuel finished his presentation on that very day, the audience stood on their feet to applaud Samuel for his stunning performance.\r\n\r\nA man afar off started shouting, \"That's my son!\" That's my son!!!\"\r\n\r\nWho else could it be?\r\n\r\nThat was Samuel's father (Mr Frank) with profound joy all over his face.\r\n\r\n### Now, let us talk about the real thing!\r\nIn the early days of Samuel's career, his father introduced him to coding class, which changed the whole world for him.\r\n\r\nWith coding skills, Samuel was able to conquer his fears and solve complex problems.\r\n\r\nSeriously {{first_name}}, it is not about changing your kids school alone.\r\n\r\nIt will make sense if your child start learning how to solve complex problem gradually as they grow.\r\n\r\nYou, too, can become that visionary parent to your kids and give them a skill that no one can ever take away from them.\r\n\r\n<br>\r\n**_It is okay if you're too busy to monitor and guide them to get these skills, that's where we come in. We have some tips for you, {{first_name}}!_**\r\n\r\n<br>\r\nGet your 100% FREE no-obligation 30-minute strategy call session (worth $500 value). One of my team members will show you how to grow your kid's learning process - to not only survive but thrive in today's digital space. [Schedule A Call Here.](https://instincthub.com/calls/30/)",
+      "attach_file": null,
+      "schedule": "2022-04-29T06:00:00+01:00",
+      "timestamp": "2022-04-28T23:17:11.032000+01:00",
+      "lead_contact_email": []
+    },
+    "order": 9,
+    "timestamp": "2022-05-04T17:52:45.427000+01:00"
+  }
+]

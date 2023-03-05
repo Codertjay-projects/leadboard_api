@@ -22,5 +22,5 @@ venv/
 ENV/
 test_json.json
 .env-production
-
+database.txt
 /wsl_venv/

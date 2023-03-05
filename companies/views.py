@@ -6,7 +6,6 @@ from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, UpdateAPIView
 from rest_framework.response import Response
-from rest_framework.exceptions import APIException
 # Create your views here.
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -22,7 +21,7 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     CompanyEmployeeSerializer, UpdateStaffSerializer
-from .utils import check_admin_access_company, get_username_not_in_db
+from .utils import check_admin_access_company, get_or_create_test_group
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -167,6 +166,8 @@ class CompanyGroupListCreate(ListCreateAPIView):
         return company
 
     def get_queryset(self):
+        # add the test group
+        test_group = get_or_create_test_group(self.get_company())
         groups = Group.objects.filter(company_id=self.get_company().id)
         return groups
 
@@ -318,7 +319,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         email_Log = EmailLog.objects.create(
             company=company, message_id=uuid.uuid4(), message_type="OTHERS",
             email_from=company.name, email_to=serializer.validated_data.get("email"),
-            reply_to=company.customer_support_email, email_subject=f"Invitation to Join {company.name}",
+            reply_to=company.reply_to_email, email_subject=f"Invitation to Join {company.name}",
             description=f"""
             <h1> Hello {serializer.validated_data.get("first_name")} - 
             {serializer.validated_data.get("last_name")}. </h1>

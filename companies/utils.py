@@ -1,6 +1,8 @@
 import random
 import string
 
+from django.http import Http404
+
 from high_value_contents.models import HighValueContent
 from users.models import User
 from companies.models import Group, Company
@@ -41,10 +43,10 @@ def check_marketer_and_admin_access_company(self):
     if user == company.owner:
         return True
     # check if the user is one of the admin
-    if company.companyemployee_set.filter(user=user, status="ACTIVE", role="ADMIN").first():
+    if company.employees.filter(user=user, status="ACTIVE", role="ADMIN").first():
         return True
     # check if the user is one of the marketers
-    if company.companyemployee_set.filter(user=user, status="ACTIVE", role="MARKETER").first():
+    if company.employees.filter(user=user, status="ACTIVE", role="MARKETER").first():
         return True
     return False
 
@@ -54,7 +56,7 @@ def check_marketer_and_admin_access_company(self):
 #     if user == company.owner:
 #         return True
 #     # check if the user is one of the admin
-#     if company.companyemployee_set.filter(user=user, status="ACTIVE", role="ADMIN").first():
+#     if company.employees.filter(user=user, status="ACTIVE", role="ADMIN").first():
 #         return True
 #     return False
 
@@ -63,12 +65,15 @@ def check_admin_access_company(self):
     # check if the user is the owner of the company
     company = self.request.query_params.get("company_id")
     company = Company.objects.filter(id=company).first()
+    if not company:
+        # if the company does not exist i raise an error
+        raise Http404
     user = self.request.user
 
     if user == company.owner:
         return True
     # check if the user is one of the admin
-    if company.companyemployee_set.filter(user=user, status="ACTIVE", role="ADMIN").first():
+    if company.employees.filter(user=user, status="ACTIVE", role="ADMIN").first():
         return True
     return False
 
@@ -93,7 +98,7 @@ def get_random_marketer_not_last_marketer(last_assigned_marketer: User, company:
     :param last_assigned_marketer: last marketer on a lead or schedule
     :return:
     """
-    random_assigned_marketer = company.companyemployee_set.filter(role="MARKETER").order_by("?").all().first().user
+    random_assigned_marketer = company.employees.filter(role="MARKETER").order_by("?").all().first().user
     if company.marketers_count() > 1:
         # if the random marker gotten was the last it recall the function
         if random_assigned_marketer == last_assigned_marketer:
@@ -110,7 +115,7 @@ def get_random_admin_not_last_admin(last_assigned_admin: User, company: Company)
     :param last_assigned_admin: last admin on a lead or schedule
     :return: random_assigned_admin
     """
-    random_assigned_admin = company.companyemployee_set.filter(role="ADMIN").order_by("?").all().first().user
+    random_assigned_admin = company.employees.filter(role="ADMIN").order_by("?").all().first().user
     if company.admins_count() > 1:
         # if the random marker gotten was the last it recall the function
         if random_assigned_admin == last_assigned_admin:
@@ -202,3 +207,14 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
         return company.first_admin_user()
     else:
         return company.owner
+def get_or_create_test_group(company):
+    """
+    this is used to get or create a test group on a lead
+    :return:
+    """
+    from companies.models import Group
+
+    test_group, created = Group.objects.get_or_create(title="Test",
+                                                      company=company)
+
+    return test_group

@@ -22,10 +22,11 @@ def append_links_and_id_to_description(description, email_type, email_id):
 
     description = description.replace(
         "http:",
-        f"https:")
+        f"https:"
+    )
     description = description.replace(
         "https",
-        f"https://production.codertjay.com:8001/api/v1/communications/update_links_clicked/?&email_type={email_type}"
+        f"https://leadapi.instincthub.com/api/v1/communications/update_links_clicked/?&email_type={email_type}"
         f"&email_id={email_id}&redirect_url=https"
     )
     return description
@@ -38,13 +39,21 @@ def modify_names_on_description(description, first_name, last_name):
     :return: description
     """
     # replace first_name
-    if last_name:
+    if first_name:
         description = description.replace(
             "first_name", first_name)
+    else:
+        description = description.replace(
+            "first_name", " "
+        )
     #  replace last_name
     if last_name:
         description = description.replace(
             "last_name", last_name)
+    else:
+        description = description.replace(
+            "last_name", " "
+        )
     return description
 
 

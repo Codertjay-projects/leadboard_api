@@ -262,7 +262,7 @@ class JobAcceptAPIView(APIView):
                 message_type="CAREER",
                 email_from=applicant.company.name,
                 email_to=applicant.email,
-                reply_to=applicant.company.customer_support_email,
+                reply_to=applicant.company.reply_to_email,
                 email_subject=f"Accepted by {applicant.company.name}",
                 description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
                      <p> You have been accepted come for interview.""",
@@ -280,7 +280,7 @@ class JobAcceptAPIView(APIView):
                 message_type="CAREER",
                 email_from=applicant.company.name,
                 email_to=applicant.email,
-                reply_to=applicant.company.customer_support_email,
+                reply_to=applicant.company.reply_to_email,
                 email_subject=f"Rejected by {applicant.company.name}",
                 description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
                                  <p> You have been Rejected dont  come for interview.""",
