@@ -31,9 +31,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         "first_name",
         "middle_name",
         "job_title",
-        "sector",
-        "lead_source",
-        "want",
+        "email",
     ]
 
     def get_company(self):

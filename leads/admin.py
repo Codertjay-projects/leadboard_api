@@ -21,8 +21,6 @@ class LeadContactAdmin(admin.ModelAdmin):
         "gender",
     ]
     search_fields = [
-
-        "prefix",
         "lead_type",
         "last_name",
         "first_name",
@@ -30,12 +28,6 @@ class LeadContactAdmin(admin.ModelAdmin):
         "job_title",
         "department",
         "sector",
-        "want",
         "email",
-        "lead_source",
-        "assigned_marketer",
-        "is_safe",
-        "verified",
-        "gender",
-        "category",
+        "assigned_marketer__email",
     ]
