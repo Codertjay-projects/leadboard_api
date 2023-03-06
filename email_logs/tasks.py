@@ -39,8 +39,7 @@ def leadboard_send_mail(
             subject=email_subject,
             body=html_message,
             headers=headers,
-            from_email=DEFAULT_FROM_EMAIL,
-            # from_email=f"{company_name} <skills@instincthub.com>",
+            from_email=f"{company_name} <lead@instincthub.com>",
             to=[email_to]
         )
         msg.content_subtype = "html"

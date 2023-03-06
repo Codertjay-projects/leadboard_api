@@ -52,7 +52,7 @@ def send_otp_to_email_task(otp, email, first_name, last_name):
         subject="Leadboard App Request OTP",
         body=html_message,
         headers=headers,
-        from_email=f"leadboard <skills@instincthub.com>",
+        from_email=f"leadboard <lead@instincthub.com>",
         to=[email]
     )
     msg.content_subtype = "html"
