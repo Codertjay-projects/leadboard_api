@@ -13,12 +13,16 @@ LEADBOARD_CUSTOMER_SUPPORT_MAIL = config("LEADBOARD_CUSTOMER_SUPPORT_MAIL")
 def login_notification_email(first_name, email):
     """this sends an email to the user once he logs in  """
     headers = {"Reply_to": LEADBOARD_INFO_MAIL}
-    description = f"""<h2>Hi {first_name},</h2> <p>We have detected a new login to your Leadboard App account as at
-                      {datetime.datetime.now()}</p>
-                     <p>For security reasons, we want to make sure it was you. If this action is done by you,
-                      kindly disregard this notice.</p> 
-                     <p>If you did not login to your account, immediately change your password on the app and contact 
-                     <a href='mailto:{LEADBOARD_INFO_MAIL}'>{LEADBOARD_INFO_MAIL}</a></p>"""
+    description = f"""
+           ## Hi {first_name},
+
+            We have detected a new login to your Leadboard App account as at {datetime.datetime.now()}.
+
+            For security reasons, we want to make sure it was you. If this action is done by you, kindly disregard this notice.
+
+            If you did not login to your account, immediately change your password on the app and contact
+             [{LEADBOARD_INFO_MAIL}](mailto:{LEADBOARD_INFO_MAIL}).
+        """
 
     html_message = render_to_string('mail.html', {"description": description})
     msg = EmailMessage(
@@ -40,12 +44,14 @@ def send_otp_to_email_task(otp, email, first_name, last_name):
     """
     headers = {"Reply_to": LEADBOARD_INFO_MAIL}
     description = f"""
-       <h3> Hello {first_name} {last_name} </h3>
-       <p>
-        Please use this OTP to complete your request:{otp}
-        </br> If you haven't performed and action that requires an OTP please contact us
-        </p>
-        f"contact <a href='mailto:{LEADBOARD_CUSTOMER_SUPPORT_MAIL}'>{LEADBOARD_INFO_MAIL}</a></p>"""
+      ### Hello {first_name} {last_name}
+
+    Please use this OTP to complete your request: {otp}
+    
+    If you haven't performed any action that requires an OTP, please contact us at [{LEADBOARD_CUSTOMER_SUPPORT_MAIL}]
+    (mailto:{LEADBOARD_CUSTOMER_SUPPORT_MAIL}).
+
+      """
 
     html_message = render_to_string('mail.html', {"description": description})
     msg = EmailMessage(
