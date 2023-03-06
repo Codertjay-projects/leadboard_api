@@ -7,6 +7,7 @@ from high_value_contents.models import HighValueContent
 from users.models import User
 from companies.models import Group, Company
 from leads.models import LeadContact
+from users.utils import is_valid_uuid
 
 
 def get_username_not_in_db(company: Company, username) -> str:
@@ -29,7 +30,12 @@ def check_group_is_under_company(company: Company, group: Group):
 
 
 def check_marketer_and_admin_access_company(self):
-    company = self.request.query_params.get("company_id")
+    if self.request.query_params.get("company_id"):
+        company = is_valid_uuid(self.request.query_params.get("company_id"))
+    elif self.kwargs['c_id']:
+        company = is_valid_uuid(self.kwargs['c_id'])
+    else:
+        return False
     company = Company.objects.filter(id=company).first()
     user = self.request.user
 

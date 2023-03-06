@@ -205,22 +205,20 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 
 #  fixme : later set cache to be redis or memcache
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'leadboard_api_cackhe_table',
-    }
-}
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+#         'LOCATION': 'leadboard_api_cackhe_table',
+#     }
+# }
 
 # maintenance mode
 MAINTENANCE_MODE_TEMPLATE = "errors/503.html"
 MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
 
 # EMAIL CONFIGURATION
-EMAIL_BACKEND = config(
-    'EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
-EMAIL_HOST = config('EMAIL_HOST', default="smtp.sendgrid.net")
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+SENDGRID_API_KEY = config('SENDGRID_API_KEY')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587

@@ -31,9 +31,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         "first_name",
         "middle_name",
         "job_title",
-        "sector",
-        "lead_source",
-        "want",
+        "email",
     ]
 
     def get_company(self):
@@ -62,7 +60,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         if staff:
             # get the leads of that's staff
             queryset = queryset.filter(assigned_marketer=staff)
-            print(queryset)
+            # print(queryset)
         elif uuid_params and not staff:
             raise APIException({'message': 'No result found'})
             

@@ -92,6 +92,10 @@ class UserScheduleCall(models.Model):
     def previous_feedback(self):
         return Feedback.objects.filter(object_id=self.id).first()
 
+    def all_previous_feedbacks(self):
+        # Get all feedbacks made by this user
+        return Feedback.objects.filter(object_id=self.id)
+
 
 class ScheduleCall(models.Model):
     """

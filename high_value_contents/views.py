@@ -15,7 +15,7 @@ from high_value_contents.models import HighValueContent, DownloadHighValueConten
 from high_value_contents.serializers import HighValueContentSerializer, DownloadHighValueContentSerializer, \
     DownloadHighValueContentDetailSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
-from users.utils import date_filter_queryset
+from users.utils import date_filter_queryset, is_valid_uuid
 
 
 class HighValueContentViewSetsAPIView(ModelViewSet):
@@ -31,7 +31,7 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
 
     def get_company(self):
         # the company id
-        company_id = self.request.query_params.get("company_id")
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
         #  this filter base on the lead id  provided
         if not company_id:
             raise Http404
@@ -56,7 +56,7 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         company = self.get_company()
         #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         # Get or create the group if it doesn't exist
         group, created = Group.objects.get_or_create(
