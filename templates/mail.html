@@ -56,7 +56,7 @@
 </head>
 {% autoescape off %}
     <body>
-    {{ description|markdown }}
+    {{ description|markdown|safe }}
 
     <br/><br/>
     <br/><br/>
