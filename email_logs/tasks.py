@@ -6,6 +6,9 @@ from django.utils import timezone
 
 from communications.utils import update_group_schedule_log_status, update_custom_schedule_log_status
 from leadboard_api.lead_celery import app
+from django.conf import settings
+
+DEFAULT_FROM_EMAIL = settings.DEFAULT_FROM_EMAIL
 
 
 @app.task
@@ -36,7 +39,8 @@ def leadboard_send_mail(
             subject=email_subject,
             body=html_message,
             headers=headers,
-            from_email=f"{company_name} <skills@instincthub.com>",
+            from_email=DEFAULT_FROM_EMAIL,
+            # from_email=f"{company_name} <skills@instincthub.com>",
             to=[email_to]
         )
         msg.content_subtype = "html"
