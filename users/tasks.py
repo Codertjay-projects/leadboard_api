@@ -48,8 +48,8 @@ def send_otp_to_email_task(otp, email, first_name, last_name):
 
 Please use this OTP to complete your request: {otp}
     
-If you haven't performed any action that requires an OTP, please contact us at [{LEADBOARD_CUSTOMER_SUPPORT_MAIL}]
-(mailto:{LEADBOARD_CUSTOMER_SUPPORT_MAIL}).
+If you haven't performed any action that requires an OTP, please contact us at {LEADBOARD_CUSTOMER_SUPPORT_MAIL},
+{LEADBOARD_CUSTOMER_SUPPORT_MAIL}.
 """
 
     html_message = render_to_string('mail.html', {"description": description})
