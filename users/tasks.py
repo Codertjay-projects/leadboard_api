@@ -20,8 +20,7 @@ We have detected a new login to your Leadboard App account as at {datetime.datet
 
 For security reasons, we want to make sure it was you. If this action is done by you, kindly disregard this notice.
 
-If you did not login to your account, immediately change your password on the app and contact
-[{LEADBOARD_INFO_MAIL}](mailto:{LEADBOARD_INFO_MAIL}).
+If you did not login to your account, immediately change your password on the app and contact {LEADBOARD_INFO_MAIL}.
         """
 
     html_message = render_to_string('mail.html', {"description": description})
