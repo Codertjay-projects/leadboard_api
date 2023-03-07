@@ -14,14 +14,14 @@ def login_notification_email(first_name, email):
     """this sends an email to the user once he logs in  """
     headers = {"Reply_to": LEADBOARD_INFO_MAIL}
     description = f"""
-           ## Hi {first_name},
+## Hi {first_name},
 
-            We have detected a new login to your Leadboard App account as at {datetime.datetime.now()}.
+We have detected a new login to your Leadboard App account as at {datetime.datetime.now()}.
 
-            For security reasons, we want to make sure it was you. If this action is done by you, kindly disregard this notice.
+For security reasons, we want to make sure it was you. If this action is done by you, kindly disregard this notice.
 
-            If you did not login to your account, immediately change your password on the app and contact
-             [{LEADBOARD_INFO_MAIL}](mailto:{LEADBOARD_INFO_MAIL}).
+If you did not login to your account, immediately change your password on the app and contact
+[{LEADBOARD_INFO_MAIL}](mailto:{LEADBOARD_INFO_MAIL}).
         """
 
     html_message = render_to_string('mail.html', {"description": description})
@@ -44,14 +44,13 @@ def send_otp_to_email_task(otp, email, first_name, last_name):
     """
     headers = {"Reply_to": LEADBOARD_INFO_MAIL}
     description = f"""
-      ### Hello {first_name} {last_name}
+### Hello {first_name} {last_name}
 
-    Please use this OTP to complete your request: {otp}
+Please use this OTP to complete your request: {otp}
     
-    If you haven't performed any action that requires an OTP, please contact us at [{LEADBOARD_CUSTOMER_SUPPORT_MAIL}]
-    (mailto:{LEADBOARD_CUSTOMER_SUPPORT_MAIL}).
-
-      """
+If you haven't performed any action that requires an OTP, please contact us at [{LEADBOARD_CUSTOMER_SUPPORT_MAIL}]
+(mailto:{LEADBOARD_CUSTOMER_SUPPORT_MAIL}).
+"""
 
     html_message = render_to_string('mail.html', {"description": description})
     msg = EmailMessage(
