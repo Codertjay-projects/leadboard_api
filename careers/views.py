@@ -13,7 +13,7 @@ from companies.models import Company
 from companies.utils import check_admin_access_company
 from email_logs.models import EmailLog
 from users.permissions import NotLoggedInPermission, IsAuthenticatedOrReadOnly, LoggedInPermission
-from users.utils import date_filter_queryset
+from users.utils import date_filter_queryset, is_valid_uuid
 from .models import Job, JobType, Applicant
 from .serializers import JobCreateUpdateSerializer, JobListDetailSerializer, JobTypeSerializer, ApplicantSerializer, \
     ApplicantActionSerializer, ApplicantEducationSerializer, ApplicantExperienceSerializer
@@ -184,6 +184,7 @@ class JobApplicantListAPIView(ListAPIView):
     """
     this returns all applicants on a job posts using the job post id
     """
+    queryset = Applicant.objects.all()
     serializer_class = ApplicantSerializer
     permission_classes = [LoggedInPermission]
     filter_backends = [SearchFilter, OrderingFilter]
@@ -198,30 +199,34 @@ class JobApplicantListAPIView(ListAPIView):
         "message",
     ]
 
-    def get_job(self):
-        """
-        the job_id needs to be passed in the params and if it wasn't the user wont be added to the job applicants,
-        but it just raises a 404 page
-        :return:
-        """
-        job_id = self.request.query_params.get("job_id")
-        if not job_id:
-            raise Http404
-        job = Job.objects.filter(id=job_id).first()
-        if not job:
-            raise Http404
-        return job
-
     def get_queryset(self):
-        # Check if the user has access
-        if not check_admin_access_company(self):
-            return Response({"error": "You dont have permission to delete a job under the company "}, status=401)
-        queryset = self.filter_queryset(self.get_job().applicants.all())
-        # Filter the date if it is passed in the params like
-        # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
-        # You will get more from the documentation
-        queryset = date_filter_queryset(request=self.request, queryset=queryset)
-        return queryset
+        
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+        
+        if company_id:
+            # Check if the user has access
+            if not check_admin_access_company(self):
+                return Response({"error": "You dont have permission to delete a job under the company "}, status=401)
+            else:
+                return super().get_queryset().filter(company__id=company_id)
+                
+                # queryset = self.paginate_queryset(applicants)
+                # serializer = self.serializer_class(applicants, many=True)
+                # print(serializer)
+                # return serializer.data
+            
+        else: raise Http404
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class JobAcceptAPIView(APIView):
@@ -232,7 +237,7 @@ class JobAcceptAPIView(APIView):
 
     def get_company(self):
         # the company id
-        company_id = self.request.query_params.get("company_id")
+        company_id = self.request.headers["company_id"]
         #  this filter base on the company id  provided
         if not company_id:
             return None

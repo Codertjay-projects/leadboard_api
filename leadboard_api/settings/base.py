@@ -202,6 +202,7 @@ CORS_ALLOW_METHODS = [
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "leadboard-sk-header",
+    "company-id"
 ]
 
 #  fixme : later set cache to be redis or memcache

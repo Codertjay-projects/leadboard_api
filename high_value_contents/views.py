@@ -83,10 +83,10 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
         instance = self.get_object()
         company = self.get_company()
         #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         self.perform_destroy(instance)
-        return Response(status=204)
+        return Response({"message": 'Deleted'}, status=204)
 
 
 class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):

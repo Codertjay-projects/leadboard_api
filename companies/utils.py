@@ -30,13 +30,14 @@ def check_group_is_under_company(company: Company, group: Group):
 
 
 def check_marketer_and_admin_access_company(self):
-    if self.request.query_params.get("company_id"):
-        company = is_valid_uuid(self.request.query_params.get("company_id"))
-    elif self.kwargs['c_id']:
-        company = is_valid_uuid(self.kwargs['c_id'])
-    else:
+    # Get company ID from header and covert to uuid object
+    company_id = is_valid_uuid(self.request.headers['company-id'])
+    if company_id:
+        company = Company.objects.filter(id=company_id).first()
+    else: 
+        company = None
         return False
-    company = Company.objects.filter(id=company).first()
+
     user = self.request.user
 
     # check if the user is the owner of the company
@@ -63,7 +64,9 @@ def check_marketer_and_admin_access_company(self):
 
 def check_admin_access_company(self):
     # check if the user is the owner of the company
-    company = self.request.query_params.get("company_id")
+
+    # Get company ID from header and covert to uuid object
+    company = is_valid_uuid(self.request.headers['company-id'])
     company = Company.objects.filter(id=company).first()
     if not company:
         # if the company does not exist i raise an error
