@@ -1,4 +1,6 @@
 {% load fields %}
+<!DOCTYPE html>
+<html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -54,48 +56,48 @@
         }
     </style>
 </head>
-{% autoescape off %}
-    <body>
-    {{ description|markdown }}
 
-    <br/><br/>
-    <br/><br/>
-    <div class="social_links">
-        <div class="contact_thr">
-            <a href="https://wa.me/message/5IA2QYCI53SUM1" target="_blank">
-                <img src="https://instincthub.com/static/img/homepage/_whatsapp.png" alt="WhatsApp Icon">
-            </a>
-            <a href="https://twitter.com/instincthub/" target="_blank">
-                <img src="https://instincthub.com/static/img/homepage/_twitter.png" alt="Twitter Icon">
-            </a>
-            <a href="https://facebook.com/instincthub" target="_blank">
-                <img src="https://instincthub.com/static/img/homepage/_facebook.png" alt="Facebook Icon">
-            </a>
-            <a href="https://linkedin.com/company/instincthub" target="_blank">
-                <img src="https://instincthub.com/static/img/homepage/_linkedin.png" alt="LinkedIn Icon">
-            </a>
-            <a href="https://instagram.com/instincthub_" target="_blank">
-                <img src="https://instincthub.com/static/img/homepage/_instagram.png" alt="Instagram Icon">
-            </a>
-            <a href="https://youtube.com/instincthub_" target="_blank">
-                <img src="https://instincthub.com/static/img/homepage/_youtube.png" alt="YouTube Icon">
-            </a>
-        </div>
+<body>
+{{ description|markdown|safe }}
 
-        <div class="privacy">
-            <!--            <a href="" class="terms_">Terms & Conditions</a>-->
-            <div>
-                <a href="https://instincthub.com/privacy-policy/" class="crumb_">Privacy</a>
-                <span>| 1 Apapa Lane, Dolphin Estate, Ikoyi, Lagos.</span>
-            </div>
-            <div>
-                <a href="https://skills.instincthub.com/" class="crumb_">Course Library</a> | <a
-                    href="https://instincthub.com/blog/" class="crumb_">Skills Articles</a>
-            </div>
-            {% if unsubscribe_link %}
-                <span>You don't want to see this message again? </span><a href="{{ unsubscribe_link }}"> Unsubscribe</a>
-            {% endif %}
-        </div>
+<br/><br/>
+<br/><br/>
+<div class="social_links">
+    <div class="contact_thr">
+        <a href="https://wa.me/message/5IA2QYCI53SUM1" target="_blank">
+            <img src="https://leadapi.instincthub.com/static/img/homepage/_whatsapp.png" alt="WhatsApp Icon">
+        </a>
+        <a href="https://twitter.com/instincthub/" target="_blank">
+            <img src="https://leadapi.instincthub.com/static/img/homepage/_twitter.png" alt="Twitter Icon">
+        </a>
+        <a href="https://facebook.com/instincthub" target="_blank">
+            <img src="https://leadapi.instincthub.com/static/img/homepage/_facebook.png" alt="Facebook Icon">
+        </a>
+        <a href="https://linkedin.com/company/instincthub" target="_blank">
+            <img src="https://leadapi.instincthub.com/static/img/homepage/_linkedin.png" alt="LinkedIn Icon">
+        </a>
+        <a href="https://instagram.com/instincthub_" target="_blank">
+            <img src="https://leadapi.instincthub.com/static/img/homepage/_instagram.png" alt="Instagram Icon">
+        </a>
+        <a href="https://youtube.com/instincthub_" target="_blank">
+            <img src="https://leadapi.instincthub.com/static/img/homepage/_youtube.png" alt="YouTube Icon">
+            <img src="https://leadapi.instincthub.com/static/img/homepage/_youtube.png" alt="YouTube Icon">
+        </a>
     </div>
-    </body>
-{% endautoescape %}
+
+    <div class="privacy">
+        <!--            <a href="" class="terms_">Terms & Conditions</a>-->
+        <div>
+            <a href="https://instincthub.com/privacy-policy/" class="crumb_">Privacy</a>
+            <span>| 1 Apapa Lane, Dolphin Estate, Ikoyi, Lagos.</span>
+        </div>
+        <div>
+            <a href="https://skills.instincthub.com/" class="crumb_">Course Library</a> | <a
+                href="https://instincthub.com/blog/" class="crumb_">Skills Articles</a>
+        </div>
+        {% if unsubscribe_link %}
+            <span>You don't want to see this message again? </span><a href="{{ unsubscribe_link }}"> Unsubscribe</a>
+        {% endif %}
+    </div>
+</div>
+</body>
