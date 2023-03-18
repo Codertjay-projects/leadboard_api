@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from careers.models import Job, Applicant, JobType, APPLICANT_STATUS_CHOICES, ApplicantExperience, ApplicantEducation
+from careers.models import Job, Applicant, APPLICANT_STATUS_CHOICES, ApplicantExperience, ApplicantEducation
 from django.core.validators import FileExtensionValidator
 
 
@@ -17,7 +17,6 @@ class JobCreateUpdateSerializer(serializers.ModelSerializer):
             "id",
             "job_category",
             "job_experience_level",
-            "job_types",
             "applicants",
             "title",
             "description",
@@ -25,27 +24,6 @@ class JobCreateUpdateSerializer(serializers.ModelSerializer):
             "timestamp",
         ]
         read_only_fields = ["timestamp", "id"]
-
-    def create(self, validated_data):
-        # the job_types are in this form job_types=[<job_types instance>, ...] which are the instances
-        # of a category
-        job_types = validated_data.pop('job_types')
-        instance = Job.objects.create(**validated_data)
-        for item in job_types:
-            try:
-                instance.job_types.add(item)
-            except Exception as a:
-                print(a)
-        return instance
-
-
-class JobTypeSerializer(serializers.ModelSerializer):
-    """list of job """
-
-    class Meta:
-        model = JobType
-        fields = "__all__"
-        read_only_fields = ["id", "timestamp"]
 
 
 class ApplicantSerializer(serializers.ModelSerializer):
@@ -115,7 +93,6 @@ class JobListDetailSerializer(serializers.ModelSerializer):
     """This contains list of jobs available"""
     applicants = ApplicantSerializer(read_only=True, many=True)
     applicants_counts = serializers.SerializerMethodField(read_only=True)
-    job_types = JobTypeSerializer(read_only=True, many=True)
 
     class Meta:
         model = Job
@@ -128,8 +105,8 @@ class JobListDetailSerializer(serializers.ModelSerializer):
             "applicants",
             "applicants_counts",
             "job_category",
-            "job_experience_level",
             "job_types",
+            "job_experience_level",
             "timestamp",
         ]
 

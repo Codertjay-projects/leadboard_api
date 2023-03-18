@@ -1,11 +1,11 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from .views import JobListCreateAPIView, JobRetrieveUpdateDestroyAPIView, JobTypeViewSetsAPIView, JobApplyAPIView, \
+from .views import JobListCreateAPIView, JobRetrieveUpdateDestroyAPIView, JobApplyAPIView, \
     JobApplicantListAPIView, JobAcceptAPIView
 
 router = DefaultRouter()
-router.register(r'job_types', JobTypeViewSetsAPIView)
+
 urlpatterns = [
     path("", JobListCreateAPIView.as_view(), name="job_list_create"),
     path("job/<str:id>/", JobRetrieveUpdateDestroyAPIView.as_view(), name="job_retrieve_update_destroy"),

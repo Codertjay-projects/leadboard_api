@@ -10,15 +10,15 @@ from users.models import User
 from users.utils import create_slug
 
 LEAD_SOURCE = (
-    ("SKILLS_APP", "SKILLS_APP"),
-    ("WHATSAPP", "WHATSAPP"),
-    ("GOOGLE", "GOOGLE"),
-    ("BLOG", "BLOG"),
-    ("FACEBOOK", "FACEBOOK"),
-    ("FRIENDS", "FRIENDS"),
-    ("WEBINAR", "WEBINAR"),
-    ("NEWS", "NEWS"),
-    ("OTHERS", "OTHERS"),
+    ("instincthub", "instinctHub"),
+    ("whatsapp", "WHATSAPP"),
+    ("google", "GOOGLE"),
+    ("blog", "BLOG"),
+    ("facebook", "FACEBOOK"),
+    ("friends", "FRIENDS"),
+    ("webinar", "WEBINAR"),
+    ("news", "NEWS"),
+    ("others", "OTHERS"),
 )
 
 
@@ -73,6 +73,7 @@ class DownloadHighValueContent(models.Model):
     last_name = models.CharField(max_length=250)
     email = models.EmailField()
     lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250)
+    phone = models.CharField(max_length=250, null=True)
     verified = models.BooleanField(default=False)
     is_safe = models.BooleanField(default=False)
     want = models.CharField(max_length=250)

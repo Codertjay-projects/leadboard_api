@@ -6,30 +6,7 @@ from django.db import models
 from django.utils import timezone
 
 from companies.models import Company
-
-JOB_TYPE_CHOICES = (
-    ("REMOTE", "REMOTE"),
-    ("CONTRACT", "CONTRACT"),
-    ("FULL-TIME", "FULL-TIME"),
-)
-
-
-class JobType(models.Model):
-    """
-    this contains the categories of jobs which is either contract,full-time or remote
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    job_type = models.CharField(choices=JOB_TYPE_CHOICES, max_length=250, unique=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-
-APPLICANT_STATUS_CHOICES = (
-    ("PENDING", "PENDING"),
-    ("INVITED", "INVITED"),
-    ("REJECTED", "REJECTED"),
-)
+from .utils import JOB_TYPE_CHOICES, JOB_CATEGORY_CHOICES, JOB_EXPERIENCE_LEVEL_CHOICES, APPLICANT_STATUS_CHOICES
 
 
 class ApplicantExperience(models.Model):
@@ -110,19 +87,6 @@ class Applicant(models.Model):
         return self.applicanteducation_set.all()
 
 
-JOB_CATEGORY_CHOICES = (
-    ("DEVELOPER", "DEVELOPER"),
-    ("ANIMATION", "ANIMATION"),
-    ("ANIMATION", "ANIMATION"),
-    ("DESIGN", "DESIGN"),
-)
-JOB_EXPERIENCE_LEVEL_CHOICES = (
-    ("JUNIOR-LEVEL", "JUNIOR-LEVEL"),
-    ("MID-LEVEL", "MID-LEVEL"),
-    ("SENIOR-LEVEL", "SENIOR-LEVEL"),
-)
-
-
 class Job(models.Model):
     """the contains list of jobs that are available under a company """
     id = models.UUIDField(
@@ -132,7 +96,7 @@ class Job(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     job_category = models.CharField(choices=JOB_CATEGORY_CHOICES, max_length=250)
     job_experience_level = models.CharField(choices=JOB_EXPERIENCE_LEVEL_CHOICES, max_length=250)
-    job_types = models.ManyToManyField(JobType, blank=True)
+    job_types = models.CharField(choices=JOB_TYPE_CHOICES, max_length=250, null=True)
     title = models.CharField(max_length=250)
     description = models.TextField()
     application_deadline = models.DateField()

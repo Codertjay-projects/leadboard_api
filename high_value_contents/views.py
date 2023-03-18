@@ -99,13 +99,15 @@ class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
 
     def get_high_value_content(self):
         # the high_value_content_id
-        high_value_content_id = self.request.query_params.get("high_value_content_id")
+        high_value_content_id = is_valid_uuid(self.request.data["high_value_content"])
+        
         #  this filter base on the high_value_content_id  provided
         if not high_value_content_id:
             raise Http404
         high_value_content = HighValueContent.objects.filter(id=high_value_content_id).first()
         if not high_value_content:
             raise Http404
+        
         return high_value_content
 
     def create(self, request, *args, **kwargs):
@@ -115,6 +117,7 @@ class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
         """
         high_value_content = self.get_high_value_content()
         company = self.get_high_value_content().company
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(high_value_content=self.get_high_value_content())
@@ -181,4 +184,25 @@ class DownloadHighValueContentRetrieveAPIView(RetrieveAPIView):
         instance.save()
         ################################################################
         serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+
+class DownloadHighValueDetailsAPIView(RetrieveAPIView):
+    """
+    Details of downloads
+    """
+    permission_classes = [NotLoggedInPermission]
+    serializer_class = HighValueContentSerializer
+    lookup_field = "id"
+    queryset = HighValueContent.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        """
+        """
+        # Set the email to be verified
+        instance = self.get_object()
+        print(instance)
+        # data = self.custom_retrieve(instance)
+        serializer = self.get_serializer(instance)
+
         return Response(serializer.data)

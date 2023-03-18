@@ -14,8 +14,8 @@ from companies.utils import check_admin_access_company
 from email_logs.models import EmailLog
 from users.permissions import NotLoggedInPermission, IsAuthenticatedOrReadOnly, LoggedInPermission
 from users.utils import date_filter_queryset, is_valid_uuid
-from .models import Job, JobType, Applicant
-from .serializers import JobCreateUpdateSerializer, JobListDetailSerializer, JobTypeSerializer, ApplicantSerializer, \
+from .models import Job, Applicant
+from .serializers import JobCreateUpdateSerializer, JobListDetailSerializer, ApplicantSerializer, \
     ApplicantActionSerializer, ApplicantEducationSerializer, ApplicantExperienceSerializer
 
 
@@ -113,21 +113,6 @@ class JobRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         instance.applicants.all().delete()
         instance.delete()
         return Response(status=204)
-
-
-class JobTypeViewSetsAPIView(ModelViewSet):
-    """this viewset enables the full crud which are create, retrieve,update and delete  """
-    serializer_class = JobTypeSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-    queryset = JobType.objects.all()
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        # I only override this just to add partial true
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
 
 
 class JobApplyAPIView(CreateAPIView):

@@ -1,15 +1,7 @@
 from django.contrib import admin
-from .models import JobType, Applicant, Job
+from .models import Applicant, Job
 
 # Register your models here.
-
-
-
-@admin.register(JobType)
-class JobTypeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'job_type', 'timestamp']
-    search_fields = ['job_type']
-
 
 
 
