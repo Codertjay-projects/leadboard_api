@@ -12,7 +12,7 @@ from email_logs.models import EmailLog
 from events.models import Event
 from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
-from users.utils import date_filter_queryset
+from users.utils import date_filter_queryset, is_valid_uuid
 
 
 class EvenListAPIView(ListAPIView):
@@ -33,12 +33,15 @@ class EvenListAPIView(ListAPIView):
         queryset = self.filter_queryset(self.queryset.all())
         # Base on PENDING,PAST and default returns all
         cat = self.request.query_params.get("cat")
+        if cat: cat = cat.upper()
+
         if cat == "UPCOMING":
             # Which means the event has not yet started
             queryset = self.filter_queryset(self.queryset.filter(start_date__gte=timezone.now()))
         elif cat == "COMPLETED":
             # Which means the event has started and have being completed
             queryset = self.filter_queryset(self.queryset.filter(start_date__lt=timezone.now()))
+            print(queryset)
 
         if queryset:
             # Filter the date if it is passed in the params like
@@ -55,13 +58,13 @@ class EventCreateAPIView(CreateAPIView):
 
     def get_company(self):
         # the company id
-        company_id = self.request.query_params.get("company_id")
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
         #  this filter base on the lead id  provided
         if not company_id:
-            raise Http404
+            raise Http404("Company ID does not exist.")
         company = Company.objects.filter(id=company_id).first()
         if not company:
-            raise Http404
+            raise Http404("Company does not exist.")
         return company
 
     def get_queryset(self):
@@ -86,7 +89,7 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
     def get_company(self):
         # the company id
-        company_id = self.request.query_params.get("company_id")
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
         #  this filter base on the lead id  provided
         if not company_id:
             raise Http404
@@ -114,7 +117,6 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         if not self.request.user.is_authenticated:
             return Response({"error": "You are not authenticated"}, status=401)
         instance = self.get_object()
-        company = self.get_company()
         #  first check for then company owner then the company admins
         if not check_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
@@ -127,13 +129,24 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         # check if the user is authenticated
         if not self.request.user.is_authenticated:
             return Response({"error": "You are not authenticated"}, status=401)
-        instance = self.get_object()
-        company = self.get_company()
+
+        event_id = is_valid_uuid(kwargs['slug'])
+        instance = None
+
+        try:
+            instance = Event.objects.get(id=event_id, company=self.get_company())
+        except Event.DoesNotExist:
+            # Raise Http404 with a 204 status code and a custom message
+            raise Http404("Object not found with the given pk") from None
+        
+        instance = Event.objects.filter(id=event_id, company=self.get_company()).first()
+        
         #  first check for then company owner then the company admins
         if not check_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
+        
         self.perform_destroy(instance)
-        return Response(status=204)
+        return Response({"message": "Item deleted."}, status=204)
 
 
 class EventRegisterAPIView(CreateAPIView):
@@ -147,7 +160,7 @@ class EventRegisterAPIView(CreateAPIView):
         """
         this is used to get the event with the event id passed on the params
         """
-        event_id = self.request.query_params.get("event_id")
+        event_id = is_valid_uuid(self.request.query_params.get("event_id"))
         #  this filter base on the event id  provided
         if not event_id:
             raise Http404
@@ -158,6 +171,7 @@ class EventRegisterAPIView(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         # Get the event
+        print('self.get_event()')
         event = self.get_event()
         if event.start_date <= timezone.now():
             return Response({"error": "Event registration closed "}, status=400)

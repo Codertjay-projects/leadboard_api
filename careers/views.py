@@ -222,7 +222,7 @@ class JobAcceptAPIView(APIView):
 
     def get_company(self):
         # the company id
-        company_id = self.request.headers["company_id"]
+        company_id = is_valid_uuid(self.request.headers["company_id"])
         #  this filter base on the company id  provided
         if not company_id:
             return None
@@ -235,9 +235,10 @@ class JobAcceptAPIView(APIView):
         serializer = ApplicantActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # Check if the applicant
-        applicant = Applicant.objects.filter(
-            company=self.get_company(),
-            id=serializer.validated_data.get("application_id")).first()
+        
+        application_id = is_valid_uuid(serializer.data['application_id'])
+        applicant = Applicant.objects.filter(company=self.get_company(), id=application_id).first()
+
         if not applicant:
             return Response({"error": "Applicant does not exists"}, status=400)
         if applicant.status == serializer.validated_data.get("status"):

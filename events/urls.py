@@ -5,7 +5,7 @@ from .views import EvenListAPIView, EventCreateAPIView, EventRetrieveUpdateDestr
 urlpatterns = [
     path("", EvenListAPIView.as_view(), name="event_list"),
     path("create/", EventCreateAPIView.as_view(), name="event_create"),
-    path("event/<str:slug>/", EventRetrieveUpdateDestroyAPIView.as_view(), name="event_update_delete_retrieve"),
+    path("details/<str:slug>/", EventRetrieveUpdateDestroyAPIView.as_view(), name="event_update_delete_retrieve"),
     path("register/", EventRegisterAPIView.as_view(), name="event_register"),
 
 ]
