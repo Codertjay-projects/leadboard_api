@@ -12,7 +12,8 @@ def is_valid_uuid(uuid_str):
             return uuid.UUID(uuid_str, version=4)
         except ValueError:
             return False
-    else: return False
+    else:
+        return False
 
 
 def create_slug(instance, instances, new_slug=None):

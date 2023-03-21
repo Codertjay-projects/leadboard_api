@@ -1,11 +1,10 @@
-import json
+from rest_framework import serializers
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
-from companies.serializers import CompanyGroupSerializer
 from companies.models import CompanyEmployee
-from companies.utils import check_group_is_under_company, get_assigned_marketer_from_company_lead
+from companies.serializers import CompanyGroupSerializer
+from companies.utils import get_assigned_marketer_from_company_lead
 from feedbacks.serializers import FeedbackSerializer
 from leads.models import LeadContact
 from users.serializers import UserDetailSerializer
@@ -161,3 +160,5 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
             return LeadContact.objects.filter(company=obj.company, paying=True).count()
         if marketer.role == 'MARKETER':
             return LeadContact.objects.filter(company=obj.company, paying=True, assigned_marketer=req_user).count()
+
+

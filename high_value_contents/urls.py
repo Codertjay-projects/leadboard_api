@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views import HighValueContentViewSetsAPIView, DownloadHighValueContentListCreateAPIView, \
-    DownloadHighValueContentRetrieveAPIView, DownloadHighValueDetailsAPIView
+    LeadsDownloadedHighValueContentRetrieveAPIView, DownloadHighValueDetailsAPIView
 
 router = DefaultRouter()
 #  the company_id is passed in the params
@@ -11,8 +11,8 @@ urlpatterns = [
     path('download_content/',
          DownloadHighValueContentListCreateAPIView.as_view(),
          name='download_content'),
-    path('download_content/<uuid:id>/',
-         DownloadHighValueContentRetrieveAPIView.as_view()), 
+    path('lead_download_content/',
+         LeadsDownloadedHighValueContentRetrieveAPIView.as_view()),
     path('details/<uuid:id>/',
          DownloadHighValueDetailsAPIView.as_view(),
          name='details'),

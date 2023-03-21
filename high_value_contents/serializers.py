@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from high_value_contents.models import HighValueContent, DownloadHighValueContent
+from high_value_contents.models import HighValueContent, LEAD_SOURCE
+from leads.models import LeadContact
 from users.serializers import UserSerializer
 
 
@@ -61,26 +62,36 @@ class HighValueContentSerializer(serializers.ModelSerializer):
         return None
 
     def get_download_count(self, obj: HighValueContent):
-        return obj.downloadhighvaluecontent_set.count()
+        return obj.lead_contacts.count()
 
 
-class DownloadHighValueContentSerializer(serializers.ModelSerializer):
+class DownloadHighValueContentSerializer(serializers.Serializer):
     """
     this only contain fields which could be used to add to the lead and also send the user
     """
-
-    class Meta:
-        model = DownloadHighValueContent
-        fields = "__all__"
-        read_only_fields = ["id", "verified", "is_safe", "timestamp"]
+    high_value_content = serializers.UUIDField()
+    first_name = serializers.CharField(max_length=250)
+    last_name = serializers.CharField(max_length=250)
+    email = serializers.EmailField()
+    lead_source = serializers.ChoiceField(choices=LEAD_SOURCE)
+    want = serializers.CharField(max_length=1000)
 
 
 class DownloadHighValueContentDetailSerializer(serializers.ModelSerializer):
     """
     this is only used to get the detail of the user that need the content and also the content info
     """
-    high_value_content = HighValueContentSerializer(read_only=True)
 
     class Meta:
-        model = DownloadHighValueContent
-        fields = "__all__"
+        model = LeadContact
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email",
+            "lead_source",
+            "verified",
+            "is_safe",
+            "want",
+            "timestamp",
+        ]

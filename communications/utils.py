@@ -33,6 +33,7 @@ def append_links_and_id_to_description(description, email_type, email_id):
 
 
 def modify_names_on_description(description, first_name, last_name):
+    # todo: add this to email log real send mail
     """
     this is used to modify the first name and last name if passed as first_name and last_name
     on the description
@@ -55,24 +56,3 @@ def modify_names_on_description(description, first_name, last_name):
             "last_name", " "
         )
     return description
-
-
-def update_custom_schedule_log_status(id, status):
-    # Used local import
-
-    from communications.models import SendCustomEmailSchedulerLog
-    # filter the schedule
-    custom_schedule = SendCustomEmailSchedulerLog.objects.filter(id=id).first()
-    if custom_schedule:
-        custom_schedule.status = status
-        custom_schedule.save()
-
-
-def update_group_schedule_log_status(id, status):
-    # Used local import
-    from communications.models import SendGroupsEmailSchedulerLog
-    # filter the schedule
-    custom_schedule = SendGroupsEmailSchedulerLog.objects.filter(id=id).first()
-    if custom_schedule:
-        custom_schedule.status = status
-        custom_schedule.save()

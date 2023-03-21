@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from communications.models import SendGroupsEmailScheduler, SendCustomEmailScheduler
+from communications.models import SendEmailScheduler
 from companies.serializers import CompanyGroupSerializer, CompanyInfoSerializer
 
 
@@ -13,7 +13,7 @@ class SendGroupsEmailSchedulerListSerializer(serializers.ModelSerializer):
     company = CompanyInfoSerializer(read_only=True)
 
     class Meta:
-        model = SendGroupsEmailScheduler
+        model = SendEmailScheduler
         fields = [
             "id",
             "company",
@@ -29,7 +29,7 @@ class SendGroupsEmailSchedulerListSerializer(serializers.ModelSerializer):
 
 class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SendGroupsEmailScheduler
+        model = SendEmailScheduler
         fields = [
             "id",
             "email_to",
@@ -53,10 +53,11 @@ class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
         email_to = []
         if validated_data.get("email_to"):
             email_to = validated_data.pop('email_to')
-        instance = SendGroupsEmailScheduler.objects.create(**validated_data)
+        instance = SendEmailScheduler.objects.create(**validated_data)
+        instance.message_type = "GROUP"
         for item in email_to:
             try:
-                instance.email_to.add(item)
+                instance.groups.add(item)
             except Exception as a:
                 print(a)
         # Note this .save below is used by the logger once we have
@@ -72,7 +73,7 @@ class SendCustomEmailListSchedulerSerializer(serializers.ModelSerializer):
     company = CompanyInfoSerializer(read_only=True)
 
     class Meta:
-        model = SendCustomEmailScheduler
+        model = SendEmailScheduler
         fields = ["id",
                   "company",
                   "email_subject",
@@ -88,10 +89,17 @@ class SendCustomEmailSchedulerSerializer(serializers.ModelSerializer):
     """
     This is used to send emails to custom individual
     """
+    message_type = serializers.CharField(max_length=250, required=False)
 
     class Meta:
-        model = SendCustomEmailScheduler
-        fields = "__all__"
+        model = SendEmailScheduler
+        fields = [
+            "message_type",
+            "email_list",
+            "email_subject",
+            "scheduled_date",
+            "description",
+        ]
         read_only_fields = ["id", "timestamp", "company"]
 
     def validate_scheduled_date(self, attrs):
@@ -99,3 +107,4 @@ class SendCustomEmailSchedulerSerializer(serializers.ModelSerializer):
         if scheduled_date < timezone.now():
             raise serializers.ValidationError("The schedule date must be greater than the current date")
         return scheduled_date
+

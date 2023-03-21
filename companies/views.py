@@ -10,9 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from communications.models import SendCustomEmailSchedulerLog, SendGroupsEmailSchedulerLog
 from email_logs.models import EmailLog
-from high_value_contents.models import DownloadHighValueContent
+from high_value_contents.models import HighValueContent
 from users.models import User
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset
@@ -464,12 +463,14 @@ class CompanyAnalyTicsAPIView(APIView):
     def get(self, request):
         # Get the company
         company = self.get_company()
+
         leads = company.lead_companies.all()
         total_unsubscribe = leads.filter(send_email=False).count()
         lead_count = leads.count()
         schedule_count = company.userschedulecall_set.count()
         marketer_count = company.company_employees().filter(role="MARKETER").count()
         admin_count = company.company_employees().filter(role="ADMIN").count()
+
         # to get the conversion count I use the schedule
         conversion_count = company.userschedulecall_set.filter(will_pay=True, eligible=True,
                                                                will_get_laptop=True).count()
@@ -478,8 +479,14 @@ class CompanyAnalyTicsAPIView(APIView):
         last_24_hours_lead_count = leads.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_schedule_count = company.userschedulecall_set.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_feedback = company.feedback_set.filter(timestamp__gte=last_24_hours_lead).count()
+
         # List of file downloaded by users
-        downloaded_file_count = DownloadHighValueContent.objects.filter(high_value_content__company=company).count()
+        downloaded_file_count = 0
+        high_value_content_group = Group.objects.filter(title="HIGHVALUECONTENT", company=company).first()
+        if high_value_content_group:
+            # this get all the people that downloads the high value content
+            downloaded_file_count = HighValueContent.objects.get_all_downloads_count(company=company)
+
         # list of all zipped files
         zipped_files_count = company.highvaluecontent_set.filter(file__endswith="zip").count()
         pdf_files_count = company.highvaluecontent_set.filter(file__endswith="pdf").count()
@@ -491,11 +498,11 @@ class CompanyAnalyTicsAPIView(APIView):
         bounced_email_count = EmailLog.objects.filter(company=company, status="FAILED").count()
 
         # Get the links clicked count from our logs
-        custom_email_links_clicked_count = SendCustomEmailSchedulerLog.objects.filter(
-            company=company).aggregate(Sum('links_clicked_count'))[
+        custom_email_links_clicked_count = EmailLog.objects.filter(
+            company=company, message_type="CUSTOM").aggregate(Sum('links_clicked_count'))[
             'links_clicked_count__sum']
-        group_email_links_clicked_count = SendGroupsEmailSchedulerLog.objects.filter(
-            company=company).aggregate(Sum('links_clicked_count'))[
+        group_email_links_clicked_count = EmailLog.objects.filter(
+            company=company, message_type="GROUP").aggregate(Sum('links_clicked_count'))[
             'links_clicked_count__sum']
 
         # Change the count to zero if it is none

@@ -1,6 +1,6 @@
-from django.db import models
 import uuid
 
+from django.db import models
 # Create your models here.
 from django.db.models.signals import pre_save
 from django.utils import timezone
@@ -22,7 +22,24 @@ LEAD_SOURCE = (
 )
 
 
+class HighValueContentManager(models.Manager):
+    """"
+    This is used to create custom function that can be used
+    """
+
+    def get_all_downloads_count(self, company: Company) -> int:
+        """this returns the total number of people that downloads the high value content"""
+        download_count = 0
+        high_value_contents = self.filter(company=company)
+        for item in high_value_contents:
+            download_count += item.lead_contacts.count()
+        return download_count
+
+
 class HighValueContent(models.Model):
+    """"
+    This contains list of high value content that can be shared and downloaded
+    """
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
@@ -45,7 +62,12 @@ class HighValueContent(models.Model):
     last_edit = models.DateTimeField(auto_now=True)
     upload_date = models.DateTimeField(default=timezone.now)
     publish = models.BooleanField(default=False)
+    # lead contacts which are the list of people that have downloaded the  high value content
+    lead_contacts = models.ManyToManyField("leads.LeadContact", blank=True)
+
     timestamp = models.DateTimeField(default=timezone.now)
+
+    objects = HighValueContentManager()
 
     class Meta:
         ordering = ["-timestamp"]
@@ -58,24 +80,3 @@ def pre_save_create_high_value_content_receiver(sender, instance, *args, **kwarg
 
 
 pre_save.connect(pre_save_create_high_value_content_receiver, sender=HighValueContent)
-
-
-class DownloadHighValueContent(models.Model):
-    """
-    this is used to save the information for the user who wants to download and also after successfully
-    created we verify so when the download is verified we then save the information to the lead
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    high_value_content = models.ForeignKey(HighValueContent, on_delete=models.SET_NULL, null=True, blank=True)
-    first_name = models.CharField(max_length=250)
-    last_name = models.CharField(max_length=250)
-    email = models.EmailField()
-    lead_source = models.CharField(choices=LEAD_SOURCE, max_length=250)
-    phone = models.CharField(max_length=250, null=True)
-    verified = models.BooleanField(default=False)
-    is_safe = models.BooleanField(default=False)
-    want = models.CharField(max_length=250)
-    on_leadboard = models.BooleanField(default=False)
-    timestamp = models.DateTimeField(default=timezone.now)

@@ -11,6 +11,10 @@ class EventRegisterSerializer(serializers.ModelSerializer):
     """
     this serializer is used to register for an event
     """
+    email = serializers.EmailField(required=False)
+    first_name = serializers.CharField(max_length=250, required=False)
+    last_name = serializers.CharField(max_length=250, required=False)
+    mobile = serializers.CharField(max_length=250, required=False)
 
     class Meta:
         model = EventRegister
@@ -26,6 +30,21 @@ class EventRegisterSerializer(serializers.ModelSerializer):
             "accept_terms_and_conditions",
             "timestamp",
         ]
+
+    def validate(self, attrs):
+        # check if the user is authenticated
+        if not self.required.user.is_authenticated:
+            if not attrs.get("email"):
+                raise serializers.ValidationError("Email required")
+            if not attrs.get("first_name"):
+                raise serializers.ValidationError("first_name required")
+            if not attrs.get("last_name"):
+                raise serializers.ValidationError("last_name required")
+            if not attrs.get("mobile"):
+                raise serializers.ValidationError("mobile required")
+            return attrs
+
+        return attrs
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -135,3 +154,33 @@ class EventDetailSerializer(serializers.ModelSerializer):
     def get_event_register_count(self, obj: Event):
         """returns the number of people registered for the event"""
         return obj.event_registers().count()
+
+
+class EventSendEmailSerializer(serializers.Serializer):
+    """
+    this is used to send email to all users registered on all event in a company, each users in just an event
+    """
+    to_all = serializers.BooleanField(default=False)
+    #  the slug field if passed for the event
+    event_slug = serializers.SlugField(required=False)
+    subject = serializers.CharField(max_length=250)
+    message = serializers.CharField(max_length=250)
+    schedule_date = serializers.DateTimeField()
+
+    def validate(self, attrs):
+        """
+        this is used to validate an event
+        :return:
+        """
+        if not attrs.get("event_slug"):
+            if not attrs.get("to_all"):
+                return serializers.ValidationError("You need to set the event slug or send the message to all event "
+                                                   "created by you .")
+        return attrs
+
+    def validate_scheduled_date(self, attrs):
+        """this is used to validate the schedule date"""
+        scheduled_date = attrs
+        if scheduled_date < timezone.now():
+            raise serializers.ValidationError("The schedule date must be greater than the current date")
+        return scheduled_date

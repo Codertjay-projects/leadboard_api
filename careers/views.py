@@ -12,6 +12,7 @@ from rest_framework.viewsets import ModelViewSet
 from companies.models import Company
 from companies.utils import check_admin_access_company
 from email_logs.models import EmailLog
+from email_logs.tasks import send_custom_mail
 from users.permissions import NotLoggedInPermission, IsAuthenticatedOrReadOnly, LoggedInPermission
 from users.utils import date_filter_queryset, is_valid_uuid
 from .models import Job, Applicant
@@ -147,17 +148,17 @@ class JobApplyAPIView(CreateAPIView):
 
         # Make sure the list is not stringify
         education_data = ast.literal_eval(self.request.data.get("education"))
-        if isinstance(education_data,list):
+        if isinstance(education_data, list):
             # Check if the instance is a list and also check the length below
-            if len(education_data) >0:
+            if len(education_data) > 0:
                 education_serializer = ApplicantEducationSerializer(data=education_data, many=True)
                 education_serializer.is_valid(raise_exception=True)
                 education_serializer.save(applicant=applicant, job=self.get_job())
 
         # Make sure the list is not stringify
-        if isinstance(education_data,list):
+        if isinstance(education_data, list):
             # Check if the instance is a list and also check the length below
-            if len(education_data) >0:
+            if len(education_data) > 0:
                 experience_data = ast.literal_eval(self.request.data.get("experience"))
                 experience_serializer = ApplicantExperienceSerializer(data=experience_data, many=True)
                 experience_serializer.is_valid(raise_exception=True)
@@ -185,31 +186,32 @@ class JobApplicantListAPIView(ListAPIView):
     ]
 
     def get_queryset(self):
-        
+
         company_id = is_valid_uuid(self.request.query_params.get("company_id"))
-        
+
         if company_id:
             # Check if the user has access
             if not check_admin_access_company(self):
                 return Response({"error": "You dont have permission to delete a job under the company "}, status=401)
             else:
                 return super().get_queryset().filter(company__id=company_id)
-                
+
                 # queryset = self.paginate_queryset(applicants)
                 # serializer = self.serializer_class(applicants, many=True)
                 # print(serializer)
                 # return serializer.data
-            
-        else: raise Http404
+
+        else:
+            raise Http404
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        
+
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        
+
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -235,7 +237,7 @@ class JobAcceptAPIView(APIView):
         serializer = ApplicantActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # Check if the applicant
-        
+
         application_id = is_valid_uuid(serializer.data['application_id'])
         applicant = Applicant.objects.filter(company=self.get_company(), id=application_id).first()
 
@@ -247,17 +249,14 @@ class JobAcceptAPIView(APIView):
             applicant.status = "INVITED"
             applicant.save()
             # Send accepted mail
-            email_Log = EmailLog.objects.create(
-                company=applicant.company,
-                message_id=uuid.uuid4(),
-                message_type="CAREER",
-                email_from=applicant.company.name,
+            send_custom_mail(
+                company_name=applicant.company.name,
+                description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
+                     <p> You have been accepted come for interview.""",
                 email_to=applicant.email,
                 reply_to=applicant.company.reply_to_email,
                 email_subject=f"Accepted by {applicant.company.name}",
-                description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
-                     <p> You have been accepted come for interview.""",
-                scheduled_date=timezone.now()
+
             )
 
             return Response({"message": "Successfully sent invite to the applicant"}, status=200)
@@ -265,17 +264,15 @@ class JobAcceptAPIView(APIView):
             applicant.status = "REJECTED"
             applicant.save()
             # Send rejected mail
-            email_Log = EmailLog.objects.create(
-                company=applicant.company,
-                message_id=uuid.uuid4(),
-                message_type="CAREER",
-                email_from=applicant.company.name,
+            send_custom_mail(
+                company_name=applicant.company.name,
+                description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
+                                 <p> You have been Rejected dont  come for interview.""",
                 email_to=applicant.email,
                 reply_to=applicant.company.reply_to_email,
                 email_subject=f"Rejected by {applicant.company.name}",
-                description=f"""<h2>Hi {applicant.first_name} - {applicant.last_name}</h2>
-                                 <p> You have been Rejected dont  come for interview.""",
-                scheduled_date=timezone.now()
+
             )
+
             return Response({"message": "Successfully sent rejection mail to the applicant"}, status=200)
         return Response({"error": "An unknown error occurred"}, status=400)

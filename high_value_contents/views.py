@@ -1,19 +1,17 @@
-import uuid
-
 from decouple import config
 from django.http import Http404
-from django.utils import timezone
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from companies.models import Company, Group
 from companies.utils import check_marketer_and_admin_access_company, get_assigned_marketer_from_company_lead
-from email_logs.models import EmailLog
-from high_value_contents.models import HighValueContent, DownloadHighValueContent
+from email_logs.tasks import send_custom_mail
+from high_value_contents.models import HighValueContent
 from high_value_contents.serializers import HighValueContentSerializer, DownloadHighValueContentSerializer, \
     DownloadHighValueContentDetailSerializer
+from leads.models import LeadContact
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset, is_valid_uuid
 
@@ -99,15 +97,15 @@ class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
 
     def get_high_value_content(self):
         # the high_value_content_id
-        high_value_content_id = is_valid_uuid(self.request.data["high_value_content"])
-        
+        high_value_content_id = is_valid_uuid(self.request.query_params.get("high_value_content_id"))
+
         #  this filter base on the high_value_content_id  provided
         if not high_value_content_id:
             raise Http404
         high_value_content = HighValueContent.objects.filter(id=high_value_content_id).first()
         if not high_value_content:
             raise Http404
-        
+
         return high_value_content
 
     def create(self, request, *args, **kwargs):
@@ -116,76 +114,65 @@ class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
         user email we save the user info on the lead
         """
         high_value_content = self.get_high_value_content()
-        company = self.get_high_value_content().company
-        
+        company = high_value_content.company
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(high_value_content=self.get_high_value_content())
+        lead_contact = LeadContact.objects.filter(company=company, email=serializer.validated_data.get("email")).first()
+        if not lead_contact:
+            lead_contact = LeadContact.objects.create(
+                first_name=serializer.validated_data.get("first_name"),
+                last_name=serializer.validated_data.get("last_name"),
+                email=serializer.validated_data.get("email"),
+                lead_source=serializer.validated_data.get("lead_source"),
+                want=serializer.validated_data.get("want"),
+                company=company,
+                assigned_marketer=get_assigned_marketer_from_company_lead(company)
+            )
+        # Set the  group
+        if high_value_content.group:
+            lead_contact.groups.add(high_value_content.group)
+            lead_contact.save()
+        # add the user to one of the once that download a lead contact
+        high_value_content.lead_contacts.add(lead_contact)
+
         # This save the email and also through this we know if the mail fail or was su
-        email_Log = EmailLog.objects.create(
-            company=company,
-            message_id=uuid.uuid4(),
-            message_type="HIGHVALUECONTENT",
-            email_from=high_value_content.company.name,
-            email_to=serializer.validated_data.get("email"),
+        send_custom_mail(
             reply_to=high_value_content.company.reply_to_email,
-            email_subject=f"Download {high_value_content.title}",
             description=f"""
             You made a request request to download {high_value_content.title} Click the link to download <a 
             href="{config("DOMAIN_NAME")}/api/v1/communications/update_links_clicked/?email_id=
             {serializer.data.get("id")}&email_type=high_value_content&redirect_url={high_value_content.link}"> 
             {high_value_content.title} or click to download file {high_value_content.file}</a>
             """,
-            scheduled_date=timezone.now()
-        )
+            email_subject=f"Download {high_value_content.title}",
+            company_name=f"Download {high_value_content.title}",
+            email_to=serializer.validated_data.get("email"), )
         return Response({"message": "An link of the file has been sent to your email", "data": serializer.data},
                         status=201)
 
 
-class DownloadHighValueContentRetrieveAPIView(RetrieveAPIView):
+class LeadsDownloadedHighValueContentRetrieveAPIView(ListAPIView):
     """
-    this get the detail info of the high value content and the trying to get it
+    this get all the leads that downloads the high value content
     """
-    permission_classes = [NotLoggedInPermission]
+    permission_classes = [LoggedInPermission]
     serializer_class = DownloadHighValueContentDetailSerializer
-    lookup_field = "id"
-    queryset = DownloadHighValueContent.objects.all()
 
-    def retrieve(self, request, *args, **kwargs):
+    def get_queryset(self):
         """
+        this returns all individuals downloading high value content
+        :return:
         """
-        # Set the email to be verified
-        instance = self.get_object()
-        instance.verified = True
-        instance.is_safe = True
+        high_value_content_id = is_valid_uuid(self.request.query_params.get("high_value_content_id"))
+        if not high_value_content_id:
+            raise Http404("Please provide the high_value_content_id on your params")
+        high_value_content = HighValueContent.objects.filter(id=high_value_content_id).first()
+        if not high_value_content:
+            raise Http404("The high_value_content_id is not a valid one")
 
-        instance.save()
-        ################################################################
-        # Lets move the info to the lead board
-        # I am importing it here since this is the only place i will use it
-        from leads.models import LeadContact
-        lead_contact = LeadContact.objects.create(
-            first_name=instance.first_name,
-            last_name=instance.last_name,
-            email=instance.email,
-            lead_source=instance.lead_source,
-            verified=instance.verified,
-            is_safe=instance.is_safe,
-            want=instance.want,
-            company=instance.high_value_content.company,
-            assigned_marketer=get_assigned_marketer_from_company_lead(instance.high_value_content.company)
-        )
-        # Set the  group
-        if instance.high_value_content.group:
-            lead_contact.groups.add(instance.high_value_content.group)
-            lead_contact.save()
-        # set the instance that it has been shown on the leadboard
-        instance.on_leadboard = True
-        instance.save()
-        ################################################################
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-    
+        return self.filter_queryset(high_value_content.lead_contacts.all())
+
 
 class DownloadHighValueDetailsAPIView(RetrieveAPIView):
     """
