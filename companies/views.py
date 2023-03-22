@@ -21,7 +21,8 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     CompanyEmployeeSerializer, UpdateStaffSerializer
-from .utils import check_admin_access_company, get_or_create_test_group
+from .utils import check_admin_access_company, get_or_create_test_group, is_valid_uuid
+from schedules.models import UserScheduleCall
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -270,7 +271,10 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
 
     def get_company(self):
         #  get the company id from kwargs and also the group id
-        company_id = self.request.query_params.get("company_id")
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+
+        print(company_id)
+        print(self.request.query_params.get("company_id"))
         company = Company.objects.filter(id=company_id).first()
         if not company:
             raise Http404
@@ -308,7 +312,9 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         if user:
             # if the user exists we create the company employee and add this user
             CompanyEmployee.objects.create(
-                user=user, company=self.get_company(), role=company_invite.role,
+                user=user, 
+                company=self.get_company(), 
+                role=company_invite.role,
                 invited=True,
                 status="ACTIVE"
             )

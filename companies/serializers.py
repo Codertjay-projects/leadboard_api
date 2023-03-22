@@ -211,6 +211,7 @@ class CompanyInviteSerializer(serializers.ModelSerializer):
             "id",
             "staff",
             "first_name",
+            "last_name",
             "invite_id",
             "email",
             "role",
