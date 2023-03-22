@@ -1,8 +1,12 @@
 from celery import shared_task
 
+from communications.models import SendEmailScheduler
+from companies.models import Company
+from email_logs.models import EmailLog
 # Note: I am currently having the import inside my
 # function just to prevent circular import in the future
 from events.models import EventRegister
+from .models import Event
 
 
 @shared_task
@@ -12,9 +16,6 @@ def send_mail_to_event_register(event_slug, subject, message, schedule_date):
     and it use our Email log to send the email
     :return:
     """
-    from .models import Event
-    from email_logs.models import EmailLog
-    from communications.models import SendEmailScheduler
 
     event = Event.objects.filter(slug=event_slug).first()
     if not event:
@@ -50,10 +51,6 @@ def send_email_to_all_event_registers(company_id, subject, message, schedule_dat
     """"
     This is used to send email to all registers on all event by a company
     """
-    from .models import Event
-    from email_logs.models import EmailLog
-
-    from companies.models import Company
 
     # Get the company
     company = Company.objects.filter(id=company_id).first()
@@ -63,7 +60,6 @@ def send_email_to_all_event_registers(company_id, subject, message, schedule_dat
     #  Get  all the company event
     company_event_qs = Event.objects.filter(company__id=company_id)
     # Create the schedule model
-    from communications.models import SendEmailScheduler
     scheduler = SendEmailScheduler.objects.create(
         company=company,
         message_type="EVENT",
@@ -80,7 +76,7 @@ def send_email_to_all_event_registers(company_id, subject, message, schedule_dat
         # create the email log
         event_register = EventRegister.objects.filter(id=item.get("event_register_id")).first()
         if event_register:
-            email_log = EmailLog.objects.get_or_create(
+            email_log = EmailLog.objects.create(
                 company=company,
                 message_type="EVENT",
                 scheduler=scheduler,

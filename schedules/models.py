@@ -48,7 +48,7 @@ class UserScheduleCall(models.Model):
     )
     groups = models.ManyToManyField(Group, related_name="user_schedule_groups", blank=True)
     assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
-
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, blank=True, null=True)
     first_name = models.CharField(max_length=250)
     last_name = models.CharField(max_length=250)
     age_range = models.CharField(max_length=5, blank=True, null=True, choices=AGE_RANGE)

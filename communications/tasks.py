@@ -1,5 +1,6 @@
 from celery import shared_task
 
+from communications.models import SendEmailScheduler
 from email_logs.models import EmailLog
 
 
@@ -10,7 +11,6 @@ def create_custom_schedule_log(custom_schedule_id):
     :param custom_schedule_id: the SendCustomEmailScheduler id since we cant pass instance to task
     :return: True (Note Required)
     """
-    from communications.models import SendEmailScheduler
 
     print("<<<<<<<>>>>>>>>>CUSTOM<<<<<<<>>>>>>>>>")
     # Using this import to avoid conflict
@@ -64,43 +64,6 @@ def create_group_schedule_log(schedule_id):
                 # the email to could be lead_contact model, event register or another
                 email_to=lead_contact,
                 email_to_id=lead_contact.id,
-            )
-        except:
-            pass
-    return True
-
-
-@shared_task
-def create_event_schedule_log(schedule_id):
-    """
-    this is used to send emails to list of people that registered under an event
-    :param schedule_id: The SendEmailScheduler model id
-    :return:
-    """
-    # Using this import to avoid conflict
-    from .models import SendEmailScheduler
-    from events.models import EventRegister
-
-    # Fil
-    # Filter base on the ID Provided
-    group_schedule = SendEmailScheduler.objects.filter(id=schedule_id).first()
-    if not group_schedule:
-        return True
-        # Get the email lists
-    # The email to must be added before sending the email
-    pending_mail_info = group_schedule.get_events_email()
-    for item in pending_mail_info:
-        # Try getting to send group email log if it exists before and if it doesn't
-        # exist I just add extra fields
-        try:
-            event_register = EventRegister.objects.get(id=item.get("event_register_id"))
-            send_group_email_log, created = EmailLog.objects.get_or_create(
-                company=group_schedule.company,
-                message_type="EVENT",
-                scheduler=group_schedule,
-                # the email to  event_register model
-                email_to=event_register,
-                email_to_id=event_register.id,
             )
         except:
             pass
