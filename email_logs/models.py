@@ -13,10 +13,13 @@ from email_logs.utils import get_email_to
 
 MESSAGE_TYPE = (
     ("CUSTOM", "CUSTOM"),
-    ("GROUP", "GROUP"),
+    ("LEAD_GROUP", "LEAD_GROUP"),
+    ("SCHEDULE_GROUP", "SCHEDULE_GROUP"),
     ("HIGHVALUECONTENT", "HIGHVALUECONTENT"),
     ("CAREER", "CAREER"),
     ("EVENT", "EVENT"),
+    ("SCHEDULE", "EVENT"),
+    ("ALL", "ALL"),
     ("OTHERS", "OTHERS"),
 )
 
@@ -77,38 +80,15 @@ def post_save_send_email_log(sender, instance: EmailLog, *args, **kwargs):
                 scheduled_date = timezone.now()
 
             # send the email if its to grou
-            if instance.message_type == "GROUP":
-                # this filter and get the lead contact with the id rpovided
-                lead_contact = get_email_to(instance.message_type, instance.email_to_instance_id)
+            # this filter and get the lead contact with the id provided
+            email_to_instance = get_email_to(instance.message_type, instance.email_to_instance_id, instance.email)
+            # the email to instance can be an email normal email or a lead_contact_instance, schedule_contact_interface
+            #  or event_register_instance
+            if email_to_instance:
                 leadboard_send_mail.apply_async(
                     args=[instance.id,
                           instance.company.name,
-                          lead_contact,
-                          instance.company.reply_to_email,
-                          instance.scheduler.email_subject,
-                          instance.scheduler.description,
-                          instance.message_type
-                          ],
-                    eta=scheduled_date)
-            elif instance.message_type == "EVENT":
-                # this filter and get the event register with the id provided
-                event_register = get_email_to(instance.message_type, instance.email_to_instance_id)
-                leadboard_send_mail.apply_async(
-                    args=[instance.id,
-                          instance.company.name,
-                          event_register,
-                          instance.company.reply_to_email,
-                          instance.scheduler.email_subject,
-                          instance.scheduler.description,
-                          instance.message_type
-                          ],
-                    eta=scheduled_date)
-            elif instance.message_type == "CUSTOM":
-                # this sends to custom emails which does not use uuid or content type but just
-                leadboard_send_mail.apply_async(
-                    args=[instance.id,
-                          instance.company.name,
-                          instance.email,
+                          email_to_instance,
                           instance.company.reply_to_email,
                           instance.scheduler.email_subject,
                           instance.scheduler.description,

@@ -22,6 +22,7 @@ class EventRegisterSerializer(serializers.ModelSerializer):
             "id",
             "first_name",
             "last_name",
+            "company",
             "email",
             "mobile",
             "gender",
@@ -33,7 +34,7 @@ class EventRegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # check if the user is authenticated
-        if not self.required.user.is_authenticated:
+        if not self.context["request"].user.is_authenticated:
             if not attrs.get("email"):
                 raise serializers.ValidationError("Email required")
             if not attrs.get("first_name"):

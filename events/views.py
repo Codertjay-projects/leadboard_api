@@ -1,16 +1,14 @@
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from companies.models import Company
 from companies.utils import check_admin_access_company
 from email_logs.tasks import send_custom_mail
 from events.models import Event, EventRegister
-from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer, EventSendEmailSerializer
-from events.tasks import send_mail_to_event_register, send_email_to_all_event_registers
+from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from users.utils import date_filter_queryset, is_valid_uuid
 
@@ -149,7 +147,7 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         return Response({"message": "Item deleted."}, status=204)
 
 
-class EventRegisterAPIView(CreateAPIView):
+class EventRegisterAPIView(ListCreateAPIView):
     """
     This is used to register for an event for a normal not logged-in user
     """
@@ -177,7 +175,8 @@ class EventRegisterAPIView(CreateAPIView):
             return Response({"error": "Event registration closed "}, status=400)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(event=event)
+        # i need the company for easy filtering in the communication model for all emails
+        serializer.save(event=event, company=event.company)
         # Send in the email to the user registering for the event
         first_name = serializer.validated_data.get("first_name")
         email = serializer.validated_data.get("last_name")
@@ -209,17 +208,13 @@ class EventRegisteredUserListAPIView(ListAPIView):
     """
     serializer_class = EventRegisterSerializer
     permission_classes = [LoggedInPermission]
-
-    def get_company(self):
-        # the company id
-        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
-        #  this filter base on the lead id  provided
-        if not company_id:
-            raise Http404("Company ID does not exist.")
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            raise Http404("Company does not exist.")
-        return company
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "email",
+        "first_name",
+        "last_name",
+        "mobile",
+    ]
 
     def get_event(self):
         """
@@ -240,6 +235,11 @@ class EventRegisteredUserListAPIView(ListAPIView):
         :return:
         """
         queryset = EventRegister.objects.filter(event=self.get_event())
+        if queryset:
+            # Filter the date if it is passed in the params like
+            # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+            # You will get more from the documentation
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -247,9 +247,10 @@ class EventRegisteredUserListAPIView(ListAPIView):
         this is used to list all the event registers and i override the default list
         """
         queryset = self.filter_queryset(self.get_queryset())
-        company = self.get_company()
+        event = self.get_event()
         #  first check for then company owner then the company admins
-        if not check_admin_access_company(self):
+        if event.company.employees.filter(user=self.request.user,
+                                          status="ACTIVE", role="ADMIN").first():
             return Response({"error": "You dont have permission"}, status=401)
 
         page = self.paginate_queryset(queryset)
@@ -259,58 +260,3 @@ class EventRegisteredUserListAPIView(ListAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-
-class EventSendEmailToRegistersAPIView(APIView):
-    """
-    this is used to send email to all registered users under an event or all event in the copany
-    """
-    permission_classes = [LoggedInPermission]
-
-    def get_company(self):
-        # the company id
-        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
-        #  this filter base on the lead id  provided
-        if not company_id:
-            raise Http404("Company ID does not exist.")
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            raise Http404("Company does not exist.")
-        return company
-
-    def post(self, request):
-        """
-        this is used to send email to all event users that registers under an event or all
-        :return:
-        """
-        serializer = EventSendEmailSerializer(data=self.request.data)
-        serializer.is_valid(raise_exception=True)
-
-        company = self.get_company()
-        #  first check for then company owner then the company admins
-        if not check_admin_access_company(self):
-            return Response({"error": "You dont have permission"}, status=401)
-
-        #  Get the data
-        to_all = serializer.validated_data.get("to_all")
-        event_slug = serializer.validated_data.get("event_slug")
-        subject = serializer.validated_data.get("subject")
-        message = serializer.validated_data.get("message")
-        schedule_date = serializer.validated_data.get("schedule_date")
-
-        if to_all:
-            # this means we are sending the email to all users registered on event
-            send_email_to_all_event_registers.delay(company.id, subject, message, schedule_date)
-            return Response({"message": "Successfully send email to all users"}, status=200)
-        elif not event_slug:
-            # if the event slug is passed
-            event = Event.objects.filter(slug=event_slug).first()
-            if not event:
-                # if the event does not exist i return error
-                return Response({"error": "Event does not exist"}, status=404)
-
-            #  send email to all users registered under an event
-            send_mail_to_event_register.delay(event_slug, subject, message, schedule_date)
-            return Response({"message": "Successfully send email to event users"}, status=200)
-
-        return Response({"error": "Error sending email please provide the right fields on the form"}, status=400)

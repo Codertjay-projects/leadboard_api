@@ -92,7 +92,7 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
         """
 
         try:
-            marketer_info_list = obj.company.companyemployee_set.filter(
+            marketer_info_list = obj.company.employees.filter(
                 role="MARKETER", status="ACTIVE").values_list(
                 "user__id",
                 "user__first_name",
@@ -160,5 +160,3 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
             return LeadContact.objects.filter(company=obj.company, paying=True).count()
         if marketer.role == 'MARKETER':
             return LeadContact.objects.filter(company=obj.company, paying=True, assigned_marketer=req_user).count()
-
-

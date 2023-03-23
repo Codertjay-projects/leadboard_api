@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -31,7 +32,7 @@ class ScheduleCallDetailView(RetrieveAPIView):
         if instance:
             instance = ScheduleCallSerializer(instance)
             return Response(instance.data, status=200)
-        else: 
+        else:
             return Response({"error": "Schedule not found"}, status=404)
 
 
@@ -105,7 +106,7 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         Using the schedule call slug which was passed in the urls to get the schedule call
         :return:
         """
-        schedule_call_slug = is_valid_uuid(self.request.data["schedule_call"])
+        schedule_call_slug = is_valid_uuid(self.request.data.get("schedule_call"))
         schedule_call = ScheduleCall.objects.filter(id=schedule_call_slug).first()
         if not schedule_call:
             raise Http404
@@ -128,7 +129,8 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         serializer.save(
             schedule_call=schedule_call,
             lead_contact=lead_contact,
-            assigned_marketer=assigned_marketer)
+            assigned_marketer=assigned_marketer,
+            company=self.get_company())
         return Response(serializer.data, status=201)
 
 
@@ -175,9 +177,9 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
             feedback_action = feedback_serializer.validated_data.get("feedback_action")
             feedback_next_schedule = feedback_serializer.validated_data.get("feedback_next_schedule")
             #  create the feedback with the helper function provided
-            feedback = Feedback.objects.create_by_model_type(
-                model_type="userschedulecall",
-                other_model_id=instance.id,
+            feedback = Feedback.objects.create(
+                content_type=ContentType.objects.get_for_model(instance),
+                object_id=instance.id,
                 feedback=feedback_content,
                 action=feedback_action,
                 next_schedule=feedback_next_schedule,

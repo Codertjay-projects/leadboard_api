@@ -14,6 +14,7 @@ class ScheduleCallSerializer(serializers.ModelSerializer):
     """
     This serializes the schedule call which is either
     """
+
     class Meta:
         model = ScheduleCall
         fields = '__all__'
@@ -33,7 +34,10 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # the groups are in this form groups=[<group instance>, ...] which are the instances
         # of a category
-        groups = validated_data.pop('groups')
+        groups = []
+        if validated_data.get("groups"):
+            groups = validated_data.pop('groups')
+
         instance = UserScheduleCall.objects.create(**validated_data)
         for item in groups:
             # check if the user has access
@@ -109,7 +113,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
         :return: marketer_list dictionary
         """
         try:
-            marketer_info_list = obj.company.companyemployee_set.filter(
+            marketer_info_list = obj.company.employees.filter(
                 role="MARKETER", status="ACTIVE").values_list(
                 "user__id",
                 "user__first_name",

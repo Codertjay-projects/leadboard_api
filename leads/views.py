@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
@@ -63,7 +64,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
             # print(queryset)
         elif uuid_params and not staff:
             raise APIException({'message': 'No result found'})
-            
+
         # Filter the date if it is passed in the params like
         if queryset:
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
@@ -161,14 +162,14 @@ class LeadContactRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             feedback_action = feedback_serializer.validated_data.get("feedback_action")
             feedback_next_schedule = feedback_serializer.validated_data.get("feedback_next_schedule")
             #  create the feedback with the helper function provided
-            feedback = Feedback.objects.create_by_model_type(
-                model_type="leadcontact",
-                other_model_id=instance.id,
+            feedback = Feedback.objects.create(
+                company=instance.company,
+                staff=self.request.user,
+                content_type=ContentType.objects.get_for_model(instance),
+                object_id=instance.id,
+                next_schedule=feedback_next_schedule,
                 feedback=feedback_content,
                 action=feedback_action,
-                next_schedule=feedback_next_schedule,
-                staff=self.request.user,
-                company=instance.company
             )
 
             """End Feedback create"""

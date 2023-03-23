@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from email_logs.models import EmailLog
+from email_logs.tasks import send_custom_mail
 from high_value_contents.models import HighValueContent
 from users.models import User
 from users.permissions import LoggedInPermission, NotLoggedInPermission
@@ -315,18 +316,18 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             company_invite.status = "ACTIVE"
             company_invite.save()
         # Send request to user to join the company
-        email_Log = EmailLog.objects.create(
-            company=company, message_id=uuid.uuid4(), message_type="OTHERS",
-            email_from=company.name, email_to=serializer.validated_data.get("email"),
-            reply_to=company.reply_to_email, email_subject=f"Invitation to Join {company.name}",
+
+        send_custom_mail.delay(
+            reply_to=company.reply_to_email,
+            email_subject=f"Invitation to Join {company.name}",
             description=f"""
             <h1> Hello {serializer.validated_data.get("first_name")} - 
             {serializer.validated_data.get("last_name")}. </h1>
              <p>{company.name} has invited you to join the their organisation
-              you can use this code to join 
-             {company_invite.invite_id}</p>   """,
-            scheduled_date=timezone.now()
-        )
+              you can use this link to  
+              <a href="https://leadboard.instincthub.com/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company}&org_id={company.id}&org_username={company.username}&email={company_invite.email}" class="crumb_">Join</a>
+            """,
+            company_name=company.name, email_to=serializer.validated_data.get("email"))
         return Response(serializer.data, status=201)
 
 
@@ -502,7 +503,10 @@ class CompanyAnalyTicsAPIView(APIView):
             company=company, message_type="CUSTOM").aggregate(Sum('links_clicked_count'))[
             'links_clicked_count__sum']
         group_email_links_clicked_count = EmailLog.objects.filter(
-            company=company, message_type="GROUP").aggregate(Sum('links_clicked_count'))[
+            company=company, message_type="LEAD_GROUP").aggregate(Sum('links_clicked_count'))[
+            'links_clicked_count__sum']
+        schedule_email_links_clicked_count = EmailLog.objects.filter(
+            company=company, message_type="SCHEDULE_GROUP").aggregate(Sum('links_clicked_count'))[
             'links_clicked_count__sum']
 
         # Change the count to zero if it is none
@@ -531,6 +535,7 @@ class CompanyAnalyTicsAPIView(APIView):
             "bounced_email_count": bounced_email_count,
             "custom_email_links_clicked_count": custom_email_links_clicked_count,
             "group_email_links_clicked_count": group_email_links_clicked_count,
+            "schedule_email_links_clicked_count": schedule_email_links_clicked_count,
             "total_link_clicked_count": total_link_clicked_count,
             "total_unsubscribe": total_unsubscribe,
         }

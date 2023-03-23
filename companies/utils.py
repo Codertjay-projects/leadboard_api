@@ -29,14 +29,24 @@ def check_group_is_under_company(company: Company, group: Group):
     return False
 
 
-def check_marketer_and_admin_access_company(self):
+def get_company(self):
     # Get company ID from header and covert to uuid object
-    company_id = is_valid_uuid(self.request.headers['company-id'])
-    if company_id:
-        company = Company.objects.filter(id=company_id).first()
-    else: 
-        company = None
-        return False
+    company_id = is_valid_uuid(self.request.headers.get("company-id"))
+    # I check if the company id is not passed in the headers then I try getting it from
+    #  the params
+    if not company_id:
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+    if not company_id:
+        raise Http404
+    company = Company.objects.filter(id=company_id).first()
+    if not company:
+        # if the company does not exist i raise an error
+        raise Http404
+    return company
+
+
+def check_marketer_and_admin_access_company(self):
+    company = get_company(self)
 
     user = self.request.user
 
@@ -64,13 +74,7 @@ def check_marketer_and_admin_access_company(self):
 
 def check_admin_access_company(self):
     # check if the user is the owner of the company
-
-    # Get company ID from header and covert to uuid object
-    company = is_valid_uuid(self.request.headers['company-id'])
-    company = Company.objects.filter(id=company).first()
-    if not company:
-        # if the company does not exist i raise an error
-        raise Http404
+    company = get_company(self)
     user = self.request.user
 
     if user == company.owner:
@@ -178,7 +182,7 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
     or
     it uses the owner of the company
     """
-    last_user_schedule_call = company.employees.all().first()
+    last_user_schedule_call = company.userschedulecall_set.all().first()
     if not last_user_schedule_call:
         # the first user_schedule_call is managed by the owner
         return company.owner
@@ -210,6 +214,8 @@ def get_assigned_marketer_from_company_user_schedule_call(company: Company):
         return company.first_admin_user()
     else:
         return company.owner
+
+
 def get_or_create_test_group(company):
     """
     this is used to get or create a test group on a lead
