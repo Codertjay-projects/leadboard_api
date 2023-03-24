@@ -85,16 +85,24 @@ def post_save_send_email_log(sender, instance: EmailLog, *args, **kwargs):
             # the email to instance can be an email normal email or a lead_contact_instance, schedule_contact_interface
             #  or event_register_instance
             if email_to_instance:
-                leadboard_send_mail.apply_async(
-                    args=[instance.id,
-                          instance.company.name,
-                          email_to_instance,
-                          instance.company.reply_to_email,
-                          instance.scheduler.email_subject,
-                          instance.scheduler.description,
-                          instance.message_type
-                          ],
-                    eta=scheduled_date)
+                leadboard_send_mail(instance.id,
+                                    instance.company.name,
+                                    email_to_instance,
+                                    instance.company.reply_to_email,
+                                    instance.scheduler.email_subject,
+                                    instance.scheduler.description,
+                                    instance.message_type
+                                    )
+                # leadboard_send_mail.apply_async(
+                #     args=[instance.id,
+                #           instance.company.name,
+                #           email_to_instance,
+                #           instance.company.reply_to_email,
+                #           instance.scheduler.email_subject,
+                #           instance.scheduler.description,
+                #           instance.message_type
+                #           ],
+                #     eta=scheduled_date)
 
 
 post_save.connect(post_save_send_email_log, sender=EmailLog)

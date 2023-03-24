@@ -46,7 +46,6 @@ class UserScheduleCall(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
-    groups = models.ManyToManyField(Group, related_name="user_schedule_groups", blank=True)
     assigned_marketer = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, blank=True, null=True)
     first_name = models.CharField(max_length=250)
@@ -106,9 +105,8 @@ class ScheduleCall(models.Model):
     )
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
-    group = models.ForeignKey(Group, on_delete=models.SET_NULL, blank=True, null=True)
     title = models.CharField(max_length=250, )
-    slug = models.SlugField()
+    slug = models.SlugField(blank=True, null=True)
     minutes = models.IntegerField()
     description = models.TextField(null=True, max_length=250)
     meeting_link = models.URLField(blank=True, null=True)

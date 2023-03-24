@@ -3,14 +3,16 @@ from rest_framework import serializers
 
 from communications.models import SendEmailScheduler
 from companies.serializers import CompanyGroupSerializer, CompanyInfoSerializer
+from schedules.serializers import ScheduleCallSerializer
 
 
 class SendEmailSchedulerListSerializer(serializers.ModelSerializer):
     """
     This is used when list the  mail sent and retrieving
     """
-    email_to = CompanyGroupSerializer(many=True, read_only=True)
+    groups = CompanyGroupSerializer(many=True, read_only=True)
     company = CompanyInfoSerializer(read_only=True)
+    schedule_calls = ScheduleCallSerializer(read_only=True)
 
     class Meta:
         model = SendEmailScheduler
@@ -18,8 +20,9 @@ class SendEmailSchedulerListSerializer(serializers.ModelSerializer):
             "id",
             "company",
             "message_type",
-            "email_to",
+            "groups",
             "events",
+            "schedule_calls",
             "high_value_contents",
             "email_list",
             "email_subject",
@@ -38,6 +41,7 @@ class SendEmailSchedulerSerializer(serializers.ModelSerializer):
             "message_type",
             "groups",
             "events",
+            "schedule_calls",
             "high_value_contents",
             "email_list",
             "email_subject",
@@ -59,6 +63,7 @@ class SendEmailSchedulerSerializer(serializers.ModelSerializer):
         groups = []
         events = []
         high_value_contents = []
+        schedule_calls = []
         if validated_data.get("groups") or isinstance(validated_data.get("groups"), list):
             groups = validated_data.pop('groups')
 
@@ -67,6 +72,9 @@ class SendEmailSchedulerSerializer(serializers.ModelSerializer):
 
         if validated_data.get("high_value_contents") or isinstance(validated_data.get("high_value_contents"), list):
             high_value_contents = validated_data.pop('high_value_contents')
+
+        if validated_data.get("schedule_calls") or isinstance(validated_data.get("schedule_calls"), list):
+            schedule_calls = validated_data.pop('schedule_calls')
 
         instance = SendEmailScheduler.objects.create(**validated_data)
         for item in groups:
@@ -90,6 +98,14 @@ class SendEmailSchedulerSerializer(serializers.ModelSerializer):
                 # you can only send to event owned by the company
                 if item.company == instance.company:
                     instance.high_value_contents.add(item)
+            except Exception as a:
+                print(a)
+        # add the schedule_calls also if it was provided
+        for item in schedule_calls:
+            try:
+                # you can only send to event owned by the company
+                if item.company == instance.company:
+                    instance.schedule_calls.add(item)
             except Exception as a:
                 print(a)
 

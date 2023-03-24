@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
 from django.utils import timezone
+from rest_framework.exceptions import APIException
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -11,10 +12,42 @@ from companies.utils import get_assigned_marketer_from_company_user_schedule_cal
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from leads.models import LeadContact
+from users.permissions import NotLoggedInPermission
+from users.utils import date_filter_queryset, is_valid_uuid
 from .models import ScheduleCall, UserScheduleCall
 from .serializers import UserScheduleSerializer, UserScheduleCreateUpdateSerializer, ScheduleCallSerializer
-from users.permissions import LoggedInPermission, NotLoggedInPermission
-from users.utils import date_filter_queryset, is_valid_uuid
+
+
+class ScheduleCallListCreateAPIView(ListCreateAPIView):
+    """
+    this is used to list and create schedule call
+    """
+    serializer_class = ScheduleCallSerializer
+    queryset = ScheduleCall.objects.all()
+    permission_classes = [NotLoggedInPermission]
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def get_queryset(self):
+        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        # the user must have access before he would be able to update a schedule
+        if not check_marketer_and_admin_access_company(self):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(company=self.get_company(), staff=self.request.user)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=201, headers=headers)
 
 
 class ScheduleCallDetailView(RetrieveAPIView):

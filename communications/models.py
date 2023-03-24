@@ -6,6 +6,7 @@ from django.utils import timezone
 from companies.models import Group, Company
 from events.models import Event
 from high_value_contents.models import HighValueContent
+from schedules.models import ScheduleCall
 from .utils import check_email
 
 EMAIL_STATUS = (
@@ -40,6 +41,8 @@ class SendEmailScheduler(models.Model):
     # the set of groups the email is sent to it could be from  newsletters, contacts,downloads and schedule
     groups = models.ManyToManyField(Group, blank=True)
     events = models.ManyToManyField(Event, blank=True)
+    # The schedule call is used for schedules
+    schedule_calls = models.ManyToManyField(ScheduleCall, blank=True)
     high_value_contents = models.ManyToManyField(HighValueContent, blank=True)
     #  list of email comma seperated
     email_list = models.TextField(blank=True, null=True)
@@ -101,7 +104,7 @@ class SendEmailScheduler(models.Model):
         from schedules.models import UserScheduleCall
         value_list_info = UserScheduleCall.objects.filter(
             company=self.company,
-            groups__in=self.groups.all()).distinct().values_list(
+            schedule_call_id__in=self.schedule_calls.all()).distinct().values_list(
             "email",
             "first_name",
             "last_name",
