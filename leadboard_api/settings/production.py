@@ -27,6 +27,17 @@ DATABASES = {
     }
 }
 
+# Cache database
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",

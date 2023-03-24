@@ -99,7 +99,7 @@ class SendEmailScheduler(models.Model):
                     }...
                     ]
         """
-        #  Get the leads email  that are connected to the SendGroupsEmailScheduler
+        #  fGet the leads email  that are connected to the SendGroupsEmailScheduler
         #  and also the id of the SendGroupsEmailScheduler
         from schedules.models import UserScheduleCall
         value_list_info = UserScheduleCall.objects.filter(
@@ -166,6 +166,7 @@ class SendEmailScheduler(models.Model):
         which is a text field
         :return: ["easy@mail.com","easy@mail.com","easy@mail.com"]
         """
+        
         custom_email_list = self.email_list.split(",")
         for item in custom_email_list:
             # Validate the email
