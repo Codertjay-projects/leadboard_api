@@ -55,11 +55,12 @@ class HighValueContentSerializer(serializers.ModelSerializer):
 
     def get_file_size(self, obj: HighValueContent):
         file = obj.file
-        if file:
+        try:
             # Convert the file size to megabytes
             file_size_megabytes = file.size / 1048576
             return round(file_size_megabytes, 2)
-        return None
+        except:
+            return None
 
     def get_download_count(self, obj: HighValueContent):
         return obj.lead_contacts.count()
