@@ -1,15 +1,13 @@
-import uuid
-
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
 from companies.models import Company
 from companies.utils import check_admin_access_company
-from email_logs.models import EmailLog
-from events.models import Event
+from email_logs.tasks import send_custom_mail
+from events.models import Event, EventRegister
 from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from users.utils import date_filter_queryset, is_valid_uuid
@@ -138,18 +136,18 @@ class EventRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
         except Event.DoesNotExist:
             # Raise Http404 with a 204 status code and a custom message
             raise Http404("Object not found with the given pk") from None
-        
+
         instance = Event.objects.filter(id=event_id, company=self.get_company()).first()
-        
+
         #  first check for then company owner then the company admins
         if not check_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
-        
+
         self.perform_destroy(instance)
         return Response({"message": "Item deleted."}, status=204)
 
 
-class EventRegisterAPIView(CreateAPIView):
+class EventRegisterAPIView(ListCreateAPIView):
     """
     This is used to register for an event for a normal not logged-in user
     """
@@ -177,29 +175,88 @@ class EventRegisterAPIView(CreateAPIView):
             return Response({"error": "Event registration closed "}, status=400)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(event=event)
+        # i need the company for easy filtering in the communication model for all emails
+        serializer.save(event=event, company=event.company)
         # Send in the email to the user registering for the event
         first_name = serializer.validated_data.get("first_name")
         email = serializer.validated_data.get("last_name")
         last_name = serializer.validated_data.get("last_name")
-        # Send rejected mail
-        email_Log = EmailLog.objects.create(
-            company=event.company,
-            message_id=uuid.uuid4(),
-            message_type="EVENT",
-            email_from=event.company.name,
-            email_to=email,
-            reply_to=event.company.reply_to_email,
-            email_subject=f"Event Successfully Registered",
+
+        # Send  mail
+        # Send accepted mail
+        send_custom_mail(
+            company_name=event.company.name,
             description=f"""
             <h2>Hi {first_name} - {last_name},</h2>"
              <p>You have successfully registered for an event </p>
              <p>The event date {event.start_date} and the end time is {event.end_date}.
              The location of the event is {event.location}
             """,
-            scheduled_date=timezone.now()
-        )
+            email_to=email,
+            reply_to=event.company.reply_to_email,
+            email_subject=f"Registered for Event",
 
+        )
         return Response(
             {"message": "Successfully registered for an event and email has been sent about the event",
              "data": serializer.data}, status=201)
+
+
+class EventRegisteredUserListAPIView(ListAPIView):
+    """
+    this is used to get list of people registered under an event
+    """
+    serializer_class = EventRegisterSerializer
+    permission_classes = [LoggedInPermission]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "email",
+        "first_name",
+        "last_name",
+        "mobile",
+    ]
+
+    def get_event(self):
+        """
+        this is used to get an event using the slug passed on the ur
+        :return:
+        """
+        event_slug = self.request.query_params.get("event_slug")
+        if not event_slug:
+            raise Http404("Event slug not passed")
+        event = Event.objects.filter(slug=event_slug).first()
+        if not event:
+            raise Http404("Event does not exist")
+        return event
+
+    def get_queryset(self):
+        """
+        this is ued to override the queryset and returns the event registered users under an event
+        :return:
+        """
+        queryset = EventRegister.objects.filter(event=self.get_event())
+        if queryset:
+            # Filter the date if it is passed in the params like
+            # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
+            # You will get more from the documentation
+            queryset = date_filter_queryset(request=self.request, queryset=queryset)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        """
+        this is used to list all the event registers and i override the default list
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        event = self.get_event()
+        #  first check for then company owner then the company admins
+        if event.company.employees.filter(user=self.request.user,
+                                          status="ACTIVE", role="ADMIN").first():
+            return Response({"error": "You dont have permission"}, status=401)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

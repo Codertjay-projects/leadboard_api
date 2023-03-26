@@ -3,6 +3,7 @@ import os
 import sys
 
 import django
+from django.contrib.contenttypes.models import ContentType
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "leadboard_api.settings")
 sys.path.append(os.path.join(os.path.realpath(os.path.dirname(__file__)), "..", ".."))
@@ -313,9 +314,9 @@ def create_feedback():
             staff = User.objects.filter(email=item.get("staff").get("email")).first()
         if model_type and instance and staff:
             print(item.get("datetime"))
-            feedback = Feedback.objects.create_by_model_type(
-                model_type=model_type,
-                other_model_id=instance.id,
+            feedback = Feedback.objects.create(
+                content_type=ContentType.objects.get_for_model(instance),
+                object_id=instance.id,
                 company=get_or_create_company(),
                 staff=staff,
                 next_schedule=item.get("next_schedule"),

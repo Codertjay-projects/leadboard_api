@@ -1,3 +1,5 @@
+import random
+
 from django.utils import timezone
 from django.utils.text import slugify
 import uuid
@@ -12,7 +14,8 @@ def is_valid_uuid(uuid_str):
             return uuid.UUID(uuid_str, version=4)
         except ValueError:
             return False
-    else: return False
+    else:
+        return False
 
 
 def create_slug(instance, instances, new_slug=None):
@@ -24,7 +27,7 @@ def create_slug(instance, instances, new_slug=None):
         slug = new_slug
     qs = instances.objects.filter(slug=slug).order_by('-id')
     if qs.exists():
-        new_slug = f'{slug}-{qs.first().id}'
+        new_slug = f'{slug}-{random.randint(10000, 999999)}'
         return create_slug(instance, instances, new_slug=new_slug)
     return slug
 

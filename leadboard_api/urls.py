@@ -38,6 +38,7 @@ urlpatterns = [
     path("api/v1/careers/", include("careers.urls")),
     path("api/v1/communications/", include("communications.urls")),
     path('api/v1/easy_tax_ussds/', include('easy_tax_ussds.urls')),
+    path('api/v1/email_logs/', include('email_logs.urls')),
 
     # for maintenance mode
     re_path(r"^maintenance-mode/", include("maintenance_mode.urls")),

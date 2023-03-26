@@ -14,10 +14,23 @@ class ScheduleCallSerializer(serializers.ModelSerializer):
     """
     This serializes the schedule call which is either
     """
+
     class Meta:
         model = ScheduleCall
-        fields = '__all__'
-        read_only_fields = ["id", "timestamp", ]
+        fields = [
+            "id",
+            "staff",
+            "company",
+            "title",
+            "slug",
+            "minutes",
+            "description",
+            "meeting_link",
+            "redirect_link",
+            "redirect_link_title",
+            "timestamp",
+        ]
+        read_only_fields = ["id", "timestamp", "slug"]
 
 
 class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -30,31 +43,14 @@ class UserScheduleCreateUpdateSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ["id", "timestamp", ]
 
-    def create(self, validated_data):
-        # the groups are in this form groups=[<group instance>, ...] which are the instances
-        # of a category
-        groups = validated_data.pop('groups')
-        instance = UserScheduleCall.objects.create(**validated_data)
-        for item in groups:
-            # check if the user has access
-            if not check_group_is_under_company(instance.schedule_call.company, item):
-                raise ValidationError("You dont have access to the groups provided")
-            try:
-                instance.groups.add(item)
-            except Exception as a:
-                print(a)
-        return instance
-
 
 class UserScheduleSerializer(serializers.ModelSerializer):
     """
     This is used to get the detail of  a schedule
     """
     schedule_call = ScheduleCallSerializer(read_only=True)
-    groups = CompanyGroupSerializer(many=True)
     assigned_marketer = UserDetailSerializer(read_only=True)
     all_previous_feedbacks = serializers.SerializerMethodField(read_only=True)
-    group_list = serializers.SerializerMethodField(read_only=True)
     assigned_marketer_list = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -62,7 +58,6 @@ class UserScheduleSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "schedule_call",
-            "groups",
             "assigned_marketer",
             "first_name",
             "last_name",
@@ -91,7 +86,6 @@ class UserScheduleSerializer(serializers.ModelSerializer):
             "kids_years",
             "time_close_from_school",
             "user_type",
-            "group_list",
             "assigned_marketer_list",
             "lead_contact",
             "schedule_category",
@@ -109,7 +103,7 @@ class UserScheduleSerializer(serializers.ModelSerializer):
         :return: marketer_list dictionary
         """
         try:
-            marketer_info_list = obj.company.companyemployee_set.filter(
+            marketer_info_list = obj.company.employees.filter(
                 role="MARKETER", status="ACTIVE").values_list(
                 "user__id",
                 "user__first_name",
@@ -136,28 +130,6 @@ class UserScheduleSerializer(serializers.ModelSerializer):
         except Exception as a:
             print(a)
             return None
-
-    def get_group_list(self, obj: UserScheduleCall):
-        """
-        List of groups in the db
-        Return status if category selected in UserScheduleCall
-        """
-        datasets = []
-        for c in obj.schedule_call.company.group_set.all():
-            # Get all groups currently on this company
-            # ( Reason why I use the company is to make it little more fast)
-            if c in obj.groups.all():
-                checked = True  # Checked categories
-            else:
-                checked = False
-            json_item = {
-                'id': str(c.id),
-                'title': c.title,
-                'status': checked
-            }
-            # append the item to the list
-            datasets.append(json_item)
-        return datasets
 
     def get_all_previous_feedbacks(self, instance):
         #  get the previous feedback

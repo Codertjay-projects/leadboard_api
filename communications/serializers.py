@@ -1,24 +1,30 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from communications.models import SendGroupsEmailScheduler, SendCustomEmailScheduler
+from communications.models import SendEmailScheduler
 from companies.serializers import CompanyGroupSerializer, CompanyInfoSerializer
+from schedules.serializers import ScheduleCallSerializer
 
 
-class SendGroupsEmailSchedulerListSerializer(serializers.ModelSerializer):
+class SendEmailSchedulerListSerializer(serializers.ModelSerializer):
     """
-    This is used when list the the mail sent and retrieving
+    This is used when list the  mail sent and retrieving
     """
-    email_to = CompanyGroupSerializer(many=True, read_only=True)
+    groups = CompanyGroupSerializer(many=True, read_only=True)
     company = CompanyInfoSerializer(read_only=True)
+    schedule_calls = ScheduleCallSerializer(read_only=True)
 
     class Meta:
-        model = SendGroupsEmailScheduler
+        model = SendEmailScheduler
         fields = [
             "id",
             "company",
-            "email_to",
-            "email_from",
+            "message_type",
+            "groups",
+            "events",
+            "schedule_calls",
+            "high_value_contents",
+            "email_list",
             "email_subject",
             "scheduled_date",
             "description",
@@ -27,13 +33,17 @@ class SendGroupsEmailSchedulerListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "timestamp"]
 
 
-class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
+class SendEmailSchedulerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SendGroupsEmailScheduler
+        model = SendEmailScheduler
         fields = [
             "id",
-            "email_to",
-            "email_from",
+            "message_type",
+            "groups",
+            "events",
+            "schedule_calls",
+            "high_value_contents",
+            "email_list",
             "email_subject",
             "scheduled_date",
             "description",
@@ -50,52 +60,56 @@ class SendGroupsEmailSchedulerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # the email_to are in this form email_to=[<email_to instance>, ...] which are the instances
         # of a category
-        email_to = []
-        if validated_data.get("email_to"):
-            email_to = validated_data.pop('email_to')
-        instance = SendGroupsEmailScheduler.objects.create(**validated_data)
-        for item in email_to:
+        groups = []
+        events = []
+        high_value_contents = []
+        schedule_calls = []
+        if validated_data.get("groups") or isinstance(validated_data.get("groups"), list):
+            groups = validated_data.pop('groups')
+
+        if validated_data.get("events") or isinstance(validated_data.get("events"), list):
+            events = validated_data.pop('events')
+
+        if validated_data.get("high_value_contents") or isinstance(validated_data.get("high_value_contents"), list):
+            high_value_contents = validated_data.pop('high_value_contents')
+
+        if validated_data.get("schedule_calls") or isinstance(validated_data.get("schedule_calls"), list):
+            schedule_calls = validated_data.pop('schedule_calls')
+
+        instance = SendEmailScheduler.objects.create(**validated_data)
+        for item in groups:
             try:
-                instance.email_to.add(item)
+                # you can only send to event owned by the company
+                if item.company == instance.company:
+                    instance.groups.add(item)
             except Exception as a:
                 print(a)
+        # add the events also if it was provided
+        for item in events:
+            try:
+                # you can only send to event owned by the company
+                if item.company == instance.company:
+                    instance.events.add(item)
+            except Exception as a:
+                print(a)
+        # add the high value contents also if it was provided
+        for item in high_value_contents:
+            try:
+                # you can only send to event owned by the company
+                if item.company == instance.company:
+                    instance.high_value_contents.add(item)
+            except Exception as a:
+                print(a)
+        # add the schedule_calls also if it was provided
+        for item in schedule_calls:
+            try:
+                # you can only send to event owned by the company
+                if item.company == instance.company:
+                    instance.schedule_calls.add(item)
+            except Exception as a:
+                print(a)
+
         # Note this .save below is used by the logger once we have
         # successfully created this then the logger logs and sends it mail
         instance.save()
         return instance
-
-
-class SendCustomEmailListSchedulerSerializer(serializers.ModelSerializer):
-    """
-    This is used to send emails to custom individual
-    """
-    company = CompanyInfoSerializer(read_only=True)
-
-    class Meta:
-        model = SendCustomEmailScheduler
-        fields = ["id",
-                  "company",
-                  "email_subject",
-                  "email_list",
-                  "description",
-                  "scheduled_date",
-                  "timestamp",
-                  ]
-        read_only_fields = ["id", "timestamp", "company"]
-
-
-class SendCustomEmailSchedulerSerializer(serializers.ModelSerializer):
-    """
-    This is used to send emails to custom individual
-    """
-
-    class Meta:
-        model = SendCustomEmailScheduler
-        fields = "__all__"
-        read_only_fields = ["id", "timestamp", "company"]
-
-    def validate_scheduled_date(self, attrs):
-        scheduled_date = attrs
-        if scheduled_date < timezone.now():
-            raise serializers.ValidationError("The schedule date must be greater than the current date")
-        return scheduled_date

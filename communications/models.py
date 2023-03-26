@@ -1,12 +1,13 @@
 import uuid
 
 from django.db import models
-from django.db.models.signals import post_save
 from django.utils import timezone
 
 from companies.models import Group, Company
-from email_logs.models import EmailLog
-from .utils import check_email, append_links_and_id_to_description, modify_names_on_description
+from events.models import Event
+from high_value_contents.models import HighValueContent
+from schedules.models import ScheduleCall
+from .utils import check_email
 
 EMAIL_STATUS = (
     ("PENDING", "PENDING"),
@@ -14,68 +15,150 @@ EMAIL_STATUS = (
     ("FAILED", "FAILED"),
 )
 
+MESSAGE_TYPE = (
+    ("CUSTOM", "CUSTOM"),
+    ("LEAD_GROUP", "LEAD_GROUP"),
+    ("SCHEDULE_GROUP", "SCHEDULE_GROUP"),
+    ("HIGHVALUECONTENT", "HIGHVALUECONTENT"),
+    ("CAREER", "CAREER"),
+    ("EVENT", "EVENT"),
+    ("ALL", "ALL"),
+    ("OTHERS", "OTHERS"),
+)
 
-class SendCustomEmailSchedulerLog(models.Model):
-    """"
-    this is used to log SendCustomEmailScheduler from the email_list provided
+
+class SendEmailScheduler(models.Model):
+    """
+    This is used to send am email to list of groups users on the lead.
     """
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    send_custom_email_scheduler = models.ForeignKey("SendCustomEmailScheduler", on_delete=models.CASCADE)
-    email = models.EmailField()
-    status = models.CharField(max_length=250, choices=EMAIL_STATUS, default="PENDING")
-    view_count = models.IntegerField(default=0)
-    links_clicked = models.TextField(blank=True, null=True)
-    links_clicked_count = models.IntegerField(default=0)
-    timestamp = models.DateTimeField(default=timezone.now)
 
+    message_type = models.CharField(max_length=250, blank=True, null=True, choices=MESSAGE_TYPE)
 
-def post_save_send_custom_email_from_log(sender, instance, *args, **kwargs):
-    """
-    Once the email is saved to the database
-    """
-    if instance.status == "PENDING" or instance.status == "FAILED":
-        # if the instance is pending or failed we re-schedule the email
-        email_scheduler = instance.send_custom_email_scheduler
-        # Update the description and append redirect url to all links which enables us to know links clicked
-        description = append_links_and_id_to_description(
-            description=email_scheduler.description,
-            email_id=instance.id,
-            email_type="custom"
-        )
-        # Create the EmailLog which once created sends an email
-        email_log, created = EmailLog.objects.get_or_create(
-            company=instance.company,
-            message_id=instance.id,
-            message_type="CUSTOM",
-            email_to=instance.email,
-            email_from=instance.company.name,
-            email_subject=email_scheduler.email_subject,
-            description=description,
-            reply_to=instance.company.reply_to_email,
-            scheduled_date=email_scheduler.scheduled_date
-        )
-
-
-post_save.connect(post_save_send_custom_email_from_log, sender=SendCustomEmailSchedulerLog)
-
-
-class SendCustomEmailScheduler(models.Model):
-    """
-    This is used to send custom mail email message to users passed in text comma seperated
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    email_subject = models.CharField(max_length=250)
+    # the set of groups the email is sent to it could be from  newsletters, contacts,downloads and schedule
+    groups = models.ManyToManyField(Group, blank=True)
+    events = models.ManyToManyField(Event, blank=True)
+    # The schedule call is used for schedules
+    schedule_calls = models.ManyToManyField(ScheduleCall, blank=True)
+    high_value_contents = models.ManyToManyField(HighValueContent, blank=True)
     #  list of email comma seperated
-    email_list = models.TextField()
-    description = models.TextField()
-    scheduled_date = models.DateTimeField(blank=True, null=True)
+    email_list = models.TextField(blank=True, null=True)
+    email_subject = models.CharField(max_length=250)
+    scheduled_date = models.DateTimeField(null=True, blank=True)
+    description = models.TextField(max_length=1500)
     timestamp = models.DateTimeField(default=timezone.now)
+
+    def get_lead_emails(self) -> list:
+        """
+        This returns a list of emails with dictionary containing leads to get this
+        :return: [  {"email": "email@example",
+                    "first_name": "Example",
+                    "last_name": "Example",
+                    "lead_contact_id":"lead_id",
+                    "scheduler_id": the_instance_id
+
+                    }...
+                    ]
+        """
+        #  Get the leads email  that are connected to the SendGroupsEmailScheduler
+        #  and also the id of the SendGroupsEmailScheduler
+        from leads.models import LeadContact
+        value_list_info = LeadContact.objects.filter(
+            company=self.company,
+            groups__in=self.groups.all()).distinct().values_list(
+            "email",
+            "first_name",
+            "last_name",
+            "id"
+        ).distinct()
+        schedule_email_list_info = []
+        for item in value_list_info:
+            # Create a dictionary which enables easy access
+            info = {
+                "email": item[0],
+                "first_name": item[1],
+                "last_name": item[2],
+                "lead_contact_id": item[3],
+                "scheduler_id": self.id
+            }
+            schedule_email_list_info.append(info)
+        return schedule_email_list_info
+
+    def get_schedule_emails(self) -> list:
+        """
+        This returns a list of emails with dictionary containing leads to get this
+        :return: [  {"email": "email@example",
+                    "first_name": "Example",
+                    "last_name": "Example",
+                    "user_schedule_id":"lead_id",
+                    "scheduler_id": the_instance_id
+
+                    }...
+                    ]
+        """
+        #  fGet the leads email  that are connected to the SendGroupsEmailScheduler
+        #  and also the id of the SendGroupsEmailScheduler
+        from schedules.models import UserScheduleCall
+        value_list_info = UserScheduleCall.objects.filter(
+            company=self.company,
+            schedule_call_id__in=self.schedule_calls.all()).distinct().values_list(
+            "email",
+            "first_name",
+            "last_name",
+            "id"
+        ).distinct()
+        schedule_email_list_info = []
+        for item in value_list_info:
+            # Create a dictionary which enables easy access
+            info = {
+                "email": item[0],
+                "first_name": item[1],
+                "last_name": item[2],
+                "user_schedule_id": item[3],
+                "scheduler_id": self.id
+            }
+            schedule_email_list_info.append(info)
+        return schedule_email_list_info
+
+    def get_events_email(self):
+        """
+        this is used to get the events emails of the people that registered
+        :return: [
+        {
+        "email":email",
+        "first_name":firstname",
+        "last_name":"last_name,
+        "event_register_id":event_register_id,
+        "scheduler_id": the_instance_id
+
+        }
+        ]
+        """
+        # get the event model
+        from events.models import Event, EventRegister
+        event_registers_info = EventRegister.objects.filter(
+            event__in=self.events.all()
+        ).distinct().values_list(
+            "email",
+            "first_name",
+            "last_name",
+            "id",
+        )
+        schedule_email_list_info = []
+        for item in event_registers_info:
+            # Create a dictionary which enables easy access
+            info = {
+                "email": item[0],
+                "first_name": item[1],
+                "last_name": item[2],
+                "event_id": item[3],
+                "scheduler_id": self.id
+            }
+            schedule_email_list_info.append(info)
+        return schedule_email_list_info
 
     def get_custom_emails(self) -> list:
         """
@@ -83,6 +166,7 @@ class SendCustomEmailScheduler(models.Model):
         which is a text field
         :return: ["easy@mail.com","easy@mail.com","easy@mail.com"]
         """
+        
         custom_email_list = self.email_list.split(",")
         for item in custom_email_list:
             # Validate the email
@@ -92,99 +176,39 @@ class SendCustomEmailScheduler(models.Model):
         # remove duplicate emails
         return list(dict.fromkeys(custom_email_list))
 
-
-####################################################################################################
-# Group Email Starts Here below ⏬⏬⏬
-####################################################################################################
-
-class SendGroupsEmailSchedulerLog(models.Model):
-    """
-    This is used to log the emails sent by the SendGroupsEmailScheduler
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    send_groups_email_scheduler = models.ForeignKey("SendGroupsEmailScheduler", on_delete=models.CASCADE)
-    # the emails would be unique with this SendGroupsEmailScheduler so on create I send the email with post_office
-    email = models.EmailField()
-    first_name = models.CharField(max_length=250, blank=True, null=True)
-    last_name = models.CharField(max_length=250, blank=True, null=True)
-    links_clicked = models.TextField(blank=True, null=True)
-    links_clicked_count = models.IntegerField(default=0)
-    view_count = models.IntegerField(default=0)
-    status = models.CharField(choices=EMAIL_STATUS, max_length=50, default="PENDING", blank=True, null=True)
-    timestamp = models.DateTimeField(default=timezone.now)
-
-
-def post_save_send_group_email_from_log(sender, instance, *args, **kwargs):
-    # This creates a task on celery and sends an email on the scheduled time
-    if instance.send_groups_email_scheduler.email_to.count() > 0:
-        # if the groups is  set because an instance is created before adding the many-to-many field
-        if instance.status == "PENDING" or instance.status == "FAILED":
-            # The task to send the mail
-            # Update the description and append redirect url to all links which enables us to know links clicked
-            description = append_links_and_id_to_description(
-                description=instance.send_groups_email_scheduler.description,
-                email_id=instance.id,
-                email_type="group"
-            )
-            # modify the names on the description
-            description = modify_names_on_description(description, instance.first_name, instance.last_name)
-
-            # Create the EmailLog which once created sends an email
-            email_log, created = EmailLog.objects.get_or_create(
-                company=instance.company,
-                message_id=instance.id,
-                message_type="GROUP",
-                email_to=instance.email,
-                email_from=instance.company.name,
-                email_subject=instance.send_groups_email_scheduler.email_subject,
-                description=description,
-                reply_to=instance.company.reply_to_email,
-                scheduled_date=instance.send_groups_email_scheduler.scheduled_date
-            )
-
-
-post_save.connect(post_save_send_group_email_from_log, sender=SendGroupsEmailSchedulerLog)
-
-
-class SendGroupsEmailScheduler(models.Model):
-    """
-    This is used to send am email to list of groups users on the lead.
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    # the set of groups the email is sent to it could be from  newsletters, contacts,downloads and schedule
-    email_to = models.ManyToManyField(Group, blank=True)
-    email_from = models.CharField(max_length=250)
-    email_subject = models.CharField(max_length=250)
-    scheduled_date = models.DateTimeField(null=True, blank=True)
-    description = models.TextField()
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    def get_lead_emails(self) -> list:
+    def get_all_emails(self):
         """
-        This returns a list of emails with dictionary containing leads to get this
-        :return: [  {"email": "email@example",
-                    "first_name": "Example",
-                    "last_name": "Example"
-                    }...
-                    ]
+        this get all emails attached to a company
+        :return:
         """
-        #  Get the leads email  that are connected to the SendGroupsEmailScheduler
-        #  and also the id of the SendGroupsEmailScheduler
-        from leads.models import LeadContact
-        value_list_info = LeadContact.objects.filter(
-            company=self.company,
-            groups__in=self.email_to.all()).distinct().values_list(
-            "email",
-            "first_name",
-            "last_name",
-        )
+        # I need the flat to be used in here
+
+        company = self.company
+        all_company_newsletter_mail = list(company.newsletter_set.all().values_list("email", flat=True))
+        # all the people that register for events under the company
+        all_company_event_register_email = list(company.eventregister_set.all().values_list("email", flat=True))
+        # get all the lead contacts email
+        all_company_lead_contacts_email = list(company.lead_companies.all().values_list("email", flat=True))
+        # get all company schedule email
+        all_company_schedule_email = list(company.userschedulecall_set.all().values_list("email", flat=True))
+
+        unique_list_if_email = list(set(all_company_newsletter_mail + all_company_schedule_email +
+                                        all_company_lead_contacts_email + all_company_event_register_email))
+        # this makes the email unique
+        return unique_list_if_email
+
+    def get_all_high_value_contents(self):
+        """
+        this returns all the high value contents lead contacts provided
+        :return:
+        """
+        value_list_info = self.high_value_contents.all().values_list(
+            "lead_contacts__email",
+            "lead_contacts__first_name",
+            "lead_contacts__last_name",
+            "lead_contacts__id",
+        ).distinct()
+
         schedule_email_list_info = []
         for item in value_list_info:
             # Create a dictionary which enables easy access
@@ -192,6 +216,9 @@ class SendGroupsEmailScheduler(models.Model):
                 "email": item[0],
                 "first_name": item[1],
                 "last_name": item[2],
+                "lead_contact_id": item[3],
+                "scheduler_id": self.id
             }
             schedule_email_list_info.append(info)
+
         return schedule_email_list_info

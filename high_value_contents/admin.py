@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import HighValueContent, DownloadHighValueContent
+
+from .models import HighValueContent
 
 
 # Register your models here.
@@ -28,28 +29,3 @@ class HighValueContentAdmin(admin.ModelAdmin):
     ]
 
 
-@admin.register(DownloadHighValueContent)
-class DownloadHighValueContentAdmin(admin.ModelAdmin):
-    list_display = [
-        "first_name",
-        "last_name",
-        "email",
-        "lead_source",
-        "verified",
-        "is_safe",
-        "want",
-        "on_leadboard",
-        "timestamp",
-    ]
-    search_fields = [
-
-        "first_name",
-        "last_name",
-        "email",
-        "lead_source",
-        "verified",
-        "is_safe",
-        "want",
-        "on_leadboard",
-        "timestamp",
-    ]

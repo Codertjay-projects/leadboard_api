@@ -1,11 +1,10 @@
-import json
+from rest_framework import serializers
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
-from companies.serializers import CompanyGroupSerializer
 from companies.models import CompanyEmployee
-from companies.utils import check_group_is_under_company, get_assigned_marketer_from_company_lead
+from companies.serializers import CompanyGroupSerializer
+from companies.utils import get_assigned_marketer_from_company_lead
 from feedbacks.serializers import FeedbackSerializer
 from leads.models import LeadContact
 from users.serializers import UserDetailSerializer
@@ -93,7 +92,7 @@ class LeadContactDetailSerializer(serializers.ModelSerializer):
         """
 
         try:
-            marketer_info_list = obj.company.companyemployee_set.filter(
+            marketer_info_list = obj.company.employees.filter(
                 role="MARKETER", status="ACTIVE").values_list(
                 "user__id",
                 "user__first_name",

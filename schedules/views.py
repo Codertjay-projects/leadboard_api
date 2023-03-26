@@ -1,5 +1,7 @@
+from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
 from django.utils import timezone
+from rest_framework.exceptions import APIException
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -10,10 +12,42 @@ from companies.utils import get_assigned_marketer_from_company_user_schedule_cal
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from leads.models import LeadContact
+from users.permissions import NotLoggedInPermission
+from users.utils import date_filter_queryset, is_valid_uuid
 from .models import ScheduleCall, UserScheduleCall
 from .serializers import UserScheduleSerializer, UserScheduleCreateUpdateSerializer, ScheduleCallSerializer
-from users.permissions import LoggedInPermission, NotLoggedInPermission
-from users.utils import date_filter_queryset, is_valid_uuid
+
+
+class ScheduleCallListCreateAPIView(ListCreateAPIView):
+    """
+    this is used to list and create schedule call
+    """
+    serializer_class = ScheduleCallSerializer
+    queryset = ScheduleCall.objects.all()
+    permission_classes = [NotLoggedInPermission]
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def get_queryset(self):
+        queryset = self.filter_queryset(self.queryset.filter(company=self.get_company()))
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        # the user must have access before he would be able to update a schedule
+        if not check_marketer_and_admin_access_company(self):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(company=self.get_company(), staff=self.request.user)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=201, headers=headers)
 
 
 class ScheduleCallDetailView(RetrieveAPIView):
@@ -31,7 +65,7 @@ class ScheduleCallDetailView(RetrieveAPIView):
         if instance:
             instance = ScheduleCallSerializer(instance)
             return Response(instance.data, status=200)
-        else: 
+        else:
             return Response({"error": "Schedule not found"}, status=404)
 
 
@@ -105,7 +139,7 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         Using the schedule call slug which was passed in the urls to get the schedule call
         :return:
         """
-        schedule_call_slug = is_valid_uuid(self.request.data["schedule_call"])
+        schedule_call_slug = is_valid_uuid(self.request.data.get("schedule_call"))
         schedule_call = ScheduleCall.objects.filter(id=schedule_call_slug).first()
         if not schedule_call:
             raise Http404
@@ -128,7 +162,8 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         serializer.save(
             schedule_call=schedule_call,
             lead_contact=lead_contact,
-            assigned_marketer=assigned_marketer)
+            assigned_marketer=assigned_marketer,
+            company=self.get_company())
         return Response(serializer.data, status=201)
 
 
@@ -175,9 +210,9 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
             feedback_action = feedback_serializer.validated_data.get("feedback_action")
             feedback_next_schedule = feedback_serializer.validated_data.get("feedback_next_schedule")
             #  create the feedback with the helper function provided
-            feedback = Feedback.objects.create_by_model_type(
-                model_type="userschedulecall",
-                other_model_id=instance.id,
+            feedback = Feedback.objects.create(
+                content_type=ContentType.objects.get_for_model(instance),
+                object_id=instance.id,
                 feedback=feedback_content,
                 action=feedback_action,
                 next_schedule=feedback_next_schedule,

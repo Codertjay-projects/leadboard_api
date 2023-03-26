@@ -40,4 +40,3 @@ class Feedback(models.Model):
 
     class Meta:
         ordering = ['-timestamp']
-

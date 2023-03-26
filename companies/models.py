@@ -73,6 +73,7 @@ class Company(models.Model):
     phone = models.CharField(max_length=25)
     info_email = models.EmailField(blank=True, null=True)
     customer_support_email = models.EmailField(blank=True, null=True)
+    logo = models.ImageField(blank=True,null=True,upload_to="logo")
     industry = models.ForeignKey(Industry, on_delete=models.CASCADE, blank=True, null=True)
     overview = models.TextField(blank=True, null=True)
     company_size = models.CharField(choices=COMPANY_SIZE_CHOICES, max_length=250, blank=True, null=True)

@@ -10,9 +10,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from communications.models import SendCustomEmailSchedulerLog, SendGroupsEmailSchedulerLog
 from email_logs.models import EmailLog
-from high_value_contents.models import DownloadHighValueContent
+from email_logs.tasks import send_custom_mail
+from high_value_contents.models import HighValueContent
 from users.models import User
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset
@@ -322,18 +322,18 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             company_invite.status = "ACTIVE"
             company_invite.save()
         # Send request to user to join the company
-        email_Log = EmailLog.objects.create(
-            company=company, message_id=uuid.uuid4(), message_type="OTHERS",
-            email_from=company.name, email_to=serializer.validated_data.get("email"),
-            reply_to=company.reply_to_email, email_subject=f"Invitation to Join {company.name}",
+
+        send_custom_mail.delay(
+            reply_to=company.reply_to_email,
+            email_subject=f"Invitation to Join {company.name}",
             description=f"""
             <h1> Hello {serializer.validated_data.get("first_name")} - 
             {serializer.validated_data.get("last_name")}. </h1>
              <p>{company.name} has invited you to join the their organisation
-              you can use this code to join 
-             {company_invite.invite_id}</p>   """,
-            scheduled_date=timezone.now()
-        )
+              you can use this link to  
+              <a href="https://leadboard.instincthub.com/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company}&org_id={company.id}&org_username={company.username}&email={company_invite.email}" class="crumb_">Join</a>
+            """,
+            company_name=company.name, email_to=serializer.validated_data.get("email"))
         return Response(serializer.data, status=201)
 
 
@@ -470,12 +470,14 @@ class CompanyAnalyTicsAPIView(APIView):
     def get(self, request):
         # Get the company
         company = self.get_company()
+
         leads = company.lead_companies.all()
         total_unsubscribe = leads.filter(send_email=False).count()
         lead_count = leads.count()
         schedule_count = company.userschedulecall_set.count()
         marketer_count = company.company_employees().filter(role="MARKETER").count()
         admin_count = company.company_employees().filter(role="ADMIN").count()
+
         # to get the conversion count I use the schedule
         conversion_count = company.userschedulecall_set.filter(will_pay=True, eligible=True,
                                                                will_get_laptop=True).count()
@@ -484,8 +486,14 @@ class CompanyAnalyTicsAPIView(APIView):
         last_24_hours_lead_count = leads.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_schedule_count = company.userschedulecall_set.filter(timestamp__gte=last_24_hours_lead).count()
         last_24_hours_feedback = company.feedback_set.filter(timestamp__gte=last_24_hours_lead).count()
+
         # List of file downloaded by users
-        downloaded_file_count = DownloadHighValueContent.objects.filter(high_value_content__company=company).count()
+        downloaded_file_count = 0
+        high_value_content_group = Group.objects.filter(title="HIGHVALUECONTENT", company=company).first()
+        if high_value_content_group:
+            # this get all the people that downloads the high value content
+            downloaded_file_count = HighValueContent.objects.get_all_downloads_count(company=company)
+
         # list of all zipped files
         zipped_files_count = company.highvaluecontent_set.filter(file__endswith="zip").count()
         pdf_files_count = company.highvaluecontent_set.filter(file__endswith="pdf").count()
@@ -497,11 +505,14 @@ class CompanyAnalyTicsAPIView(APIView):
         bounced_email_count = EmailLog.objects.filter(company=company, status="FAILED").count()
 
         # Get the links clicked count from our logs
-        custom_email_links_clicked_count = SendCustomEmailSchedulerLog.objects.filter(
-            company=company).aggregate(Sum('links_clicked_count'))[
+        custom_email_links_clicked_count = EmailLog.objects.filter(
+            company=company, message_type="CUSTOM").aggregate(Sum('links_clicked_count'))[
             'links_clicked_count__sum']
-        group_email_links_clicked_count = SendGroupsEmailSchedulerLog.objects.filter(
-            company=company).aggregate(Sum('links_clicked_count'))[
+        group_email_links_clicked_count = EmailLog.objects.filter(
+            company=company, message_type="LEAD_GROUP").aggregate(Sum('links_clicked_count'))[
+            'links_clicked_count__sum']
+        schedule_email_links_clicked_count = EmailLog.objects.filter(
+            company=company, message_type="SCHEDULE_GROUP").aggregate(Sum('links_clicked_count'))[
             'links_clicked_count__sum']
 
         # Change the count to zero if it is none
@@ -530,6 +541,7 @@ class CompanyAnalyTicsAPIView(APIView):
             "bounced_email_count": bounced_email_count,
             "custom_email_links_clicked_count": custom_email_links_clicked_count,
             "group_email_links_clicked_count": group_email_links_clicked_count,
+            "schedule_email_links_clicked_count": schedule_email_links_clicked_count,
             "total_link_clicked_count": total_link_clicked_count,
             "total_unsubscribe": total_unsubscribe,
         }
