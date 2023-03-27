@@ -18,6 +18,7 @@ from users.utils import date_filter_queryset, is_valid_uuid
 from users.models import User
 from .models import LeadContact
 from .serializers import LeadContactUpdateCreateSerializer, LeadContactDetailSerializer
+from django.db.models import Q
 
 
 class LeadContactCreateListAPIView(ListCreateAPIView):
@@ -35,6 +36,20 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         "email",
     ]
 
+    def filter_queryset(self, queryset):
+        """overiding the filter queryset and filter  for multiple values if exists
+         for example if the &search=favour afenikehna, if search by splitting it
+         """
+        search_query = self.request.query_params.get('search')
+        if search_query:
+            search_words = search_query.split()
+            q_objects = Q()
+            for word in search_words:
+                for field in self.search_fields:
+                    q_objects |= Q(**{f"{field}__icontains": word})
+            queryset = queryset.filter(q_objects)
+        return queryset
+
     def get_company(self):
         #  filter the company base on the id provided
         company_id = is_valid_uuid(self.request.query_params.get("company_id"))
@@ -49,7 +64,7 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         """
         lead_type = self.request.query_params.get("lead_type")
         cat = self.request.query_params.get("cat")
-        uuid_params = self.request.query_params.get("staff")
+        uuid_params = self.request.query_params.get("user")
         staff = User.objects.filter(id=is_valid_uuid(uuid_params)).first()
         # Check if the category is passed
         # get leads base on the company and the cat

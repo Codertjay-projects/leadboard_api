@@ -8,6 +8,7 @@ class GroupAdmin(admin.ModelAdmin):
     list_display = [
         "title",
         "slug",
+        "company",
         "timestamp",
     ]
     search_fields = [

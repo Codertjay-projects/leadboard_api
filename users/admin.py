@@ -31,6 +31,7 @@ class UserAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = [
+        "user",
         "gender",
         "date_of_birth",
         "address",
