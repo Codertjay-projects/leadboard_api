@@ -1,5 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.exceptions import APIException
 
 from communications.models import SendEmailScheduler
 from companies.serializers import CompanyGroupSerializer, CompanyInfoSerializer
@@ -53,8 +54,10 @@ class SendEmailSchedulerSerializer(serializers.ModelSerializer):
 
     def validate_scheduled_date(self, attrs):
         scheduled_date = attrs
+        if not scheduled_date:
+            return timezone.now()
         if scheduled_date < timezone.now():
-            raise timezone.now()
+            raise APIException({"error": "Schedule date must be greater than current date"})
         return scheduled_date
 
     def create(self, validated_data):
