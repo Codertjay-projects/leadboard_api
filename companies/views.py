@@ -184,6 +184,11 @@ class CompanyGroupListCreate(ListCreateAPIView):
         serializer.save(company=company)
         return Response(serializer.data, status=201)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class CompanyGroupRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     """
@@ -312,8 +317,8 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         if user:
             # if the user exists we create the company employee and add this user
             CompanyEmployee.objects.create(
-                user=user, 
-                company=self.get_company(), 
+                user=user,
+                company=self.get_company(),
                 role=company_invite.role,
                 invited=True,
                 status="ACTIVE"
