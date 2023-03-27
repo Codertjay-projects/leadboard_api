@@ -153,8 +153,8 @@ class Company(models.Model):
 
 
 ROLE_CHOICES = (
-    ("ADMIN", "ADMIN"),
-    ("MARKETER", "MARKETER"),
+    ("admin", "ADMIN"),
+    ("marketer", "MARKETER"),
 )
 
 

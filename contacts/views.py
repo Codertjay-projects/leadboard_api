@@ -21,6 +21,12 @@ class ContactUsViewSetsAPIView(ModelViewSet):
     serializer_class = ContactUsSerializer
     permission_classes = [NotLoggedInPermission]
     lookup_field = "id"
+    search_fields = [
+        "email",
+        "first_name",
+        "last_name",
+        "message",
+    ]
 
     def get_company(self, *args, **kwargs):
         # the company id
@@ -123,6 +129,9 @@ class NewsletterListCreateAPIView(ListCreateAPIView):
     permission_classes = [NotLoggedInPermission]
     serializer_class = NewsletterSerializer
     queryset = Newsletter.objects.all()
+    search_fields = [
+        "email"
+    ]
 
     def get_company(self, *args, **kwargs):
         # the company id
@@ -163,7 +172,7 @@ class NewsletterListCreateAPIView(ListCreateAPIView):
         if not self.request.user.is_authenticated:
             return Response({"error": "You need to be logged in"}, status=401)
         # Check if the user has permission to view the newsletters
-        if not check_marketer_and_admin_access_company(user=self.request.user, company=self.get_company()):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission to view the emails"}, status=401)
         page = self.paginate_queryset(queryset)
         if page is not None:
