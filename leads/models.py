@@ -65,7 +65,8 @@ class CustomLeadManager(models.Manager):
         :return:
         """
         Feedback.objects.filter(content_type=ContentType.objects.get_for_model(LeadContact))
-
+        if action_type:
+            action_type = action_type.upper()
         if action_type == "ACTIONED":
             lead_contact_qs = [lead_contact.id for lead_contact in self.filter(company=company) if
                                lead_contact.previous_feedback()]

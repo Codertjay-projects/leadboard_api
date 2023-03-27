@@ -37,8 +37,8 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
     ]
 
     def filter_queryset(self, queryset):
-        """overiding the filter queryset and filter  for multiple values if exists
-         for example if the &search=favour afenikehna, if search by splitting it
+        """overriding the filter queryset and filter  for multiple values if exists
+         for example if the &search=favour afenikhena, if search by splitting it
          """
         search_query = self.request.query_params.get('search')
         if search_query:
@@ -68,10 +68,12 @@ class LeadContactCreateListAPIView(ListCreateAPIView):
         staff = User.objects.filter(id=is_valid_uuid(uuid_params)).first()
         # Check if the category is passed
         # get leads base on the company and the cat
+
         queryset = self.filter_queryset(LeadContact.objects.filter_by_actions(
             action_type=cat, company=self.get_company()))
         # if the lead_type is passed on the params then we set it on the request
         if lead_type:
+            lead_type = lead_type.upper()
             queryset = queryset.filter(lead_type=lead_type)
         if staff:
             # get the leads of that's staff

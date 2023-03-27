@@ -1,5 +1,6 @@
 from decouple import config
 from django.http import Http404
+from rest_framework.exceptions import APIException
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.response import Response
@@ -70,7 +71,7 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
         instance = self.get_object()
         company = self.get_company()
         #  first check for then company owner then the company admins or  the assigned marketer
-        if not check_marketer_and_admin_access_company(self.request.user, company):
+        if not check_marketer_and_admin_access_company(self):
             return Response({"error": "You dont have permission"}, status=401)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -166,10 +167,10 @@ class LeadsDownloadedHighValueContentRetrieveAPIView(ListAPIView):
         """
         high_value_content_id = is_valid_uuid(self.request.query_params.get("high_value_content_id"))
         if not high_value_content_id:
-            raise Http404("Please provide the high_value_content_id on your params")
+            raise APIException({"error": "Please provide the high_value_content_id on your params"})
         high_value_content = HighValueContent.objects.filter(id=high_value_content_id).first()
         if not high_value_content:
-            raise Http404("The high_value_content_id is not a valid one")
+            raise APIException({"error": "The high_value_content_id is not a valid one"})
 
         return self.filter_queryset(high_value_content.lead_contacts.all())
 

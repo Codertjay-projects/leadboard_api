@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 from django.http import Http404
 from django.utils import timezone
 from rest_framework.exceptions import APIException
@@ -81,15 +82,22 @@ class UserScheduleCallListCreateAPIView(ListCreateAPIView):
         "first_name",
         "last_name",
         "email",
-        "assigned_marketer__first_name",
-        "assigned_marketer__last_name",
-        "age_range",
-        "location",
-        "gender",
         "communication_medium",
-        "catch_up_per_hours_weeks",
-        "time_close_from_school",
     ]
+
+    def filter_queryset(self, queryset):
+        """overriding the filter queryset and filter  for multiple values if exists
+         for example if the &search=favour afenikhena, if search by splitting it
+         """
+        search_query = self.request.query_params.get('search')
+        if search_query:
+            search_words = search_query.split()
+            q_objects = Q()
+            for word in search_words:
+                for field in self.search_fields:
+                    q_objects |= Q(**{f"{field}__icontains": word})
+            queryset = queryset.filter(q_objects)
+        return queryset
 
     def get_company(self):
         #  filter the company base on the id provided
