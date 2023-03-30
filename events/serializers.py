@@ -185,3 +185,14 @@ class EventSendEmailSerializer(serializers.Serializer):
         if scheduled_date < timezone.now():
             raise serializers.ValidationError("The schedule date must be greater than the current date")
         return scheduled_date
+
+
+class EventBasicSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Event
+        fields = [
+            "id",
+            "title",
+            "company"
+        ]

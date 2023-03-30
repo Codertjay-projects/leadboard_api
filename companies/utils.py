@@ -31,7 +31,9 @@ def check_group_is_under_company(company: Company, group: Group):
 
 def get_company(self):
     # Get company ID from header and covert to uuid object
-    company_id = is_valid_uuid(self.request.headers.get("company-id"))
+    company_id = None
+    if self.request.headers.get("company-id"):
+        company_id = is_valid_uuid(self.request.headers.get("company-id"))
     # I check if the company id is not passed in the headers then I try getting it from
     #  the params
     if not company_id:
@@ -223,7 +225,11 @@ def get_or_create_test_group(company):
     """
     from companies.models import Group
 
-    test_group, created = Group.objects.get_or_create(title="Test",
+    try:
+        test_group, created = Group.objects.get_or_create(title="Test",
                                                       company=company)
+        return test_group
+    except: 
+        return None
 
-    return test_group
+    

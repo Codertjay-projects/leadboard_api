@@ -4,7 +4,7 @@ from django.http import Http404
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.response import Response
 
 from companies.models import Company, CompanyEmployee
@@ -40,6 +40,7 @@ class ScheduleCallListCreateAPIView(ListCreateAPIView):
         return queryset
 
     def create(self, request, *args, **kwargs):
+        
         # the user must have access before he would be able to update a schedule
         if not check_marketer_and_admin_access_company(self):
             # If it doesn't raise an error that means the user is part of the organisation
@@ -259,3 +260,42 @@ class UserScheduleCallRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView)
                 return Response({"error": "You dont have permission to perform this action"}, status=401)
         self.perform_destroy(instance)
         return Response(status=204)
+
+
+class ListSchedulesAPIView(ListAPIView):
+    """
+    This is used to list or create a user schedule
+    """
+    permission_classes = [NotLoggedInPermission]
+    serializer_class = ScheduleCallSerializer
+    queryset = ScheduleCall.objects.all()
+    # filter_backends = [SearchFilter, OrderingFilter]
+    # search_fields = [
+    #     "first_name",
+    #     "last_name",
+    #     "email",
+    #     "communication_medium",
+    # ]
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        # Check if the user is logged in
+        # Check if the user have permission to view the list
+        if not check_marketer_and_admin_access_company(self):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        # Check if the user is among marketers in the company
+        if self.request.user.id in self.get_company().all_marketers_user_ids():
+            # Filter to get the leads where the user is the assigned marketer
+            queryset = queryset.filter(company=self.get_company())
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

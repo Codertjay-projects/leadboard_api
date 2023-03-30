@@ -168,7 +168,7 @@ class CompanyGroupListCreate(ListCreateAPIView):
 
     def get_queryset(self):
         # add the test group
-        test_group = get_or_create_test_group(self.get_company())
+        # test_group = get_or_create_test_group(self.get_company())
         groups = Group.objects.filter(company_id=self.get_company().id)
         return groups
 

@@ -5,10 +5,10 @@ from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDe
 from rest_framework.response import Response
 
 from companies.models import Company
-from companies.utils import check_admin_access_company
+from companies.utils import check_admin_access_company, check_marketer_and_admin_access_company
 from email_logs.tasks import send_custom_mail
 from events.models import Event, EventRegister
-from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer
+from events.serializers import EventSerializer, EventRegisterSerializer, EventDetailSerializer, EventBasicSerializer
 from users.permissions import NotLoggedInPermission, LoggedInPermission
 from users.utils import date_filter_queryset, is_valid_uuid
 
@@ -48,6 +48,38 @@ class EvenListAPIView(ListAPIView):
             queryset = date_filter_queryset(request=self.request, queryset=queryset)
         return queryset
 
+
+class EventListBasicAPIView(ListAPIView):
+    """
+    This is used to list or create a user schedule
+    """
+    permission_classes = [LoggedInPermission]
+    serializer_class = EventBasicSerializer
+    queryset = Event.objects.all()
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        # Check if the user is logged in
+        # Check if the user have permission to view the list
+        if not check_marketer_and_admin_access_company(self):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        # Check if the user is among marketers in the company
+        if self.request.user.id in self.get_company().all_marketers_user_ids():
+            # Filter to get the leads where the user is the assigned marketer
+            queryset = queryset.filter(company=self.get_company())
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
 
 class EventCreateAPIView(CreateAPIView):
     serializer_class = EventSerializer

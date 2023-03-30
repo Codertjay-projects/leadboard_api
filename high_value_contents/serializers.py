@@ -96,3 +96,17 @@ class DownloadHighValueContentDetailSerializer(serializers.ModelSerializer):
             "want",
             "timestamp",
         ]
+
+
+class HighValueContentBasicSerializer(serializers.ModelSerializer):
+    """
+    this serializer is meant for send email grouping
+    """
+
+    class Meta:
+        model = HighValueContent
+        fields = [
+            "id",
+            "title",
+            "company",
+        ]

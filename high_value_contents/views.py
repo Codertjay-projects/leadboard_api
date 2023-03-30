@@ -11,7 +11,7 @@ from companies.utils import check_marketer_and_admin_access_company, get_assigne
 from email_logs.tasks import send_custom_mail
 from high_value_contents.models import HighValueContent
 from high_value_contents.serializers import HighValueContentSerializer, DownloadHighValueContentSerializer, \
-    DownloadHighValueContentDetailSerializer
+    DownloadHighValueContentDetailSerializer, HighValueContentBasicSerializer
 from leads.models import LeadContact
 from users.permissions import LoggedInPermission, NotLoggedInPermission
 from users.utils import date_filter_queryset, is_valid_uuid
@@ -87,6 +87,38 @@ class HighValueContentViewSetsAPIView(ModelViewSet):
         self.perform_destroy(instance)
         return Response({"message": 'Deleted'}, status=204)
 
+
+class ListSchedulesBasicAPIView(ListAPIView):
+    """
+    This is used to list or create a user schedule
+    """
+    permission_classes = [LoggedInPermission]
+    serializer_class = HighValueContentBasicSerializer
+    queryset = HighValueContent.objects.all()
+
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        # Check if the user is logged in
+        # Check if the user have permission to view the list
+        if not check_marketer_and_admin_access_company(self):
+            # If it doesn't raise an error that means the user is part of the organisation
+            return Response({"error": "You dont have permission"}, status=401)
+        # Check if the user is among marketers in the company
+        if self.request.user.id in self.get_company().all_marketers_user_ids():
+            # Filter to get the leads where the user is the assigned marketer
+            queryset = queryset.filter(company=self.get_company())
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
 
 class DownloadHighValueContentListCreateAPIView(ListCreateAPIView):
     """

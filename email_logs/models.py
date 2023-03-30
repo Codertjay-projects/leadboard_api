@@ -76,7 +76,7 @@ def post_save_send_email_log(sender, instance: EmailLog, *args, **kwargs):
             # Setting the schedule_time
             scheduled_date = instance.scheduler.scheduled_date
             # if the time has passed I just use the current time
-            if not scheduled_date:
+            if not scheduled_date or scheduled_date is None:
                 scheduled_date = timezone.now()
             elif scheduled_date <= timezone.now():
                 scheduled_date = timezone.now()

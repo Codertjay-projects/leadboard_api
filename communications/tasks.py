@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from communications.models import SendEmailScheduler
 from email_logs.models import EmailLog
 from events.models import EventRegister
+from users.utils import is_valid_uuid
 
 
 @shared_task
@@ -18,7 +19,7 @@ def create_custom_schedule_log(custom_schedule_id):
     # Using this import to avoid conflict
 
     # Filter base on the ID Provided
-    custom_schedule = SendEmailScheduler.objects.filter(id=custom_schedule_id).first()
+    custom_schedule = SendEmailScheduler.objects.filter(id=is_valid_uuid(custom_schedule_id)).first()
     if not custom_schedule:
         return True
         # Get the email lists
