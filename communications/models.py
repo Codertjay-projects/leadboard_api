@@ -154,7 +154,7 @@ class SendEmailScheduler(models.Model):
                 "email": item[0],
                 "first_name": item[1],
                 "last_name": item[2],
-                "event_id": item[3],
+                "event_register_id": item[3],
                 "scheduler_id": self.id
             }
             schedule_email_list_info.append(info)

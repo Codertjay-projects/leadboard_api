@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from communications.serializers import CompanyJoinSerializer
 from email_logs.models import EmailLog
 from email_logs.tasks import send_custom_mail
 from high_value_contents.models import HighValueContent
@@ -315,18 +316,25 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         # add the user to the company employee
         user = User.objects.filter(email=company_invite.email).first()
         if user:
+            user_exist = True
+
             # if the user exists we create the company employee and add this user
             CompanyEmployee.objects.create(
                 user=user,
                 company=self.get_company(),
                 role=company_invite.role,
                 invited=True,
-                status="ACTIVE"
+                status="INACTIVE"
             )
             # Make the invite active
             company_invite.status = "ACTIVE"
             company_invite.save()
+            link_to_join = f"{request.headers['host']}/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}&user_exist={True}"
+
         # Send request to user to join the company
+        else:
+            user_exist = False
+            link_to_join = f"{request.headers['host']}/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}&user_exist={False}"
 
         send_custom_mail.delay(
             reply_to=company.reply_to_email,
@@ -336,7 +344,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             {serializer.validated_data.get("last_name")}. </h1>
              <p>{company.name} has invited you to join the their organisation
               you can use this link to  
-              <a href="https://leadboard.instincthub.com/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}" class="crumb_">Join {company.username}</a>
+              <a href="{link_to_join}" class="crumb_">Join {company.username}</a>
             """,
             company_name=company.name, email_to=serializer.validated_data.get("email"))
         return Response(serializer.data, status=201)
@@ -551,3 +559,34 @@ class CompanyAnalyTicsAPIView(APIView):
             "total_unsubscribe": total_unsubscribe,
         }
         return Response(data, status=200)
+
+
+class CompanyEmployeeJoinOrganisationAPIView(APIView):
+    """
+    This is used to join an organisation passing the data
+    """
+    permission_classes = [NotLoggedInPermission]
+
+    def post(self, request):
+        serializer = CompanyJoinSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data.get("email")
+        company_username = serializer.validated_data.get("company_username")
+        # check if company exist
+        company = Company.objects.filter(username=company_username).first()
+        if not company:
+            return Response({"error": "Company does not exist"}, status=400)
+        # check if user exists
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({"error": "User does not exist. Please try Joining by signup"}, status=400)
+        # check if invite exists
+        company_invite = company.companyinvite_set.filter(email=email).first()
+        if not company_invite:
+            return Response({"error": "You were not invited to join this organisation"}, status=400)
+        company_invite.status = "ACTIVE"
+        company_invite.save()
+        # create the employee
+        company_employee = CompanyEmployee.objects.create_or_update(
+            user=user, company=company, role=company_invite.role, status="ACTIVE")
+        return Response({"message": "Successfully joined organisation "}, status=200)

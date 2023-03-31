@@ -70,7 +70,7 @@ class SendEmailSchedulerListCreateAPIView(ListCreateAPIView):
         elif instance.message_type == "CUSTOM":
             create_custom_schedule_log.delay(instance.id)
         elif instance.message_type == "EVENT":
-            send_email_to_all_event_registers.delay(instance.id)
+            send_email_to_all_event_registers(instance.id)
         elif instance.message_type == "ALL":
             send_email_to_all_emails.delay(instance.id)
         elif instance.message_type == "SCHEDULE_GROUP":

@@ -50,12 +50,17 @@ class CustomRegisterSerializer(RegisterSerializer):
             company_exists = Company.objects.filter(username=attrs.get('company_username')).first()
             user = User.objects.filter(email=attrs.get('email')).first()
             if company_exists:
-                raise serializers.ValidationError({'company_username': "Company username has already been please try another"})
+                raise serializers.ValidationError(
+                    {'company_username': "Company username has already been please try another"})
             if not attrs.get("company_name"):
                 raise serializers.ValidationError({'company_name': "You need the company name if creating a company"})
-            
+
             if user:
                 raise serializers.ValidationError({'email': "A user is already registered with this e-mail address."})
+        if attrs.get('actions') == "JOIN":
+            company = Company.objects.filter(username=attrs.get("company_username")).first()
+            if not company:
+                raise serializers.ValidationError({"company_username": "Company username does not Exist"})
         return attrs
 
     def get_cleaned_data(self):
@@ -90,6 +95,7 @@ class CustomRegisterSerializer(RegisterSerializer):
         ##############################
         # Create a company for the user or Join an Organisation base on what the user chose
         if self.cleaned_data.get("actions") == "JOIN":
+            print(self.cleaned_data.get("company_username"))
             company = Company.objects.filter(username=self.cleaned_data.get("company_username")).first()
             if not company:
                 raise serializers.ValidationError("Company does not Exist")
@@ -98,8 +104,11 @@ class CustomRegisterSerializer(RegisterSerializer):
                 email=self.cleaned_data.get("email"),
                 company=company,
             ).first()
+            status = "ACTIVE"
             if not company_invite:
                 # Means we create the invite but with no staff
+                status = "INACTIVE"
+
                 company_invite = CompanyInvite.objects.create(
                     email=self.cleaned_data.get("email"),
                     company=company,
@@ -111,17 +120,18 @@ class CustomRegisterSerializer(RegisterSerializer):
             company = company_invite.company
             if company_invite.role == "ADMIN":
                 # Add the user to the admins
-                CompanyEmployee.objects.create(user=user, company=company, status="ACTIVE", role="ADMIN")
+                CompanyEmployee.objects.create(user=user, company=company, status=status, role="ADMIN")
                 company_invite.status = "ACTIVE"
                 company_invite.save()
             elif company_invite.role == "MARKETER":
                 # Add the user to the marketer
-                CompanyEmployee.objects.create(user=user, company=company, status="ACTIVE", role="MARKETER")
+                CompanyEmployee.objects.create(user=user, company=company, status=status, role="MARKETER")
                 company_invite.status = "ACTIVE"
                 company_invite.save()
             else:
                 # Just create the employee with no role and also not invited
                 CompanyEmployee.objects.create(user=user, company=company, status="ACTIVE", invited=False)
+
         if self.cleaned_data.get("actions") == "CREATE":
             company = Company.objects.create(
                 owner=user,
@@ -132,6 +142,7 @@ class CustomRegisterSerializer(RegisterSerializer):
                 if industry:
                     company.industry = industry
                     company.save()
+
         return user
 
 

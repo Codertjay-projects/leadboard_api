@@ -57,7 +57,7 @@ class SendEmailSchedulerSerializer(serializers.ModelSerializer):
         if not scheduled_date:
             return timezone.now()
         if scheduled_date < timezone.now():
-            raise APIException({"error": "Schedule date must be greater than current date"})
+            raise APIException(detail={"error": "Schedule date must be greater than current date"}, code=400)
         return scheduled_date
 
     def create(self, validated_data):
@@ -116,3 +116,11 @@ class SendEmailSchedulerSerializer(serializers.ModelSerializer):
         # successfully created this then the logger logs and sends it mail
         instance.save()
         return instance
+
+
+class CompanyJoinSerializer(serializers.Serializer):
+    """
+    this serializer takes in data to add the user to the company
+    """
+    email = serializers.EmailField()
+    company_username = serializers.CharField(max_length=250)
