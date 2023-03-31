@@ -6,6 +6,16 @@ from companies.serializers import CompanyInfoSerializer
 from users.serializers import UserDetailSerializer
 from .models import Event, EventRegister
 
+class EventBasicSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Event
+        fields = [
+            "id",
+            "title",
+            "company"
+        ]
+
 
 class EventRegisterSerializer(serializers.ModelSerializer):
     """
@@ -15,6 +25,7 @@ class EventRegisterSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=250, required=False)
     last_name = serializers.CharField(max_length=250, required=False)
     mobile = serializers.CharField(max_length=250, required=False)
+    event = EventBasicSerializer()
 
     class Meta:
         model = EventRegister
@@ -30,7 +41,9 @@ class EventRegisterSerializer(serializers.ModelSerializer):
             "will_receive_email",
             "accept_terms_and_conditions",
             "timestamp",
+            "event",
         ]
+        read_only_fields =["event"]
 
     def validate(self, attrs):
         # check if the user is authenticated
@@ -187,12 +200,3 @@ class EventSendEmailSerializer(serializers.Serializer):
         return scheduled_date
 
 
-class EventBasicSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Event
-        fields = [
-            "id",
-            "title",
-            "company"
-        ]

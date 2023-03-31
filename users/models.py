@@ -112,8 +112,8 @@ class UserProfileManager(models.Manager):
 
 
 GENDER_CHOICES = (
-    ("male", "MALE"),
-    ("female", "FEMALE")
+    ("MALE", "MALE"),
+    ("FEMALE", "FEMALE")
 )
 
 

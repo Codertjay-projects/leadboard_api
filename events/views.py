@@ -248,30 +248,43 @@ class EventRegisteredUserListAPIView(ListAPIView):
         "mobile",
     ]
 
+    def get_company(self):
+        #  filter the company base on the id provided
+        company_id = is_valid_uuid(self.request.query_params.get("company_id"))
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            raise Http404
+        return company
+
     def get_event(self):
         """
         this is used to get an event using the slug passed on the ur
         :return:
         """
         event_slug = self.request.query_params.get("event_slug")
-        if not event_slug:
-            raise Http404("Event slug not passed")
-        event = Event.objects.filter(slug=event_slug).first()
-        if not event:
-            raise Http404("Event does not exist")
-        return event
+        if event_slug:
+            event = Event.objects.filter(slug=event_slug).first()
+            return event
+        else: 
+            return None
 
     def get_queryset(self):
         """
         this is ued to override the queryset and returns the event registered users under an event
         :return:
         """
-        queryset = EventRegister.objects.filter(event=self.get_event())
+        if self.get_event():
+            queryset = EventRegister.objects.filter(event=self.get_event())
+        else: 
+            queryset = EventRegister.objects.filter(company=self.get_company())
+        
         if queryset:
             # Filter the date if it is passed in the params like
             # ?from_date=2222-12-12&to_date=2223-11-11 or the word ?seven_days=true or ...
             # You will get more from the documentation
             queryset = date_filter_queryset(request=self.request, queryset=queryset)
+        else:
+            raise Http404("No record found")
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -279,9 +292,9 @@ class EventRegisteredUserListAPIView(ListAPIView):
         this is used to list all the event registers and i override the default list
         """
         queryset = self.filter_queryset(self.get_queryset())
-        event = self.get_event()
+        company = self.get_company()
         #  first check for then company owner then the company admins
-        if event.company.employees.filter(user=self.request.user,
+        if company.employees.filter(user=self.request.user,
                                           status="ACTIVE", role="ADMIN").first():
             return Response({"error": "You dont have permission"}, status=401)
 

@@ -58,7 +58,12 @@
 </head>
 
 <body>
-{{ description|markdown|safe }}
+
+{% if no_markdown == True %}
+    {{ description|safe }}
+{% else %}
+    {{ description|markdown|safe }}
+{% endif %}
 
 <br/><br/>
 <br/><br/>

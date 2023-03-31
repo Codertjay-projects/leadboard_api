@@ -336,7 +336,7 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             {serializer.validated_data.get("last_name")}. </h1>
              <p>{company.name} has invited you to join the their organisation
               you can use this link to  
-              <a href="https://leadboard.instincthub.com/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company}&org_id={company.id}&org_username={company.username}&email={company_invite.email}" class="crumb_">Join</a>
+              <a href="https://leadboard.instincthub.com/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}" class="crumb_">Join {company.username}</a>
             """,
             company_name=company.name, email_to=serializer.validated_data.get("email"))
         return Response(serializer.data, status=201)

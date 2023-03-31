@@ -98,7 +98,9 @@ def leadboard_send_mail(
 @shared_task
 def send_custom_mail(reply_to, description, email_subject, company_name, email_to):
     headers = {"Reply-To": reply_to}
-    html_message = render_to_string('mail.html', {"description": description})
+
+    # Added no_markdown if want to ignore markdown in mail.html
+    html_message = render_to_string('mail.html', {"description": description, "no_markdown": True})
     msg = EmailMessage(
         subject=email_subject,
         body=html_message,
