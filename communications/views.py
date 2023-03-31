@@ -74,7 +74,7 @@ class SendEmailSchedulerListCreateAPIView(ListCreateAPIView):
         elif instance.message_type == "ALL":
             send_email_to_all_emails.delay(instance.id)
         elif instance.message_type == "SCHEDULE_GROUP":
-            create_user_schedule_schedule_log(instance.id)
+            create_user_schedule_schedule_log.delay(instance.id)
         elif instance.message_type == "HIGHVALUECONTENT":
             send_email_to_high_value_contents.delay(instance.id)
         return Response(serializer.data, status=201)
