@@ -1,5 +1,3 @@
-import uuid
-
 from django.db.models import Sum
 from django.http import Http404
 from django.utils import timezone
@@ -22,8 +20,7 @@ from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, Compa
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
     CompanyEmployeeSerializer, UpdateStaffSerializer
-from .utils import check_admin_access_company, get_or_create_test_group, is_valid_uuid
-from schedules.models import UserScheduleCall
+from .utils import check_admin_access_company, is_valid_uuid
 
 
 class CompanyListCreateAPIView(ListCreateAPIView):
@@ -316,7 +313,6 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
         # add the user to the company employee
         user = User.objects.filter(email=company_invite.email).first()
         if user:
-            user_exist = True
 
             # if the user exists we create the company employee and add this user
             CompanyEmployee.objects.create(
@@ -329,12 +325,11 @@ class CompanyInviteListCreateAPIView(ListCreateAPIView):
             # Make the invite active
             company_invite.status = "ACTIVE"
             company_invite.save()
-            link_to_join = f"{request.headers['host']}/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}&user_exist={True}"
+            link_to_join = f"{request.headers.get('Referer', 'https://lead.instincthub.com')}/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}&user_exist={True}"
 
         # Send request to user to join the company
         else:
-            user_exist = False
-            link_to_join = f"{request.headers['host']}/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}&user_exist={False}"
+            link_to_join = f"{request.headers.get('Referer', 'https://lead.instincthub.com')}/accounts/join?tp=JOIN&first_name={company_invite.first_name}&last_name={company_invite.last_name}&invite_id={company_invite.invite_id}&org_id={company.id}&org_username={company.username}&email={company_invite.email}&user_exist={False}"
 
         send_custom_mail.delay(
             reply_to=company.reply_to_email,
