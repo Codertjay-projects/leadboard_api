@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = [ "makarfi.leadboard.ng"]
+ALLOWED_HOSTS = ["makarfi.leadboard.ng"]
 
 #  read more https://docs.djangoproject.com/en/4.1/ref/middleware/#http-strict-transport-security
 CSRF_COOKIE_SECURE = True
@@ -41,6 +41,8 @@ CACHES = {
 # CORS headers
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
+    r"^https://\w+\.leadboard\.ng$",
+    r"^https://leadboard.ng$",
     r"^https://instincthub.com$",
     r"^https://instincthub-oxyka.ondigitalocean.app$",
     "https://leadboard.instincthub.com",

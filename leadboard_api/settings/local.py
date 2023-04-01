@@ -18,6 +18,8 @@ DATABASES = {
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.instincthub\.com$",
     r"^https://instincthub.com$",
+    r"^https://\w+\.leadboard\.ng$",
+    r"^https://leadboard.ng$",
     r"^https://instincthub-oxyka.ondigitalocean.app$",
     "https://leadboard.instincthub.com",
     "https://leadboard-nextjs-17nqm9sjw-instincthub.vercel.app",
