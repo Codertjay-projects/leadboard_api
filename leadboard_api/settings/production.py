@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ["leadapi.instincthub.com"]
+ALLOWED_HOSTS = [ "makarfi.leadboard.ng"]
 
 #  read more https://docs.djangoproject.com/en/4.1/ref/middleware/#http-strict-transport-security
 CSRF_COOKIE_SECURE = True
