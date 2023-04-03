@@ -270,7 +270,7 @@ class LeadUploadAPIView(APIView):
                     company=company)
                 # Get or create the lead contact
                 lead_contact = LeadContact.objects.filter(email=item.get("email"), company=company).first()
-                lead_type = item.get("lead_type", lead_contact.lead_type)
+                lead_type = item.get("lead_type", '')
                 if lead_type:
                     lead_type = lead_type.upper()
                 else:
