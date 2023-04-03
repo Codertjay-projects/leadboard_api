@@ -108,7 +108,9 @@ def get_random_marketer_not_last_marketer(last_assigned_marketer: User, company:
     :return:
     """
     random_assigned_marketer = company.employees.filter(role="MARKETER").order_by("?").all().first().user
-    if company.marketers_count() > 1:
+    
+
+    if company.marketers_count() > 2:
         # if the random marker gotten was the last it recall the function
         if random_assigned_marketer == last_assigned_marketer:
             return get_random_marketer_not_last_marketer(last_assigned_marketer, company)
@@ -148,10 +150,12 @@ def get_assigned_marketer_from_company_lead(company: Company):
     if company.marketers_count() > 1:
         # if the company have more than one marketer then we can get a random one
         # check if the last lead have a assigned marketer
+        
         if last_lead.assigned_marketer:
             last_assigned_marketer = last_lead.assigned_marketer
             # get a random assigned marketer
             assigned_marketer = get_random_marketer_not_last_marketer(last_assigned_marketer, company)
+            print(assigned_marketer)
             return assigned_marketer
         else:
             return company.first_marketer_user()

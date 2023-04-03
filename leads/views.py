@@ -262,20 +262,27 @@ class LeadUploadAPIView(APIView):
         # the data name is called a file
         company = get_company(self)
         data = self.request.data
+        
         try:
             for item in data:
                 group, group_created = Group.objects.get_or_create(
-                    title=item.get("group").upper(),
+                    title=item.get("group").upper().replace(" ","_"),
                     company=company)
                 # Get or create the lead contact
                 lead_contact = LeadContact.objects.filter(email=item.get("email"), company=company).first()
+                lead_type = item.get("lead_type", lead_contact.lead_type)
+                if lead_type:
+                    lead_type = lead_type.upper()
+                else:
+                    lead_type = None
+                print(lead_contact)
                 if not lead_contact:
                     lead_contact = LeadContact()
                     lead_contact.email = item.get("email")
-                    lead_contact.company = item.get("company")
+                    lead_contact.company = company
                 # Update the lead contact with the data provided
-                lead_contact.prefix = item.get("prefix", lead_contact.prefix),
-                lead_contact.lead_type = item.get("lead_type", lead_contact.lead_type).upper()
+                lead_contact.prefix = item.get("prefix", lead_contact.prefix)
+                lead_contact.lead_type = lead_type
                 lead_contact.last_name = item.get("last_name", lead_contact.last_name)
                 lead_contact.first_name = item.get("first_name", lead_contact.first_name)
                 lead_contact.middle_name = item.get("middle_name", lead_contact.middle_name)
@@ -289,15 +296,20 @@ class LeadUploadAPIView(APIView):
 
                 # filter for the assigned marketer
                 marketer_email = item.get("assigned_marketer")
-                if marketer_email != "" or not None:
+                if marketer_email:
                     assigned_marketer = company.employees.filter(user__email=marketer_email).first()
+                    print(assigned_marketer)
                     if not assigned_marketer:
                         assigned_marketer = get_assigned_marketer_from_company_lead(company)
                     # add the assigned marketer
-                    lead_contact.assigned_marketer = assigned_marketer
-                lead_contact.groups.add(group)
+                else:
+                    assigned_marketer = get_assigned_marketer_from_company_lead(company)
+
+                lead_contact.assigned_marketer = assigned_marketer
                 lead_contact.save()
+                lead_contact.groups.add(group)
 
         except Exception as a:
-            return Response({"error": a}, status=400)
+            print(a)
+            return Response({"error": f'{a}'}, status=400)
         return Response({"message": "Successfully upload"}, status=200)
