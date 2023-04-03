@@ -3,7 +3,7 @@ import uuid
 
 from django.db import models
 # Create your models here.
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.utils import timezone
 
 from users.models import User
@@ -22,20 +22,6 @@ class Industry(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
-
-
-COMPANY_SIZE_CHOICES = (
-    ("2-10", "2-10"),
-    ("11-50", "11-50"),
-    ("51-200", "51-200"),
-    ("11-50", "11-50"),
-    ("51-200", "51-200"),
-    ("201-500", "201-500"),
-    ("501-1000", "501-1000"),
-    ("1001-5000", "1001-5000"),
-    ("5001-10000", "5001-10000"),
-    ("10000-+", "10000-+"),
-)
 
 
 class Location(models.Model):
@@ -57,6 +43,125 @@ COMPANY_EMPLOYEE_STATUS = (
     ("PENDING", "PENDING"),
 )
 
+ROLE_CHOICES = (
+    ("ADMIN", "ADMIN"),
+    ("MARKETER", "MARKETER"),
+)
+
+
+class CompanyEmployeeManager(models.Manager):
+    """
+    This enables create optional function
+    """
+
+    def create_or_update(self, user, company, role, status):
+        """
+        this enables getting or creating a company employee if he or she exists we just update
+        """
+        company_employee = self.filter(user=user, company=company).first()
+        if company_employee:
+            """if the employees exist we just make an update"""
+            company_employee.role = role
+            company_employee.status = status
+            company_employee.save()
+        else:
+            # We just create a new employee
+            company_employee = CompanyEmployee.objects.create(user=user, company=company, role=role, status=status)
+        return company_employee
+
+
+class CompanyEmployee(models.Model):
+    """
+    THIS company marketer is meant for us to track the marketer which was added to the company
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey("Company", on_delete=models.CASCADE, related_name='employees')
+    role = models.CharField(choices=ROLE_CHOICES, max_length=250, blank=True, null=True)
+    invited = models.BooleanField(default=True)
+    status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
+    timestamp = models.DateTimeField(default=timezone.now)
+    lead_actions_count = models.IntegerField(default=0)
+    schedule_actions_count = models.IntegerField(default=0)
+    objects = CompanyEmployeeManager()
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+
+INVITE_STATUS = (
+    ("ACTIVE", "ACTIVE"),
+    ("PENDING", "PENDING"),
+    ("DEACTIVATED", "DEACTIVATED"),
+)
+
+
+class CompanyInvite(models.Model):
+    """This is meant to create an invitation which would be sent to the user to join the company """
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    first_name = models.CharField(max_length=250, blank=True, null=True)
+    last_name = models.CharField(max_length=250, blank=True, null=True)
+    # this id is sent to the user upon creating
+    invite_id = models.CharField(max_length=50, blank=True, null=True)
+    email = models.EmailField()
+    role = models.CharField(max_length=250, choices=ROLE_CHOICES, blank=True, null=True)
+    status = models.CharField(max_length=250, choices=INVITE_STATUS, default="PENDING")
+    invited = models.BooleanField(default=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def save(self, *args, **kwargs):
+        if not self.invite_id:
+            self.invite_id = random.randint(1000000, 9999999)
+        return super(CompanyInvite, self).save(*args, **kwargs)
+
+
+class Group(models.Model):
+    """
+    This contains list of activities on a companies in which the company uses to group
+    his or her leads or meeting schedules
+    """
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, null=False, unique=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return self.title
+
+
+def pre_save_group_receiver(sender, instance, *args, **kwargs):
+    # enable creating slug for a  group before it is being saved
+    if not instance.slug:
+        instance.slug = create_slug(instance, Group)
+
+
+pre_save.connect(pre_save_group_receiver, sender=Group)
+
+COMPANY_SIZE_CHOICES = (
+    ("2-10", "2-10"),
+    ("11-50", "11-50"),
+    ("51-200", "51-200"),
+    ("11-50", "11-50"),
+    ("51-200", "51-200"),
+    ("201-500", "201-500"),
+    ("501-1000", "501-1000"),
+    ("1001-5000", "1001-5000"),
+    ("5001-10000", "5001-10000"),
+    ("10000-+", "10000-+"),
+)
+
 
 class Company(models.Model):
     """
@@ -73,7 +178,7 @@ class Company(models.Model):
     phone = models.CharField(max_length=25)
     info_email = models.EmailField(blank=True, null=True)
     customer_support_email = models.EmailField(blank=True, null=True)
-    logo = models.ImageField(blank=True,null=True,upload_to="logo")
+    logo = models.ImageField(blank=True, null=True, upload_to="logo")
     industry = models.ForeignKey(Industry, on_delete=models.CASCADE, blank=True, null=True)
     overview = models.TextField(blank=True, null=True)
     company_size = models.CharField(choices=COMPANY_SIZE_CHOICES, max_length=250, blank=True, null=True)
@@ -152,108 +257,17 @@ class Company(models.Model):
         return user_id_list
 
 
-ROLE_CHOICES = (
-    ("ADMIN", "ADMIN"),
-    ("MARKETER", "MARKETER"),
-)
+def post_save_create_owner_as_admin_employee(sender, instance: Company, *args, **kwargs):
+    # Create the admin as owner once the company is created
+    if instance.owner:
+        if not instance.employees.filter(user=instance.owner):
+            employee, created = CompanyEmployee.objects.get_or_create(
+                company=instance,
+                user=instance.owner,
+                role="ADMIN",
+                invited=False,
+                status="ACTIVE"
+            )
 
 
-class CompanyEmployeeManager(models.Manager):
-    """
-    This enables create optional function
-    """
-
-    def create_or_update(self, user, company, role, status):
-        """
-        this enables getting or creating a company employee if he or she exists we just update
-        """
-        company_employee = self.filter(user=user, company=company).first()
-        if company_employee:
-            """if the employees exist we just make an update"""
-            company_employee.role = role
-            company_employee.status = status
-            company_employee.save()
-        else:
-            # We just create a new employee
-            company_employee = CompanyEmployee.objects.create(user=user, company=company, role=role, status=status)
-        return company_employee
-
-
-class CompanyEmployee(models.Model):
-    """
-    THIS company marketer is meant for us to track the marketer which was added to the company
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    company = models.ForeignKey("Company", on_delete=models.CASCADE, related_name='employees')
-    role = models.CharField(choices=ROLE_CHOICES, max_length=250, blank=True, null=True)
-    invited = models.BooleanField(default=True)
-    status = models.CharField(choices=COMPANY_EMPLOYEE_STATUS, max_length=250, )
-    timestamp = models.DateTimeField(default=timezone.now)
-    lead_actions_count = models.IntegerField(default=0)
-    schedule_actions_count = models.IntegerField(default=0)
-    objects = CompanyEmployeeManager()
-
-    class Meta:
-        ordering = ["-timestamp"]
-
-
-INVITE_STATUS = (
-    ("ACTIVE", "ACTIVE"),
-    ("PENDING", "PENDING"),
-    ("DEACTIVATED", "DEACTIVATED"),
-)
-
-
-class CompanyInvite(models.Model):
-    """This is meant to create an invitation which would be sent to the user to join the company """
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
-    first_name = models.CharField(max_length=250, blank=True, null=True)
-    last_name = models.CharField(max_length=250, blank=True, null=True)
-    # this id is sent to the user upon creating
-    invite_id = models.CharField(max_length=50, blank=True, null=True)
-    email = models.EmailField()
-    role = models.CharField(max_length=250, choices=ROLE_CHOICES, blank=True, null=True)
-    status = models.CharField(max_length=250, choices=INVITE_STATUS, default="PENDING")
-    invited = models.BooleanField(default=True)
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ["-timestamp"]
-
-    def save(self, *args, **kwargs):
-        if not self.invite_id:
-            self.invite_id = random.randint(1000000, 9999999)
-        return super(CompanyInvite, self).save(*args, **kwargs)
-
-
-class Group(models.Model):
-    """
-    This contains list of activities on a companies in which the company uses to group
-    his or her leads or meeting schedules
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, unique=True
-    )
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=120, null=False, unique=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-timestamp"]
-
-    def __str__(self):
-        return self.title
-
-
-def pre_save_group_receiver(sender, instance, *args, **kwargs):
-    # enable creating slug for a  group before it is being saved
-    if not instance.slug:
-        instance.slug = create_slug(instance, Group)
-
-
-pre_save.connect(pre_save_group_receiver, sender=Group)
+post_save.connect(post_save_create_owner_as_admin_employee, sender=Company)

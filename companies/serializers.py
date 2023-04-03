@@ -230,13 +230,11 @@ class UpdateStaffSerializer(serializers.ModelSerializer):
 
 
 class EmployeeCompanySerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
     company = CompanyInfoSerializer(read_only=True)
 
     class Meta:
         model = CompanyEmployee
         fields = [
-            "user",
             "company",
             "role",
             "invited",

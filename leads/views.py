@@ -268,22 +268,25 @@ class LeadUploadAPIView(APIView):
                     title=item.get("lead_type").upper(),
                     company=company)
                 # Get or create the lead contact
-                lead_contact, created = LeadContact.objects.get_or_create(
-                    company=company,
-                    prefix=item.get("prefix"),
-                    lead_type=item.get("lead_type").upper(),
-                    last_name=item.get("last_name"),
-                    first_name=item.get("first_name"),
-                    middle_name=item.get("middle_name"),
-                    job_title=item.get("job_title"),
-                    sector=item.get("sector"),
-                    email=item.get("email"),
-                    mobile=item.get("phone"),
-                    gender=item.get("gender"),
-                    send_email=item.get("send_email"),
-                    lead_source=item.get("lead_source"),
-                    is_safe=item.get("is_safe"),
-                )
+                lead_contact = LeadContact.objects.filter(email=item.get("email"), company=company).first()
+                if not lead_contact:
+                    lead_contact = LeadContact()
+                    lead_contact.email = item.get("email")
+                    lead_contact.company = item.get("company")
+                # Update the lead contact with the data provided
+                lead_contact.prefix = item.get("prefix", lead_contact.prefix),
+                lead_contact.lead_type = item.get("lead_type", lead_contact.lead_type).upper()
+                lead_contact.last_name = item.get("last_name", lead_contact.last_name)
+                lead_contact.first_name = item.get("first_name", lead_contact.first_name)
+                lead_contact.middle_name = item.get("middle_name", lead_contact.middle_name)
+                lead_contact.job_title = item.get("job_title", lead_contact.job_title)
+                lead_contact.sector = item.get("sector", lead_contact.sector)
+                lead_contact.mobile = item.get("phone", lead_contact.mobile)
+                lead_contact.gender = item.get("gender", lead_contact.gender)
+                lead_contact.send_email = item.get("send_email", lead_contact.send_email)
+                lead_contact.lead_source = item.get("lead_source", lead_contact.lead_source)
+                lead_contact.is_safe = item.get("is_safe", lead_contact.is_safe)
+
                 # filter for the assigned marketer
                 marketer_email = item.get("assigned_marketer")
                 if marketer_email != "" or not None:

@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
-from companies.serializers import CompanySerializer
-from companies.models import Company
+from companies.serializers import CompanySerializer, EmployeeCompanySerializer
+from companies.models import Company, CompanyEmployee
 from .utils import is_valid_uuid
 
 from users.models import User
@@ -29,18 +29,20 @@ class LeaderboardLoginAPIView(LoginView):
         if the user
         is not then it uses the default response from the  TokenSerializer
         """
-        
+
         self.request = request
         self.serializer = self.get_serializer(data=self.request.data, context={'request': request})
         self.serializer.is_valid(raise_exception=True)
         self.login()
-        
+
         # Every user that owned a company should get the  company objects.
-        try: 
-            company = CompanySerializer(Company.objects.filter(owner=self.request.user), many=True)
+        try:
+            company_employees = EmployeeCompanySerializer(CompanyEmployee.objects.filter(user=self.request.user),
+                                                          many=True)
             response = super().post(request, *args, **kwargs)
-            response.data['company'] = company.data
-        except: response = self.get_response()
+            response.data['company'] = company_employees.data
+        except:
+            response = self.get_response()
 
         # login the user to access him/ her on the request
         #  overriding the login of allauth to add this if user is not verified
@@ -144,7 +146,7 @@ class VerifyEmailOTPAPIView(APIView):
     def post(self, request):
         print(request.data)
         try:
-            
+
             serializer = VerifyEmailSerializer(data=self.request.data)
             serializer.is_valid(raise_exception=True)
             email = serializer.data.get('email')
@@ -157,10 +159,12 @@ class VerifyEmailOTPAPIView(APIView):
                 user.verified = True
                 user.save()
                 return Response({'message': 'Successfully verify your mail'}, status=status.HTTP_200_OK)
-            return Response({'error': 'Account not verified. Time exceeded or OTP is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Account not verified. Time exceeded or OTP is invalid'},
+                            status=status.HTTP_400_BAD_REQUEST)
         except Exception as a:
             print(a)
-            return Response({'error': 'There was an error performing your request. Email Not Verified'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'There was an error performing your request. Email Not Verified'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserUpdateAPIView(APIView):
