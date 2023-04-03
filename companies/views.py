@@ -19,7 +19,7 @@ from .models import Company, Location, Industry, Group, CompanyInvite, CompanyEm
 from .serializers import CompanyCreateUpdateSerializer, CompanySerializer, CompanyInfoSerializer, \
     CompanyModifyUserSerializer, \
     CompanyGroupSerializer, LocationSerializer, IndustrySerializer, CompanyInviteSerializer, \
-    CompanyEmployeeSerializer, UpdateStaffSerializer
+    CompanyEmployeeSerializer, UpdateStaffSerializer, EmployeeCompanySerializer
 from .utils import check_admin_access_company, is_valid_uuid
 
 
@@ -585,3 +585,15 @@ class CompanyEmployeeJoinOrganisationAPIView(APIView):
         company_employee = CompanyEmployee.objects.create_or_update(
             user=user, company=company, role=company_invite.role, status="ACTIVE")
         return Response({"message": "Successfully joined organisation "}, status=200)
+
+
+class EmployeeCompanyListAPIView(ListAPIView):
+    """
+    this shows the list of companies and individual is attached to
+    """
+    serializer_class = EmployeeCompanySerializer
+    permission_classes = [LoggedInPermission]
+
+    def get_queryset(self):
+        queryset = CompanyEmployee.objects.filter(user=self.request.user)
+        return queryset
