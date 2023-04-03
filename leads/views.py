@@ -275,7 +275,6 @@ class LeadUploadAPIView(APIView):
                     lead_type = lead_type.upper()
                 else:
                     lead_type = None
-                print(lead_contact)
                 if not lead_contact:
                     lead_contact = LeadContact()
                     lead_contact.email = item.get("email")
@@ -298,14 +297,15 @@ class LeadUploadAPIView(APIView):
                 marketer_email = item.get("assigned_marketer")
                 if marketer_email:
                     assigned_marketer = company.employees.filter(user__email=marketer_email).first()
-                    print(assigned_marketer)
                     if not assigned_marketer:
                         assigned_marketer = get_assigned_marketer_from_company_lead(company)
                     # add the assigned marketer
                 else:
                     assigned_marketer = get_assigned_marketer_from_company_lead(company)
 
-                lead_contact.assigned_marketer = assigned_marketer
+                if assigned_marketer.first_name:
+                    lead_contact.assigned_marketer = assigned_marketer
+                    
                 lead_contact.save()
                 lead_contact.groups.add(group)
 
