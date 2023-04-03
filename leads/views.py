@@ -265,7 +265,7 @@ class LeadUploadAPIView(APIView):
         try:
             for item in data:
                 group, group_created = Group.objects.get_or_create(
-                    title=item.get("g").upper(),
+                    title=item.get("group").upper(),
                     company=company)
                 # Get or create the lead contact
                 lead_contact = LeadContact.objects.filter(email=item.get("email"), company=company).first()
