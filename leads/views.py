@@ -261,10 +261,9 @@ class LeadUploadAPIView(APIView):
     def post(self, request):
         # the data name is called a file
         company = get_company(self)
-        data = self.request.data.get("file")
+        data = self.request.data
         try:
-            data_dict = json.load(data)
-            for item in data_dict:
+            for item in data:
                 group, group_created = Group.objects.get_or_create(
                     title=item.get("lead_type").upper(),
                     company=company)
@@ -272,7 +271,7 @@ class LeadUploadAPIView(APIView):
                 lead_contact, created = LeadContact.objects.get_or_create(
                     company=company,
                     prefix=item.get("prefix"),
-                    lead_type=item.get("lead_type"),
+                    lead_type=item.get("lead_type").upper(),
                     last_name=item.get("last_name"),
                     first_name=item.get("first_name"),
                     middle_name=item.get("middle_name"),
