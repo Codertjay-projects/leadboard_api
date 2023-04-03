@@ -303,9 +303,11 @@ class LeadUploadAPIView(APIView):
                 else:
                     assigned_marketer = get_assigned_marketer_from_company_lead(company)
 
-                if assigned_marketer.first_name:
-                    lead_contact.assigned_marketer = assigned_marketer
-                    
+                try:
+                    if assigned_marketer.first_name:
+                        lead_contact.assigned_marketer = assigned_marketer
+                except: pass
+
                 lead_contact.save()
                 lead_contact.groups.add(group)
 
