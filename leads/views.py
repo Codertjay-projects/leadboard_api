@@ -7,10 +7,12 @@ from rest_framework.response import Response
 from django.utils import timezone
 from rest_framework import status
 import uuid
+import json
+from rest_framework.views import APIView
 
-from companies.models import Company, CompanyEmployee
+from companies.models import Company, CompanyEmployee, Group
 from companies.utils import check_marketer_and_admin_access_company, check_company_high_value_content_access, \
-    get_assigned_marketer_from_company_user_schedule_call, get_assigned_marketer_from_company_lead
+    get_assigned_marketer_from_company_user_schedule_call, get_assigned_marketer_from_company_lead, get_company
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackCreateSerializer
 from users.permissions import LoggedInPermission, NotLoggedInPermission
@@ -248,3 +250,52 @@ class LeadStatsRetrieveAPIView(RetrieveAPIView):
         }
 
         return Response(context, status=status.HTTP_200_OK)
+
+
+class LeadUploadAPIView(APIView):
+    """
+    this is used to upload lead in json format
+    """
+    permission_classes = [LoggedInPermission]
+
+    def post(self, request):
+        # the data name is called a file
+        company = get_company(self)
+        data = self.request.data.get("file")
+        try:
+            data_dict = json.load(data)
+            for item in data_dict:
+                group, group_created = Group.objects.get_or_create(
+                    title=item.get("lead_type").upper(),
+                    company=company)
+                # Get or create the lead contact
+                lead_contact, created = LeadContact.objects.get_or_create(
+                    company=company,
+                    prefix=item.get("prefix"),
+                    lead_type=item.get("lead_type"),
+                    last_name=item.get("last_name"),
+                    first_name=item.get("first_name"),
+                    middle_name=item.get("middle_name"),
+                    job_title=item.get("job_title"),
+                    sector=item.get("sector"),
+                    email=item.get("email"),
+                    mobile=item.get("phone"),
+                    gender=item.get("gender"),
+                    send_email=item.get("send_email"),
+                    lead_source=item.get("lead_source"),
+                    is_safe=item.get("is_safe"),
+                )
+                # filter for the assigned marketer
+                marketer_email = item.get("assigned_marketer")
+                if marketer_email != "" or not None:
+                    assigned_marketer = company.employees.filter(user__email=marketer_email).first()
+                    if not assigned_marketer:
+                        assigned_marketer = get_assigned_marketer_from_company_lead(company)
+                    # add the assigned marketer
+                    lead_contact.assigned_marketer = assigned_marketer
+                lead_contact.groups.add(group)
+                lead_contact.save()
+
+        except Exception as a:
+            return Response({"error": a}, status=400)
+        return Response({"message": "Successfully upload"}, status=200)
