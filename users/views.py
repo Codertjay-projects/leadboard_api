@@ -97,7 +97,7 @@ class RequestEmailOTPAPIView(APIView):
 
     def post(self, request):
         email = request.data.get('email')
-        user = User.objects.filter(email=email).first()
+        user = User.objects.filter(email__icontains=email).first()
         if user:
             #  sends an otp to the user email
             if user.send_email_otp():

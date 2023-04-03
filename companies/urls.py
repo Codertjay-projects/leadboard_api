@@ -5,7 +5,7 @@ from .views import CompanyRetrieveUpdateDeleteAPIView, CompanyListCreateAPIView,
     CompanyGroupRetrieveUpdateDestroy, CompanyGroupListCreate, LocationViewSetsAPIView, IndustryViewSetsAPIView, \
     CompanyInviteListCreateAPIView, InvitedEmployeeSearchCompanyAPIView, CompanyEmployeesListAPIView, \
     CompanyLittleInfoListAPIView, CompanyAnalyTicsAPIView, IndustryListAPIView, UpdateStaffView, \
-    CompanyEmployeeJoinOrganisationAPIView
+    CompanyEmployeeJoinOrganisationAPIView, EmployeeCompanyListAPIView
 
 urlpatterns = [
     path("", CompanyListCreateAPIView.as_view(), name="company_list_create"),
@@ -20,6 +20,7 @@ urlpatterns = [
     path("company_employees_join/", CompanyEmployeeJoinOrganisationAPIView.as_view(), name="company_employees_join"),
     path("company_id_from_invite/", InvitedEmployeeSearchCompanyAPIView.as_view(), name="company_id_from_invite"),
     path("company_little_info/", CompanyLittleInfoListAPIView.as_view(), name="company_little_info"),
+    path("company_employee_company/", EmployeeCompanyListAPIView.as_view(), name="company_employee_company"),
     path("company_analytics/", CompanyAnalyTicsAPIView.as_view(), name="company_analytics"),
     path("industry_listing/", IndustryListAPIView.as_view(), name="industry_listing"),
     path("updates/<id>/", UpdateStaffView.as_view(), name=""),

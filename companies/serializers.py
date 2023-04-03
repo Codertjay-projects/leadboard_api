@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from users.serializers import UserDetailSerializer
+from users.serializers import UserDetailSerializer, UserSerializer
 from feedbacks.serializers import FeedbackSerializer
 from .models import Company, Group, Industry, Location, CompanyInvite, CompanyEmployee
 
@@ -227,3 +227,20 @@ class UpdateStaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyInvite
         fields = '__all__'
+
+
+class EmployeeCompanySerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    company = CompanyInfoSerializer(read_only=True)
+
+    class Meta:
+        model = CompanyEmployee
+        fields = [
+            "user",
+            "company",
+            "role",
+            "invited",
+            "status",
+            "lead_actions_count",
+            "schedule_actions_count",
+        ]
