@@ -68,7 +68,7 @@
 <br/><br/>
 <br/><br/>
 <div class="social_links">
-    <div class="contact_thr">
+    {% comment %} <div class="contact_thr">
         <a href="https://wa.me/message/5IA2QYCI53SUM1" target="_blank">
             <img src="https://leadapi.instincthub.com/static/img/homepage/_whatsapp.png" alt="WhatsApp Icon">
         </a>
@@ -88,17 +88,17 @@
             <img src="https://leadapi.instincthub.com/static/img/homepage/_youtube.png" alt="YouTube Icon">
             <img src="https://leadapi.instincthub.com/static/img/homepage/_youtube.png" alt="YouTube Icon">
         </a>
-    </div>
+    </div> {% endcomment %}
 
     <div class="privacy">
         <!--            <a href="" class="terms_">Terms & Conditions</a>-->
         <div>
-            <a href="https://instincthub.com/privacy-policy/" class="crumb_">Privacy</a>
+            <a href="https://instincthub.com/policies/privacy-policy/" class="crumb_">Privacy</a>
             <span>| 1 Apapa Lane, Dolphin Estate, Ikoyi, Lagos.</span>
         </div>
         <div>
             <a href="https://skills.instincthub.com/" class="crumb_">Course Library</a> | <a
-                href="https://instincthub.com/blog/" class="crumb_">Skills Articles</a>
+                href="https://instincthub.com/blog/" class="crumb_">Articles</a>
         </div>
         {% if unsubscribe_link %}
             <span>You don't want to see this message again? </span><a href="{{ unsubscribe_link }}"> Unsubscribe</a>
