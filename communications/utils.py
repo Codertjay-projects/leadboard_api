@@ -28,7 +28,7 @@ def append_links_and_id_to_description(description, email_type, email_id):
     )
     description = description.replace(
         "https",
-        f"https://leadapi.instincthub.com/api/v1/email_logs/update_links_clicked/?&email_type={email_type}"
+        f"https://makarfi.leadboard.ng/api/v1/email_logs/update_links_clicked/?&email_type={email_type}"
         f"&email_id={email_id}&redirect_url=https"
     )
     return description
